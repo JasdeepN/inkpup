@@ -18,3 +18,6 @@ Finding traces in GitHub Actions
 Notes
 - The workflow first checks whether any trace files exist before uploading to avoid no-op uploads.
 - Traces are only saved for failing tests when `--trace=retain-on-failure` is used; for full tracing on all runs use `--trace=on` (not recommended in CI due to size).
+
+Environment
+- You can set `PORT` and `PLAYWRIGHT_BASE_URL` in a local `.env` file (an example is provided in `.env.example`). The CI workflow uses the `PLAYWRIGHT_BASE_URL` environment variable when starting the server.

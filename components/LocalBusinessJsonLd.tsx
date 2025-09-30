@@ -22,5 +22,5 @@ export default function LocalBusinessJsonLd(props) {
   if (openingHours) data.openingHours = openingHours;
   if (latitude && longitude) data.geo = { '@type': 'GeoCoordinates', latitude, longitude };
 
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;
+  return <script type="application/ld+json" data-testid="json-ld" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;
 }

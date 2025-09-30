@@ -16,9 +16,9 @@ test('LocalBusinessJsonLd renders valid JSON-LD', () => {
     />
   );
 
-  const script = container.querySelector('script[type="application/ld+json"]');
+  const script = container.querySelector('[data-testid="json-ld"]');
   expect(script).toBeTruthy();
-  const parsed = JSON.parse(script.textContent || '{}');
+  const parsed = JSON.parse(script?.textContent || '{}');
   expect(parsed['@type']).toBe('TattooParlor');
   expect(parsed.name).toBe('InkPup Tattoos');
 });

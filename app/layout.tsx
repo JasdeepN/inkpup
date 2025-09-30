@@ -14,7 +14,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head />
       <body>
-  <a href="#content" className="skip-link sr-only focus:not-sr-only">Skip to content</a>
+  <a href="#content" className="skip-link sr-only focus:not-sr-only" data-testid="skip-link">Skip to content</a>
         <Meta title={metadata.title} description={metadata.description} url={business.website} />
         {/* LocalBusiness JSON-LD - populated from `data/business.json` */}
         <LocalBusinessJsonLd

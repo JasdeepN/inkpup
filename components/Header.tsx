@@ -26,21 +26,22 @@ export default function Header() {
     <header className="bg-white border-b border-gray-200">
       <div className="container flex items-center justify-between py-4">
         <div className="flex items-center gap-4">
-          <Link href="/" className="text-2xl font-bold">InkPup</Link>
+          <Link href="/" className="text-2xl font-bold" data-testid="site-logo">InkPup</Link>
           <nav className="hidden md:flex gap-4 text-sm text-gray-700" aria-label="Primary">
-            <Link href="/portfolio" className="hover:underline">Portfolio</Link>
-            <Link href="/services" className="hover:underline">Services</Link>
-            <Link href="/contact" className="hover:underline">Contact</Link>
+            <Link href="/portfolio" className="hover:underline" data-testid="nav-portfolio">Portfolio</Link>
+            <Link href="/services" className="hover:underline" data-testid="nav-services">Services</Link>
+            <Link href="/contact" className="hover:underline" data-testid="nav-contact">Contact</Link>
           </nav>
         </div>
 
         <div className="flex items-center gap-3">
-          <Link href="/contact" className="btn btn--primary">Book</Link>
+          <Link href="/contact" className="btn btn--primary" data-testid="nav-book">Book</Link>
           <button
             className="md:hidden p-2 rounded-md border"
             aria-label={open ? 'Close menu' : 'Open menu'}
             aria-expanded={open}
             onClick={() => setOpen(!open)}
+            data-testid="nav-toggle"
           >
             {open ? '✕' : '☰'}
           </button>
@@ -54,10 +55,10 @@ export default function Header() {
         aria-label="Mobile"
       >
         <div className="container py-4 flex flex-col gap-3">
-          <a href="/portfolio" ref={firstLinkRef} className="text-base">Portfolio</a>
-          <a href="/services" className="text-base">Services</a>
-          <a href="/contact" className="text-base">Contact</a>
-          <a href="/contact" className="btn btn--primary mt-2">Book</a>
+          <a href="/portfolio" ref={firstLinkRef} className="text-base" data-testid="mobile-portfolio">Portfolio</a>
+          <a href="/services" className="text-base" data-testid="mobile-services">Services</a>
+          <a href="/contact" className="text-base" data-testid="mobile-contact">Contact</a>
+          <a href="/contact" className="btn btn--primary mt-2" data-testid="mobile-book">Book</a>
         </div>
       </nav>
     </header>

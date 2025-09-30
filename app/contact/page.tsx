@@ -16,17 +16,17 @@ export default function ContactPage() {
         <form method="post" action="/api/contact" className="grid gap-3 max-w-md">
           <label className="flex flex-col text-sm">
             <span>Name</span>
-            <input name="name" required className="mt-1 p-2 border rounded" />
+            <input name="name" data-testid="contact-name" required className="mt-1 p-2 border rounded" />
           </label>
           <label className="flex flex-col text-sm">
             <span>Email</span>
-            <input name="email" type="email" required className="mt-1 p-2 border rounded" />
+            <input name="email" data-testid="contact-email" type="email" required className="mt-1 p-2 border rounded" />
           </label>
           <label className="flex flex-col text-sm">
             <span>Message</span>
-            <textarea name="message" rows={6} required className="mt-1 p-2 border rounded" />
+            <textarea name="message" data-testid="contact-message" rows={6} required className="mt-1 p-2 border rounded" />
           </label>
-          <button type="submit" className="btn btn--primary">Send</button>
+          <button type="submit" data-testid="contact-submit" className="btn btn--primary">Send</button>
         </form>
       </div>
     </section>
