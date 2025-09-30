@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import SmartImage from './SmartImage';
 
 export default function Hero({ title = 'Custom Tattoos & Cover-ups', subtitle = 'InkPup Tattoos — Toronto (GTA). Book by appointment.' }) {
   return (
@@ -14,7 +14,13 @@ export default function Hero({ title = 'Custom Tattoos & Cover-ups', subtitle = 
         </div>
         <div className="hidden md:block">
           <div className="rounded-lg overflow-hidden shadow-lg">
-            <Image src="/social/sample1.jpg" alt="tattoo sample" width={800} height={600} className="w-full h-auto object-cover" />
+            <SmartImage
+              src={'/istockphoto-1147544807-612x612.jpg'}
+              alt="tattoo sample"
+              width={800}
+              height={600}
+              className="w-full h-auto object-cover"
+            />
           </div>
         </div>
       </div>

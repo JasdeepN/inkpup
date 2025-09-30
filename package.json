@@ -7,12 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-  "test:e2e": "playwright test",
+    "test:e2e": "playwright test",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook",
     "test:storybook": "storyshots test",
-  "test": "jest",
-  "test:unit": "jest --coverage"
+    "test": "jest",
+    "test:unit": "jest --coverage",
+    "r2:set-cache-control": "node scripts/set-r2-cache-control.js"
   },
   "dependencies": {
     "next": "13.4.12",
@@ -20,6 +21,7 @@
     "react-dom": "18.2.0"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.899.0",
     "@babel/preset-env": "^7.28.3",
     "@babel/preset-react": "^7.27.1",
     "@babel/preset-typescript": "^7.27.1",
@@ -39,8 +41,10 @@
     "@types/react": "19.1.15",
     "autoprefixer": "^10.4.21",
     "babel-jest": "^30.2.0",
+    "dotenv": "^17.2.3",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^30.2.0",
+    "minimist": "^1.2.8",
     "postcss": "^8.5.6",
     "sass": "^1.93.2",
     "tailwindcss": "^3.4.17",
