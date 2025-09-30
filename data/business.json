@@ -1,0 +1,15 @@
+{
+  "name": "InkPup Tattoos",
+  "address": {
+    "street": "1275 Finch Ave W unit 111",
+    "city": "North York",
+    "region": "ON",
+    "postalCode": "M3J 0L5"
+  },
+  "phone": "",
+  "email": "",
+  "website": "https://www.inkpup.ca",
+  "sameAs": ["https://www.instagram.com/inkpup.tattoos/", "https://www.inkpup.ca"],
+  "instagram": "https://www.instagram.com/inkpup.tattoos/",
+  "hours": ["By appointment only - DM always open"]
+}

@@ -65,6 +65,33 @@ Contact / metadata
 - Focus geography: Toronto, GTA; include neighborhood pages where possible.
 - Social: encourage OG image per portfolio item and Instagram embed where appropriate.
 
+Styling / Tailwind best practices
+- Use Tailwind for layout, spacing, and utility-first patterns. Prefer semantic class names only when a style is reused often and extract it to SCSS with `@apply`.
+- Keep components lightweight: use Tailwind utility classes in JSX for one-off styles; extract repeated patterns to SCSS (e.g., `.btn-primary`, `.card`, `.prose` overrides).
+- SCSS modules or global `app/globals.scss` may hold design tokens (CSS variables), utility helpers, and `@apply` extracted classes.
+- Content paths in `tailwind.config.js` must include `./app`, `./components`, and `./pages` so unused CSS is purged in production.
+- Accessibility: always include focus styles (use `focus:outline-none focus:ring-2 focus:ring-offset-2` or `ring` utilities) and ensure sufficient color contrast for text over backgrounds.
+- Typography: use `@tailwindcss/typography` for blog/portfolio body copy and adjust via `prose` utility classes in SCSS when necessary.
+- Forms: use `@tailwindcss/forms` to normalize inputs and apply consistent spacing.
+- Keep dark mode consistent with `darkMode: 'class'` — add a `theme` class on the `<html>` root for toggling.
+- Responsive design: prefer mobile-first utilities (no `sm:` prefix for base), and test at common breakpoints: 640, 768, 1024, 1280.
+- Naming convention: when extracting utilities to classes, use BEM-like or semantic names: `.btn`, `.btn--primary`, `.card`, `.gallery__item`.
+- Performance: avoid deep nesting and large custom CSS — rely on Tailwind utilities to reduce specificity and CSS size.
+- Example: extract a reusable CTA button in `app/globals.scss` and use it like `<button className="btn btn--primary">Book</button>`.
+
+Example SCSS extract (in `app/globals.scss`):
+```
+.btn { @apply inline-flex items-center justify-center gap-2 rounded-md font-medium; }
+.btn--primary { @apply bg-accent text-white px-4 py-2 shadow; }
+.card { @apply bg-white rounded-lg p-4 shadow-sm; }
+.prose-custom { @apply prose prose-sm md:prose lg:prose-lg; }
+```
+
+Linting & consistency
+- Add a Tailwind lint rule or ESLint plugin for className ordering if desired (optional).
+- Document component styling patterns in this instructions file when you introduce a new pattern.
+
+
 Todo (copyable, use when working on the project)
 ```
 - [ ] Create Next.js app skeleton (App Router) under `app/` with `layout.tsx` and `head.tsx`.

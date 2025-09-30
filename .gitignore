@@ -77,5 +77,11 @@ cypress/screenshots/
 *.tgz
 .cache/
 
+# Test results and Playwright
+test-results/
+playwright-report/
+.playwright/
+
 # Keep the instructions directory tracked
 !.github/instructions/
+TODO.IGNORE

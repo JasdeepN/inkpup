@@ -1,0 +1,3 @@
+/* Minimal global styles */
+html,body,#__next,#app-root { height: 100%; }
+body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; color: #111; }
