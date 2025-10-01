@@ -11,7 +11,7 @@ export default async function PortfolioPage() {
     <section className="portfolio-gallery">
       <div className="portfolio-gallery__intro">
         <h2 className="portfolio-gallery__title">Portfolio</h2>
-        <p className="portfolio-gallery__subtitle">Browse healed pieces, available designs, flash, and fine art direct from our R2 gallery.</p>
+        <p className="portfolio-gallery__subtitle">Browse healed pieces, available designs, flash, and fine art!</p>
       </div>
       <GalleryView initialCategory={DEFAULT_CATEGORY} initialItems={initialItems} />
     </section>

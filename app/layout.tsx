@@ -7,7 +7,7 @@ import ParticlesBackground from '../components/ParticlesBackground';
 
 export const metadata = {
   title: `${business.name} — ${business.address.city}`,
-  description: `Custom tattoos, cover-ups, and aftercare. Serving ${business.address.city} and the GTA.`
+  description: `Custom tattoos, re-works, and aftercare. Serving ${business.address.city} and the GTA.`
 };
 
 export default function RootLayout({ children }) {
