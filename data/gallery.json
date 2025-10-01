@@ -1,5 +1,30 @@
 [
-  {"src":"/social/sample1.jpg","alt":"Blackwork skull","caption":"Blackwork skull by Alex"},
-  {"src":"/social/sample2.jpg","alt":"Floral sleeve","caption":"Floral sleeve by Jamie"},
-  {"src":"https://via.placeholder.com/800","alt":"Placeholder","caption":"Placeholder image"}
+  {
+    "id": "healed-1",
+    "category": "healed",
+    "src": "/social/sample1.jpg",
+    "alt": "Healed blackwork skull",
+    "caption": "Freshly healed blackwork skull by Alex"
+  },
+  {
+    "id": "available-1",
+    "category": "available",
+    "src": "/social/sample2.jpg",
+    "alt": "Available floral sleeve",
+    "caption": "Available floral sleeve design by Jamie"
+  },
+  {
+    "id": "flash-1",
+    "category": "flash",
+    "src": "https://via.placeholder.com/800x800?text=Flash+Wolf",
+    "alt": "Flash wolf design",
+    "caption": "Wolf flash ready to tattoo"
+  },
+  {
+    "id": "art-1",
+    "category": "art",
+    "src": "https://via.placeholder.com/800x800?text=Art+Print",
+    "alt": "Art print sample",
+    "caption": "Mixed media art print"
+  }
 ]

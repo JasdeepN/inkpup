@@ -22,22 +22,29 @@ export default function Header() {
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
+  // Dark mode toggle
+  const [dark, setDark] = useState(true);
+  useEffect(() => {
+    if (dark) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+  }, [dark]);
+
   return (
-    <header className="bg-white border-b border-gray-200">
-      <div className="container flex items-center justify-between py-4">
-        <div className="flex items-center gap-4">
+    <header className="site-header">
+      <div className="container site-header__inner">
+        <div className="site-header__brand">
           <Link href="/" className="text-2xl font-bold" data-testid="site-logo">InkPup</Link>
-          <nav className="hidden md:flex gap-4 text-sm text-gray-700" aria-label="Primary">
-            <Link href="/portfolio" className="hover:underline" data-testid="nav-portfolio">Portfolio</Link>
-            <Link href="/services" className="hover:underline" data-testid="nav-services">Services</Link>
-            <Link href="/contact" className="hover:underline" data-testid="nav-contact">Contact</Link>
+          <nav className="primary-nav hidden md:flex" aria-label="Primary">
+            <Link href="/portfolio" data-testid="nav-portfolio">Portfolio</Link>
+            <Link href="/services" data-testid="nav-services">Services</Link>
+            <Link href="/contact" data-testid="nav-contact">Contact</Link>
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="header-actions">
           <Link href="/contact" className="btn btn--primary" data-testid="nav-book">Book</Link>
           <button
-            className="md:hidden p-2 rounded-md border"
+            className="mobile-menu-button md:hidden"
             aria-label={open ? 'Close menu' : 'Open menu'}
             aria-expanded={open}
             onClick={() => setOpen(!open)}
@@ -45,19 +52,26 @@ export default function Header() {
           >
             {open ? '✕' : '☰'}
           </button>
+          <button
+            className="theme-toggle"
+            aria-label="Toggle dark mode"
+            onClick={() => setDark((d) => !d)}
+          >
+            {dark ? '🌙' : '☀️'}
+          </button>
         </div>
       </div>
 
       {/* Mobile menu - accessible */}
       <nav
-        className={`md:hidden bg-white border-t border-gray-200 ${open ? 'block' : 'hidden'}`}
+        className={`mobile-nav md:hidden ${open ? 'block' : 'hidden'}`}
         aria-hidden={!open}
         aria-label="Mobile"
       >
-        <div className="container py-4 flex flex-col gap-3">
-          <a href="/portfolio" ref={firstLinkRef} className="text-base" data-testid="mobile-portfolio">Portfolio</a>
-          <a href="/services" className="text-base" data-testid="mobile-services">Services</a>
-          <a href="/contact" className="text-base" data-testid="mobile-contact">Contact</a>
+        <div className="container mobile-nav__inner py-4">
+          <a href="/portfolio" ref={firstLinkRef} data-testid="mobile-portfolio">Portfolio</a>
+          <a href="/services" data-testid="mobile-services">Services</a>
+          <a href="/contact" data-testid="mobile-contact">Contact</a>
           <a href="/contact" className="btn btn--primary mt-2" data-testid="mobile-book">Book</a>
         </div>
       </nav>

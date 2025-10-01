@@ -8,9 +8,15 @@ type Props = {
   height?: number;
   className?: string;
   priority?: boolean;
+  fill?: boolean;
+  sizes?: string;
 };
 
-export default function SmartImage({ src, alt = '', width, height, className, priority = false }: Readonly<Props>) {
+export default function SmartImage({ src, alt = '', width, height, className, priority = false, fill = false, sizes }: Readonly<Props>) {
   const resolved = resolveR2Url(src);
+  if (fill) {
+    return <Image src={resolved} alt={alt} fill sizes={sizes} className={className} priority={priority} />;
+  }
+
   return <Image src={resolved} alt={alt} width={width} height={height} className={className} priority={priority} />;
 }

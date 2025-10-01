@@ -1,3 +1,102 @@
 /* Minimal global styles */
 html,body,#__next,#app-root { height: 100%; }
-body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; color: #111; }
+body {
+	margin: 0;
+	font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+	background-color: theme('colors.bg.DEFAULT');
+	color: theme('colors.primary.DEFAULT');
+	transition: background 0.2s, color 0.2s;
+}
+
+a {
+	color: theme('colors.accent.DEFAULT');
+	text-decoration: underline;
+	transition: color 0.2s;
+}
+a:hover {
+	color: theme('colors.accent.dark');
+}
+
+/* Card/surface */
+.card {
+	background: theme('colors.surface.DEFAULT');
+	color: theme('colors.primary.DEFAULT');
+	border-radius: theme('borderRadius.xl');
+	box-shadow: theme('boxShadow.card');
+	border: 1px solid theme('colors.border.DEFAULT');
+	padding: 1.5rem;
+	margin-bottom: 1.5rem;
+	transition: background 0.2s, color 0.2s;
+}
+
+/* Buttons */
+.btn {
+	background: theme('colors.accent.DEFAULT');
+	color: #fff;
+	border-radius: 0.5rem;
+	padding: 0.5rem 1.25rem;
+	font-weight: 600;
+	border: none;
+	cursor: pointer;
+	transition: background 0.2s, color 0.2s;
+}
+.btn:hover {
+	background: theme('colors.accent.dark');
+}
+
+/* Forms */
+input, textarea, select {
+	background: theme('colors.surface.DEFAULT');
+	color: theme('colors.primary.DEFAULT');
+	border: 1px solid theme('colors.border.DEFAULT');
+	border-radius: 0.5rem;
+	padding: 0.5rem 1rem;
+	margin-bottom: 1rem;
+	transition: background 0.2s, color 0.2s;
+}
+input:focus, textarea:focus, select:focus {
+	outline: 2px solid theme('colors.accent.DEFAULT');
+}
+
+/* Code blocks */
+pre, code {
+	background: theme('colors.code.DEFAULT');
+	color: theme('colors.accent.DEFAULT');
+	font-family: 'Fira Mono', Menlo, monospace;
+	border-radius: 0.5rem;
+	padding: 0.25rem 0.5rem;
+}
+
+/* Muted text */
+.muted, .text-muted {
+	color: theme('colors.muted.DEFAULT');
+}
+
+/* Dark mode overrides */
+html.dark body {
+	background-color: theme('colors.bg.dark');
+	color: theme('colors.primary.dark');
+}
+html.dark .card {
+	background: theme('colors.surface.dark');
+	color: theme('colors.primary.dark');
+	border-color: theme('colors.border.dark');
+}
+html.dark a {
+	color: theme('colors.accent.dark');
+}
+html.dark .btn {
+	background: theme('colors.accent.dark');
+}
+html.dark input, html.dark textarea, html.dark select {
+	background: theme('colors.surface.dark');
+	color: theme('colors.primary.dark');
+	border-color: theme('colors.border.dark');
+}
+html.dark pre, html.dark code {
+	background: theme('colors.code.dark');
+	color: theme('colors.accent.dark');
+}
+html.dark .muted, html.dark .text-muted {
+	color: theme('colors.muted.dark');
+}

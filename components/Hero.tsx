@@ -2,18 +2,26 @@ import SmartImage from './SmartImage';
 
 export default function Hero({ title = 'Custom Tattoos & Cover-ups', subtitle = 'InkPup Tattoos — Toronto (GTA). Book by appointment.' }) {
   return (
-    <section className="bg-gradient-to-r from-white to-gray-50">
-      <div className="container grid gap-6 md:grid-cols-2 items-center py-12">
-        <div className="space-y-4">
-          <h1 className="text-4xl md:text-5xl font-extrabold" data-testid="hero-title">{title}</h1>
-          <p className="text-gray-700" data-testid="hero-subtitle">{subtitle}</p>
-          <div className="flex items-center gap-3">
+    <section className="hero-section">
+      <div className="container">
+        <div className="space-y-6">
+          <h1 className="hero-title text-4xl md:text-5xl" data-testid="hero-title">{title}</h1>
+          <p className="hero-subtitle text-lg" data-testid="hero-subtitle">{subtitle}</p>
+          <div className="hero-actions">
             <a href="/contact" className="btn btn--primary" data-testid="hero-book">Book an appointment</a>
-            <a href="https://www.instagram.com/inkpup.tattoos/" target="_blank" rel="noreferrer" className="text-sm text-gray-600 underline" data-testid="hero-portfolio">View portfolio</a>
+            <a
+              href="https://www.instagram.com/inkpup.tattoos/"
+              target="_blank"
+              rel="noreferrer"
+              className="hero-link"
+              data-testid="hero-portfolio"
+            >
+              View portfolio
+            </a>
           </div>
         </div>
         <div className="hidden md:block">
-          <div className="rounded-lg overflow-hidden shadow-lg">
+          <div className="hero-image">
             <SmartImage
               src={'/istockphoto-1147544807-612x612.jpg'}
               alt="tattoo sample"

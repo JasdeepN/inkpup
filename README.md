@@ -64,3 +64,13 @@ PLAYWRIGHT_BASE_URL=http://localhost:3002 npx playwright test
 ```
 
 The tests are located under `tests/e2e/` and the Playwright config is `playwright.config.ts`.
+
+## Attribution
+
+This project uses the "Wolf" icon from Flaticon for the site favicon. The icon is provided by the author Freepik and is free to use with attribution.
+
+Required attribution:
+
+"Wolf icon by Freepik from www.flaticon.com"
+
+See `ATTRIBUTION.md` for details and usage instructions.
