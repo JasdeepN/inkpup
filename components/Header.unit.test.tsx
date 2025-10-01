@@ -10,10 +10,18 @@ test('header shows primary nav in desktop and tab order includes Book link', asy
   const primary = screen.getByLabelText('Primary');
   expect(primary).toBeInTheDocument();
 
+  // Primary nav order should surface Portfolio, Contact, then About
+  const { within } = require('@testing-library/react');
+  const navLinks = within(primary).getAllByRole('link');
+  expect(navLinks.map((link) => link.textContent?.trim())).toEqual([
+    'Portfolio',
+    'Contact',
+    'About',
+  ]);
+  expect(navLinks[navLinks.length - 1]).toHaveAttribute('href', '/about');
+
   // Book link should be present in the header (scope search to banner)
   const banner = screen.getByRole('banner');
-  const { getByRole } = require('@testing-library/dom');
-  const { within } = require('@testing-library/react');
   const book = within(banner).getByRole('link', { name: /book/i });
   expect(book).toBeInTheDocument();
 

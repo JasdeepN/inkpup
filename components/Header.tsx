@@ -36,8 +36,8 @@ export default function Header() {
           <Link href="/" className="text-2xl font-bold" data-testid="site-logo">InkPup</Link>
           <nav className="primary-nav hidden md:flex" aria-label="Primary">
             <Link href="/portfolio" data-testid="nav-portfolio">Portfolio</Link>
-            <Link href="/services" data-testid="nav-services">Services</Link>
             <Link href="/contact" data-testid="nav-contact">Contact</Link>
+            <Link href="/about" data-testid="nav-about">About</Link>
           </nav>
         </div>
 
@@ -70,8 +70,8 @@ export default function Header() {
       >
         <div className="container mobile-nav__inner py-4">
           <a href="/portfolio" ref={firstLinkRef} data-testid="mobile-portfolio">Portfolio</a>
-          <a href="/services" data-testid="mobile-services">Services</a>
           <a href="/contact" data-testid="mobile-contact">Contact</a>
+          <a href="/about" data-testid="mobile-about">About</a>
           <a href="/contact" className="btn btn--primary mt-2" data-testid="mobile-book">Book</a>
         </div>
       </nav>

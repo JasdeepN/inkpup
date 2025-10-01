@@ -24,7 +24,7 @@ Repository layout to follow (prefer App Router)
 - app/
   - layout.tsx, head.tsx
   - page.tsx (home), /portfolio/[slug]/page.tsx
-  - /services/page.tsx, /contact/page.tsx, /blog/page.tsx
+  - /about/page.tsx, /contact/page.tsx, /blog/page.tsx
 - components/
   - Meta.tsx
   - LocalBusinessJsonLd.tsx

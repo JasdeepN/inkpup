@@ -41,8 +41,10 @@
   gap: 0.5rem;
   border-radius: 0.75rem;
   font-weight: 600;
-  padding: 0.6rem 1.35rem;
-  line-height: 1.1;
+  font-size: 1rem;
+  line-height: 1.2;
+  padding: 0.65rem 1.5rem;
+  text-align: center;
   border: none;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
@@ -93,6 +95,19 @@
   background: #dc2626;
   transform: translateY(-1px);
   box-shadow: 0 16px 36px rgba(220, 38, 38, 0.45);
+}
+
+.btn--instagram {
+  background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af, #515bd4);
+  color: #fff;
+  border: none;
+  box-shadow: 0 16px 40px rgba(221, 42, 123, 0.45);
+}
+
+.btn--instagram:hover,
+.btn--instagram:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 22px 48px rgba(129, 52, 175, 0.5);
 }
 
 .text-accent { color: var(--brand-accent); }
@@ -634,6 +649,40 @@ html.dark {
   flex-direction: column;
   gap: 0.75rem;
   font-size: 0.95rem;
+}
+
+
+.site-footer a.btn--instagram {
+  color: #fff;
+}
+
+.site-footer a.btn {
+  text-decoration: none;
+}
+
+.site-footer a.btn:hover,
+.site-footer a.btn:focus-visible {
+  text-decoration: none;
+}
+
+.site-footer__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.site-footer__cta-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex-shrink: 0;
+  display: block;
+}
+
+.site-footer__cta-text {
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 /* ----------------------------------------------
