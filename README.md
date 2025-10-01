@@ -75,6 +75,17 @@ npm run test:storybook
 
 The script will build Storybook, serve the static build, and execute the runner with DOM snapshot assertions stored under `__snapshots__/`.
 
+## Admin portal
+
+A password-protected gallery portal is available for managing Cloudflare R2 assets. Configure the following environment variables (see `.env.example`):
+
+- `ADMIN_PORTAL_SLUG`: Single path segment for the hidden URL (e.g. `studio-console` -> `/studio-console`).
+- `ADMIN_PORTAL_PASSWORD`: Portal password required to sign in.
+- `ADMIN_SESSION_SECRET`: Secret used to sign session cookies (rotate on compromise).
+- Optional overrides: `ADMIN_SESSION_COOKIE_NAME`, `ADMIN_SESSION_TTL_HOURS`, and `R2_MAX_IMAGE_WIDTH` (defaults to 1800px).
+
+Uploads are optimized with Sharp (auto-rotation, max width, WebP output) before being pushed to R2 with long-lived cache headers. The portal lists existing gallery assets, provides direct links, and supports deletion. R2 credentials (`R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`) must be present for mutations; otherwise, the UI falls back to read-only mode.
+
 ## Attribution
 
 This project uses the "Wolf" icon from Flaticon for the site favicon. The icon is provided by the author Freepik and is free to use with attribution.

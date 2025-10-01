@@ -10,6 +10,7 @@ export interface GalleryItem {
   category: GalleryCategory;
   size?: number;
   lastModified?: string;
+  key?: string;
 }
 
 export function isGalleryCategory(value: string): value is GalleryCategory {
