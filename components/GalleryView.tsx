@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { SyntheticEvent } from 'react';
 import type { GalleryItem, GalleryCategory } from '../lib/gallery-types';
 import { GALLERY_CATEGORIES, getCategoryLabel } from '../lib/gallery-types';
 import Gallery from './Gallery';
 import SmartImage from './SmartImage';
+import { isGalleryCaptionsEnabled } from '../lib/featureFlags';
 
 type GalleryViewProps = {
   readonly initialCategory: GalleryCategory;
@@ -15,11 +16,14 @@ type GalleryViewProps = {
 type GalleryRecord = Partial<Record<GalleryCategory, GalleryItem[]>>;
 
 export default function GalleryView({ initialCategory, initialItems }: GalleryViewProps) {
+  const captionsEnabled = isGalleryCaptionsEnabled();
   const [activeCategory, setActiveCategory] = useState<GalleryCategory>(initialCategory);
   const [itemsByCategory, setItemsByCategory] = useState<GalleryRecord>({ [initialCategory]: initialItems });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<GalleryItem | null>(null);
+  const [imageMeta, setImageMeta] = useState<{ naturalWidth: number; naturalHeight: number } | null>(null);
+  const [modalSize, setModalSize] = useState<{ width: number; height: number } | null>(null);
 
   const items = useMemo(() => itemsByCategory[activeCategory] ?? [], [activeCategory, itemsByCategory]);
 
@@ -48,7 +52,56 @@ export default function GalleryView({ initialCategory, initialItems }: GalleryVi
     }
   }, [itemsByCategory]);
 
-  const closeModal = useCallback(() => setSelected(null), []);
+  const closeModal = useCallback(() => {
+    setSelected(null);
+    setImageMeta(null);
+    setModalSize(null);
+  }, []);
+
+  const updateModalSize = useCallback(
+    (dimensions: { naturalWidth: number; naturalHeight: number }) => {
+      if (typeof window === 'undefined') return;
+      const maxWidth = Math.min(window.innerWidth * 0.9, 960);
+      const maxHeight = Math.min(window.innerHeight * 0.9, 720);
+
+      const scale = Math.min(
+        maxWidth / dimensions.naturalWidth,
+        maxHeight / dimensions.naturalHeight,
+        1,
+      );
+
+      const width = Math.max(280, Math.round(dimensions.naturalWidth * scale));
+      const height = Math.max(280, Math.round(dimensions.naturalHeight * scale));
+      setModalSize({ width, height });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!imageMeta) return;
+
+    const handleResize = () => updateModalSize(imageMeta);
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [imageMeta, updateModalSize]);
+
+  const handleImageLoad = useCallback(
+    (img: HTMLImageElement) => {
+      const dimensions = { naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight };
+      setImageMeta(dimensions);
+      updateModalSize(dimensions);
+    },
+    [updateModalSize],
+  );
+
+  useEffect(() => {
+    if (!selected) {
+      setImageMeta(null);
+      setModalSize(null);
+    }
+  }, [selected]);
 
   return (
     <div className="gallery-view">
@@ -88,17 +141,26 @@ export default function GalleryView({ initialCategory, initialItems }: GalleryVi
         >
           <div className="gallery-modal__content">
             <button className="gallery-modal__close" type="button" onClick={closeModal} aria-label="Close image preview">✕</button>
-            <div className="gallery-modal__image">
+            <div
+              className="gallery-modal__image"
+              style={modalSize ? { width: `${modalSize.width}px`, height: `${modalSize.height}px` } : undefined}
+            >
               <SmartImage
                 src={selected.src}
                 alt={selected.alt ?? 'Tattoo artwork'}
                 fill
                 sizes="(min-width: 1024px) 70vw, 90vw"
                 className="gallery-modal__img"
+                onLoadingComplete={handleImageLoad}
               />
             </div>
-            {(selected.caption || selected.alt) && (
-              <p className="gallery-modal__caption">{selected.caption || selected.alt}</p>
+            {(selected.alt || (captionsEnabled && selected.caption)) && (
+              <div className="gallery-modal__footer">
+                <p className="gallery-modal__title">{selected.alt || 'Untitled artwork'}</p>
+                {captionsEnabled && selected.caption && (
+                  <p className="gallery-modal__caption">{selected.caption}</p>
+                )}
+              </div>
             )}
           </div>
         </dialog>

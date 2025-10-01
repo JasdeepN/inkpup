@@ -10,13 +10,44 @@ type Props = {
   priority?: boolean;
   fill?: boolean;
   sizes?: string;
+  onLoadingComplete?: (img: HTMLImageElement) => void;
 };
 
-export default function SmartImage({ src, alt = '', width, height, className, priority = false, fill = false, sizes }: Readonly<Props>) {
+export default function SmartImage({
+  src,
+  alt = '',
+  width,
+  height,
+  className,
+  priority = false,
+  fill = false,
+  sizes,
+  onLoadingComplete,
+}: Readonly<Props>) {
   const resolved = resolveR2Url(src);
   if (fill) {
-    return <Image src={resolved} alt={alt} fill sizes={sizes} className={className} priority={priority} />;
+    return (
+      <Image
+        src={resolved}
+        alt={alt}
+        fill
+        sizes={sizes}
+        className={className}
+        priority={priority}
+        onLoadingComplete={onLoadingComplete}
+      />
+    );
   }
 
-  return <Image src={resolved} alt={alt} width={width} height={height} className={className} priority={priority} />;
+  return (
+    <Image
+      src={resolved}
+      alt={alt}
+      width={width}
+      height={height}
+      className={className}
+      priority={priority}
+      onLoadingComplete={onLoadingComplete}
+    />
+  );
 }

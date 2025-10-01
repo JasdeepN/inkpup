@@ -1,6 +1,6 @@
 import SmartImage from './SmartImage';
 
-export default function Hero({ title = 'Custom Tattoos & Re-Works', subtitle = 'InkPup Tattoos — Toronto (GTA). Book by appointment.' }) {
+export default function Hero({ title = 'Custom Tattoos, Consults & Re-Works', subtitle = 'InkPup Tattoos — Toronto (GTA). Book by appointment.' }) {
   return (
     <section className="hero-section">
       <div className="container">

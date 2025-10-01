@@ -4,6 +4,16 @@ import userEvent from '@testing-library/user-event';
 import Gallery from './Gallery';
 import type { GalleryItem } from '../lib/gallery-types';
 
+const originalCaptionFlag = process.env.NEXT_PUBLIC_SHOW_GALLERY_CAPTIONS;
+
+afterEach(() => {
+  if (typeof originalCaptionFlag === 'undefined') {
+    delete process.env.NEXT_PUBLIC_SHOW_GALLERY_CAPTIONS;
+  } else {
+    process.env.NEXT_PUBLIC_SHOW_GALLERY_CAPTIONS = originalCaptionFlag;
+  }
+});
+
 test('Gallery renders provided gallery items', () => {
   const sampleItems: GalleryItem[] = [
     {
@@ -43,6 +53,7 @@ test('Gallery shows empty message when no items and not loading', () => {
 });
 
 test('Gallery invokes onSelect and renders captions for items', async () => {
+  process.env.NEXT_PUBLIC_SHOW_GALLERY_CAPTIONS = 'true';
   const user = userEvent.setup();
   const handleSelect = jest.fn();
   const items: GalleryItem[] = [

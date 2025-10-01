@@ -94,7 +94,7 @@ describe('upload and delete gallery images', () => {
 
     expect(sendMock).toHaveBeenCalledTimes(1);
     const commandInstance = sendMock.mock.calls[0][0] as { params: Record<string, unknown> };
-    expect(commandInstance.params.Key).toMatch(/^flash\//);
+  expect(commandInstance.params.Key).toBe('flash/creme-brulee.webp');
     expect(commandInstance.params.ContentType).toBe('image/webp');
     expect(commandInstance.params.Metadata).toEqual({ alt: 'Alt text', caption: 'Caption text' });
     expect(commandInstance.params.CacheControl).toContain('max-age');
@@ -140,7 +140,7 @@ describe('upload and delete gallery images', () => {
       Contents: [
         { Key: 'flash/', Size: undefined },
         {
-          Key: 'flash/2024/02/01/demo-piece.webp',
+          Key: 'flash/demo-piece.webp',
           Size: 1111,
           LastModified: new Date('2024-02-01T00:00:00Z'),
           ETag: 'demo-tag',
@@ -152,8 +152,8 @@ describe('upload and delete gallery images', () => {
 
     const secondPage = {
       Contents: [
-        { Key: 'flash/2023/12/older-piece.webp', Size: 777 },
-        { Key: 'flash/2023/12/folder/', Size: undefined },
+  { Key: 'flash/older-piece.webp', Size: 777 },
+  { Key: 'flash/folder/', Size: undefined },
       ],
       IsTruncated: false,
     };
@@ -175,11 +175,11 @@ describe('upload and delete gallery images', () => {
     });
 
     expect(items).toHaveLength(2);
-    expect(items[0].key).toBe('flash/2024/02/01/demo-piece.webp');
+  expect(items[0].key).toBe('flash/demo-piece.webp');
     expect(items[0].alt).toBe('Demo piece');
     expect(items[0].caption).toBe('Demo piece');
     expect(items[0].lastModified).toBe('2024-02-01T00:00:00.000Z');
-    expect(items[1].key).toBe('flash/2023/12/older-piece.webp');
+  expect(items[1].key).toBe('flash/older-piece.webp');
     expect(items[1].lastModified).toBeUndefined();
   });
 });

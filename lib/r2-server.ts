@@ -76,18 +76,13 @@ function sanitizeFilename(originalName: string): string {
 
 export function generateGalleryObjectKey(
   category: GalleryCategory,
-  originalFilename: string,
-  timestamp: number = Date.now()
+  originalFilename: string
 ): string {
   if (!isGalleryCategory(category)) {
     throw new Error(`Unsupported gallery category '${category}'.`);
   }
-  const date = new Date(timestamp);
-  const year = date.getUTCFullYear();
-  const month = `${date.getUTCMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getUTCDate()}`.padStart(2, '0');
   const slug = sanitizeFilename(originalFilename);
-  return `${category}/${year}/${month}/${day}/${timestamp}-${slug}.webp`;
+  return `${category}/${slug}.webp`;
 }
 
 async function createOptimizedImage(buffer: Buffer) {
