@@ -1,36 +1,34 @@
-module.exports = {
-  // Use babel-jest to transform JS/TS/TSX so JSX and ESM import syntax are handled
+const nextJest = require('next/jest.js');
+
+const createJestConfig = nextJest({
+  // Provide the path to the Next.js app so next/jest can load next.config.js,
+  // environment variables, and the SWC transformer automatically
+  dir: './',
+});
+
+const customConfig = {
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-  // Exclude Playwright e2e tests from Jest
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts', '<rootDir>/storybook.setup.ts'],
   testPathIgnorePatterns: ['<rootDir>/tests/e2e/'],
-  // Broaden test discovery to include components, app, pages, and tests folders
-  testMatch: [
-    '<rootDir>/components/**/*.test.+(ts|tsx|js)',
-    '<rootDir>/app/**/?(*.)+(test|spec).+(ts|tsx|js)',
-    '<rootDir>/pages/**/?(*.)+(test|spec).+(ts|tsx|js)',
-    '<rootDir>/tests/**/?(*.)+(test|spec).+(ts|tsx|js)',
-    '<rootDir>/**/*.(test|spec).+(ts|tsx|js)'
-  ],
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  transform: {
-    '^.+\\.(ts|tsx|js|jsx)$': 'babel-jest'
-  },
-  // Use ts-jest preset for TypeScript handling (remove babel-jest transform to avoid conflicts)
+  testMatch: ['<rootDir>/**/*.(test|spec).{js,jsx,ts,tsx,mjs,cjs,mts,cts}'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'mjs', 'cjs', 'mts', 'cts', 'json', 'node'],
   moduleNameMapper: {
     '^next/link$': '<rootDir>/__mocks__/next-link.js',
-    '^next/image$': '<rootDir>/__mocks__/next-image.js'
+    '^next/image$': '<rootDir>/__mocks__/next-image.js',
+    '^sb-original/(.*)$': '<rootDir>/node_modules/vite-plugin-storybook-nextjs/dist/plugins/next-image/alias/$1.cjs',
   },
-  transformIgnorePatterns: ['/node_modules/'],
   collectCoverage: true,
   coverageDirectory: '<rootDir>/coverage',
+  coverageProvider: 'v8',
   coverageThreshold: {
     global: {
       branches: 70,
       functions: 75,
       lines: 75,
-      statements: 75
-    }
+      statements: 75,
+    },
   },
   clearMocks: true,
 };
+
+module.exports = createJestConfig(customConfig);

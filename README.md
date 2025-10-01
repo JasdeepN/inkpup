@@ -39,7 +39,7 @@ Update business data
 
 End-to-end tests (Playwright)
 
-This project includes Playwright e2e tests that verify keyboard navigation (skip link) and mobile menu behavior.
+This project includes Playwright e2e tests that cover the gallery experience (category switching, error states, modal interactions) in addition to navigation, skip links, and mobile menu behavior.
 
 To run the tests locally:
 
@@ -64,6 +64,16 @@ PLAYWRIGHT_BASE_URL=http://localhost:3002 npx playwright test
 ```
 
 The tests are located under `tests/e2e/` and the Playwright config is `playwright.config.ts`.
+
+Storybook snapshot tests
+
+Storybook stories are validated with the official test runner to ensure they render without regressions. Run them from a clean workspace with:
+
+```bash
+npm run test:storybook
+```
+
+The script will build Storybook, serve the static build, and execute the runner with DOM snapshot assertions stored under `__snapshots__/`.
 
 ## Attribution
 
