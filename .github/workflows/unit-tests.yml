@@ -3,9 +3,9 @@ name: Unit tests
 
 on:
   push:
-    branches: [ dev ]
+    branches: [ dev, master ]
   pull_request:
-    branches: [ dev ]
+    branches: [ dev, master ]
 
 jobs:
   unit-tests:
@@ -29,8 +29,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests (no coverage enforcement on dev)
-        # Disable coverage to avoid failing dev pushes due to coverage threshold; enforce coverage on master integration workflow
+      - name: Run Jest unit tests (coverage disabled for speed)
+        # Following GitHub's Node.js CI guidance, run npm test (Jest) without coverage enforcement to keep CI fast.
         run: npm test -- --ci --reporters=default --coverage=false
 
       - name: Upload coverage artifact
