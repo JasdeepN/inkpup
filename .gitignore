@@ -1,10 +1,10 @@
 # Node
+# Node
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-package-lock.json
 # If you use pnpm or yarn, lockfiles are fine to keep — uncomment if you want to ignore
 # pnpm-lock.yaml
 yarn.lock
@@ -55,9 +55,6 @@ Thumbs.db
 # Test output
 coverage/
 .jest/
-
-# Storybook
-.storybook/
 
 # Cypress
 cypress/videos/
