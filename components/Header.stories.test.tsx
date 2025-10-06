@@ -15,9 +15,9 @@ describe('Header stories', () => {
         await MobileMenu.run();
       });
     } catch (err) {
-      /* eslint-disable-next-line no-console */
-      console.debug(err);
-      // fall back to rendering the component directly
+      // fall back to rendering the component directly (silence error)
+      /* eslint-disable-next-line no-unused-vars */
+      const _err = err;
       usedFallback = true;
       render(<Header />);
     }

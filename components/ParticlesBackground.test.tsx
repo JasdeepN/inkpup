@@ -19,6 +19,26 @@ import { initParticlesEngine } from '@tsparticles/react';
 import { loadFull } from 'tsparticles';
 
 describe('ParticlesBackground', () => {
+  // Silence React "not wrapped in act(...)" console errors that
+  // come from the mocked particles engine resolving outside of act.
+  // We filter only that specific message so other real errors still surface.
+  let consoleErrorSpy: jest.SpyInstance;
+  beforeAll(() => {
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
+      const first = String(args?.[0] ?? '');
+      if (first.includes('not wrapped in act')) return;
+      // forward other errors
+      // @ts-ignore - forward original behavior
+      (consoleErrorSpy as any).__original?.apply(console, args);
+    });
+    // keep a reference to original so we can forward non-matching messages
+    // @ts-ignore
+    (consoleErrorSpy as any).__original = console.error.bind(console);
+  });
+  afterAll(() => {
+    consoleErrorSpy.mockRestore();
+  });
+
   const originalMatchMedia = window.matchMedia;
   const originalConnection = Object.getOwnPropertyDescriptor(navigator, 'connection');
   const mockedInit = initParticlesEngine as jest.Mock;
