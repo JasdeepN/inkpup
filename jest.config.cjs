@@ -8,8 +8,11 @@ const createJestConfig = nextJest({
 
 const customConfig = {
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts', '<rootDir>/storybook.setup.ts'],
-  testPathIgnorePatterns: ['<rootDir>/tests/e2e/'],
+  // only include the Jest setup (storybook's runtime shouldn't run in unit tests)
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  // Ignore Storybook 'stories' test files in CI since they require Storybook aliases
+  // that are not needed for app unit tests and can break Jest resolution in some runners.
+  testPathIgnorePatterns: ['<rootDir>/tests/e2e/', '\\.?\\.stories\\.test\\.(js|jsx|ts|tsx)$'],
   testMatch: ['<rootDir>/**/*.(test|spec).{js,jsx,ts,tsx,mjs,cjs,mts,cts}'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'mjs', 'cjs', 'mts', 'cts', 'json', 'node'],
   moduleNameMapper: {
