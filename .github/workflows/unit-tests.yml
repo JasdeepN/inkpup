@@ -28,8 +28,8 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
 
       - name: Install dependencies
-        # Repository intentionally ignores package-lock.json, so use npm install instead of npm ci.
-        run: npm install
+        # package-lock.json is tracked; use npm ci for clean, reproducible installs
+        run: npm ci
 
       - name: Run Jest unit tests (coverage disabled for speed)
         # Following GitHub's Node.js CI guidance, run npm test (Jest) without coverage enforcement to keep CI fast.

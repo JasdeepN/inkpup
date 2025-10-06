@@ -38,6 +38,7 @@ jobs:
             playwright-browsers-${{ runner.os }}-
 
       - name: Install dependencies
+        # package-lock.json is tracked; use npm ci for clean, reproducible installs and faster CI
         run: npm ci
 
       - name: Build
