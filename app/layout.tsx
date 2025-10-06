@@ -56,7 +56,7 @@ export default function RootLayout({ children }) {
                   <span className="site-footer__cta-text">Follow @inkpup.tattoos</span>
                 </a>
               </div>
-              <p className="text-sm text-muted mt-2">Icon (favicon): "Wolf" by <a className="underline" href="https://www.flaticon.com/authors/freepik">Freepik</a> from <a className="underline" href="https://www.flaticon.com/free-icon/wolf_101711">Flaticon</a></p>
+              <p className="text-sm text-muted mt-2">Icon (favicon): &quot;Wolf&quot; by <a className="underline" href="https://www.flaticon.com/authors/freepik">Freepik</a> from <a className="underline" href="https://www.flaticon.com/free-icon/wolf_101711">Flaticon</a></p>
             </div>
           </footer>
         </div>

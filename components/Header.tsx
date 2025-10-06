@@ -69,10 +69,10 @@ export default function Header() {
         aria-label="Mobile"
       >
         <div className="container mobile-nav__inner py-4">
-          <a href="/portfolio" ref={firstLinkRef} data-testid="mobile-portfolio">Portfolio</a>
-          <a href="/contact" data-testid="mobile-contact">Contact</a>
-          <a href="/about" data-testid="mobile-about">About</a>
-          <a href="/contact" className="btn btn--primary mt-2" data-testid="mobile-book">Book</a>
+          <Link href="/portfolio" ref={firstLinkRef} data-testid="mobile-portfolio">Portfolio</Link>
+          <Link href="/contact" data-testid="mobile-contact">Contact</Link>
+          <Link href="/about" data-testid="mobile-about">About</Link>
+          <Link href="/contact" className="btn btn--primary mt-2" data-testid="mobile-book">Book</Link>
         </div>
       </nav>
     </header>

@@ -75,6 +75,24 @@ npm run test:storybook
 
 The script will build Storybook, serve the static build, and execute the runner with DOM snapshot assertions stored under `__snapshots__/`.
 
+## Local GitHub Actions cache for `act`
+
+Running `act` repeatedly can be slow if the Docker runner images have to be re-downloaded each time. This project bundles a helper script, inspired by the [official `act` image catalog](https://github.com/nektos/act/blob/master/IMAGES.md), that pulls `ghcr.io/catthehacker/ubuntu:act-latest`, stores a compressed archive locally, and can reload it on demand.
+
+```bash
+# Warm (pull + save) the cache
+npm run act:cache:warm
+
+# Restore images from the cache before running act
+npm run act:cache:load
+
+# Inspect cache status or remove the archives
+npm run act:cache:list
+npm run act:cache:prune
+```
+
+By default the archives are written to `~/.cache/act-images`. You can override the location or image list by setting `ACT_IMAGE_CACHE_DIR` and `ACT_IMAGE_CACHE_IMAGES` (space-delimited) before executing the script. After warming the cache, you can run `act` with `--pull=false` or rely on the cached layers for much faster local CI loops.
+
 ## Admin portal
 
 A password-protected gallery portal is available for managing Cloudflare R2 assets. Configure the following environment variables (see `.env.example`):

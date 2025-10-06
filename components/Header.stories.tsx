@@ -2,10 +2,12 @@ import React from 'react';
 import Header from './Header';
 import { within, userEvent, waitFor, expect } from 'storybook/test';
 
-export default {
+const story = {
   title: 'Header',
   component: Header,
 };
+
+export default story;
 
 export const MobileMenu = () => <Header />;
 

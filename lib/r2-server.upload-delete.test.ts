@@ -64,9 +64,9 @@ describe('upload and delete gallery images', () => {
   delete process.env.R2_ACCESS_KEY_ID;
   delete process.env.R2_SECRET_ACCESS_KEY;
 
-  const module = await import('./r2-server');
+  const server = await import('./r2-server');
     await expect(
-      module.uploadGalleryImage({
+      server.uploadGalleryImage({
         category: 'healed',
         originalFilename: 'sample.jpg',
         buffer: Buffer.from('mock'),
@@ -82,9 +82,9 @@ describe('upload and delete gallery images', () => {
     process.env.NEXT_PUBLIC_R2_BASE_URL = 'https://cdn.example.com';
     process.env.R2_MAX_IMAGE_WIDTH = '1200';
 
-    const module = await import('./r2-server');
+    const server = await import('./r2-server');
 
-    await module.uploadGalleryImage({
+    await server.uploadGalleryImage({
       category: 'flash',
       originalFilename: 'Crème brûlée.png',
       buffer: Buffer.from('mock'),
@@ -113,13 +113,13 @@ describe('upload and delete gallery images', () => {
     process.env.R2_ACCESS_KEY_ID = 'access';
     process.env.R2_SECRET_ACCESS_KEY = 'secret';
 
-    const module = await import('./r2-server');
+    const server = await import('./r2-server');
 
-    await expect(module.deleteGalleryImage('other/key.webp', 'flash')).rejects.toThrow(
+    await expect(server.deleteGalleryImage('other/key.webp', 'flash')).rejects.toThrow(
       'The provided key does not belong to the specified category.'
     );
 
-    await module.deleteGalleryImage('flash/image.webp', 'flash');
+    await server.deleteGalleryImage('flash/image.webp', 'flash');
 
     expect(sendMock).toHaveBeenCalledTimes(1);
     const deleteCommand = sendMock.mock.calls[0][0] as { params: Record<string, unknown> };
@@ -134,7 +134,8 @@ describe('upload and delete gallery images', () => {
     process.env.R2_SECRET_ACCESS_KEY = 'secret';
     process.env.NEXT_PUBLIC_R2_BASE_URL = 'https://cdn.example.com';
 
-    const module = await import('./r2-server');
+
+  const server = await import('./r2-server');
 
     const firstPage = {
       Contents: [
@@ -162,7 +163,7 @@ describe('upload and delete gallery images', () => {
       .mockImplementationOnce(async () => firstPage)
       .mockImplementationOnce(async () => secondPage);
 
-    const items = await module.listGalleryImages('flash');
+    const items = await server.listGalleryImages('flash');
 
     expect(sendMock).toHaveBeenCalledTimes(2);
     expect((sendMock.mock.calls[0][0] as { params: Record<string, unknown> }).params).toMatchObject({

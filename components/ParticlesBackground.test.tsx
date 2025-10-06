@@ -1,30 +1,49 @@
 import React from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
 
+// Mock tsparticles components to avoid loading the real engine in tests
 jest.mock('@tsparticles/react', () => ({
-    __esModule: true,
+  __esModule: true,
+  // default Particles component
+  default: ({ className }: { className?: string }) => (
+    <div data-testid="mock-particles" className={className} />
+  ),
+  // initParticlesEngine should call the callback and resolve
   initParticlesEngine: jest.fn((cb: (engine: unknown) => Promise<void>) => Promise.resolve(cb({}))),
-    default: ({ className }: { className?: string }) => (
-      <div data-testid="mock-particles" className={className} />
-    ),
-    Particles: ({ className }: { className?: string }) => (
-      <div data-testid="mock-particles" className={className} />
-    ),
 }));
 
-jest.mock('tsparticles', () => ({
-  loadFull: jest.fn(() => Promise.resolve()),
-}));
+jest.mock('tsparticles', () => ({ loadFull: jest.fn(() => Promise.resolve()) }));
 
 import ParticlesBackground from './ParticlesBackground';
 import { initParticlesEngine } from '@tsparticles/react';
 import { loadFull } from 'tsparticles';
 
 describe('ParticlesBackground', () => {
+  // Silence React "not wrapped in act(...)" console errors that
+  // come from the mocked particles engine resolving outside of act.
+  // We filter only that specific message so other real errors still surface.
+  let consoleErrorSpy: jest.SpyInstance;
+  beforeAll(() => {
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
+      const first = String(args?.[0] ?? '');
+      if (first.includes('not wrapped in act')) return;
+      // forward other errors
+      // @ts-ignore - forward original behavior
+      (consoleErrorSpy as any).__original?.apply(console, args);
+    });
+    // keep a reference to original so we can forward non-matching messages
+    // @ts-ignore
+    (consoleErrorSpy as any).__original = console.error.bind(console);
+  });
+  afterAll(() => {
+    consoleErrorSpy.mockRestore();
+  });
+
   const originalMatchMedia = window.matchMedia;
   const originalConnection = Object.getOwnPropertyDescriptor(navigator, 'connection');
   const mockedInit = initParticlesEngine as jest.Mock;
   const mockedLoadFull = loadFull as unknown as jest.Mock;
+
   const createMatchMedia = (shouldReduceMotion = false) =>
     (query: string): MediaQueryList => ({
       matches: query === '(prefers-reduced-motion: reduce)' ? shouldReduceMotion : false,
@@ -38,8 +57,8 @@ describe('ParticlesBackground', () => {
     });
 
   beforeEach(() => {
-  mockedInit.mockClear();
-  mockedLoadFull.mockClear();
+    mockedInit.mockClear();
+    mockedLoadFull.mockClear();
     window.matchMedia = createMatchMedia();
     Object.defineProperty(navigator, 'connection', {
       configurable: true,
@@ -76,5 +95,33 @@ describe('ParticlesBackground', () => {
     expect(screen.queryByTestId('particles-fallback')).not.toBeInTheDocument();
     expect(mockedInit).toHaveBeenCalledTimes(1);
     expect(mockedLoadFull).toHaveBeenCalledTimes(1);
+  });
+
+  test('disables particles when navigator.connection indicates saveData or slow network', async () => {
+    // simulate connection with saveData true
+    Object.defineProperty(navigator, 'connection', {
+      configurable: true,
+      value: { saveData: true, effectiveType: '4g', addEventListener: jest.fn(), removeEventListener: jest.fn() },
+    });
+
+    const { unmount } = render(<ParticlesBackground />);
+    await act(async () => {
+      // initial render
+    });
+
+    // fallback should render when saveData is true
+    expect(screen.getByTestId('particles-fallback')).toBeInTheDocument();
+
+    // unmount before next render to avoid duplicates in DOM
+    unmount();
+
+    // simulate slow-2g
+    Object.defineProperty(navigator, 'connection', {
+      configurable: true,
+      value: { saveData: false, effectiveType: 'slow-2g', addEventListener: jest.fn(), removeEventListener: jest.fn() },
+    });
+
+    const { getByTestId } = render(<ParticlesBackground />);
+    expect(getByTestId('particles-fallback')).toBeInTheDocument();
   });
 });

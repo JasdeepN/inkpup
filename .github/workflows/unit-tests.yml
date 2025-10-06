@@ -6,6 +6,7 @@ on:
     branches: [ dev, master ]
   pull_request:
     branches: [ dev, master ]
+  workflow_dispatch:
 
 jobs:
   unit-tests:
@@ -27,6 +28,7 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
 
       - name: Install dependencies
+        # package-lock.json is tracked; use npm ci for clean, reproducible installs
         run: npm ci
 
       - name: Run Jest unit tests (coverage disabled for speed)

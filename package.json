@@ -7,13 +7,17 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-  "test:e2e": "playwright test",
-  "test:integration": "npm run test:e2e",
+    "test:e2e": "playwright test",
+    "test:integration": "npm run test:e2e",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:storybook": "vitest run --config vitest.workspace.ts --project=storybook",
     "test": "jest",
-    "test:unit": "jest --coverage"
+    "test:unit": "jest --coverage",
+    "act:cache:warm": "bash scripts/act-cache-images.sh warm",
+    "act:cache:load": "bash scripts/act-cache-images.sh load",
+    "act:cache:list": "bash scripts/act-cache-images.sh list",
+    "act:cache:prune": "bash scripts/act-cache-images.sh prune"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.653.0",

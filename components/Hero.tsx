@@ -1,4 +1,5 @@
 import SmartImage from './SmartImage';
+import Link from 'next/link';
 
 export default function Hero({ title = 'Custom Tattoos, Consults & Re-Works', subtitle = 'InkPup Tattoos — Toronto (GTA). Book by appointment.' }) {
   return (
@@ -8,7 +9,7 @@ export default function Hero({ title = 'Custom Tattoos, Consults & Re-Works', su
           <h1 className="hero-title text-4xl md:text-5xl" data-testid="hero-title">{title}</h1>
           <p className="hero-subtitle text-lg" data-testid="hero-subtitle">{subtitle}</p>
           <div className="hero-actions">
-            <a href="/contact" className="btn btn--primary" data-testid="hero-book">Book an appointment</a>
+            <Link href="/contact" className="btn btn--primary" data-testid="hero-book">Book an appointment</Link>
             <a
               href="https://www.instagram.com/inkpup.tattoos/"
               target="_blank"
