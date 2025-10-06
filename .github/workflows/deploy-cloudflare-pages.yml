@@ -21,7 +21,10 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        # Use a tolerant install so CI doesn't fail on dev-only peerDependency conflicts
+        # (storybook and other dev tools target newer Node versions). This keeps CI
+        # deterministic enough for builds while avoiding lockfile churn here.
+        run: npm install --legacy-peer-deps --silent
 
       - name: Lint
         run: npm run lint
