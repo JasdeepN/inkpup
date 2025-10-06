@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function AboutPage() {
   return (
     <section className="container max-w-3xl mx-auto space-y-8 py-8">
@@ -34,7 +36,7 @@ export default function AboutPage() {
           </div>
           <div>
             <dt className="font-semibold">Contact</dt>
-            <dd>Email via the <a className="text-accent underline" href="/contact">contact form</a> or DM <a className="text-accent underline" href="https://www.instagram.com/inkpup.tattoos/" target="_blank" rel="noreferrer">@inkpup.tattoos</a>.</dd>
+            <dd>Email via the <Link className="text-accent underline" href="/contact">contact form</Link> or DM <a className="text-accent underline" href="https://www.instagram.com/inkpup.tattoos/" target="_blank" rel="noreferrer">@inkpup.tattoos</a>.</dd>
           </div>
         </dl>
       </div>
@@ -46,7 +48,7 @@ export default function AboutPage() {
           Share your references, your inspiration, and the story behind the piece—we&apos;ll design something
           that feels unmistakably you.
         </p>
-        <a className="btn btn--primary" href="/contact" data-testid="about-book">Book a consultation</a>
+        <Link className="btn btn--primary" href="/contact" data-testid="about-book">Book a consultation</Link>
       </div>
     </section>
   );
