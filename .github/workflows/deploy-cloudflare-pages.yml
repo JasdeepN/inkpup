@@ -1,8 +1,9 @@
+jobs:
 name: Deploy to Cloudflare Pages
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, dev ]
   workflow_dispatch:
 
 jobs:
@@ -40,49 +41,4 @@ jobs:
           CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
         run: |
           npm run opennext:deploy
-name: Deploy to Cloudflare Pages
-
-on:
-  push:
-    branches: [ master ]
-
-jobs:
-  build-and-deploy:
-    name: Build and deploy to Cloudflare Pages
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      - name: Prepare Next.js for Cloudflare Pages (next-on-pages)
-        # next-on-pages will generate a `.output` directory suitable for Wrangler Pages publish
-        run: |
-          npm install --no-save @cloudflare/next-on-pages@latest
-          npx @cloudflare/next-on-pages@latest
-
-      - name: Install wrangler v2
-        run: npm install --no-save wrangler@2
-
-      - name: Publish to Cloudflare Pages
-        env:
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-          CF_PROJECT_NAME: ${{ secrets.CF_PROJECT_NAME }}
-        run: |
-          # deploy the generated `.output` with Wrangler Pages
-          npx wrangler@2 pages deploy .output \
-            --project-name "${CF_PROJECT_NAME}" \
-            --branch master \
-            --commit-hash "${GITHUB_SHA}"
 
