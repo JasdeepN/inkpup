@@ -1,10 +1,10 @@
 name = "inkpup-worker"
 compatibility_date = "2025-10-07"
 
+main = ".open-next/worker.js"
+
 [env.production]
 account_id = "${CLOUDFLARE_ACCOUNT_ID}"
 workers_dev = false
 route = ""
 zone_id = ""
-
-main = ".open-next/worker.js"
