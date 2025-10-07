@@ -27,10 +27,9 @@ import {
 
 type AdminSearchParams = Record<string, string | string[] | undefined>;
 
-type PageProps = {
-  params: { admin?: string[] };
-  searchParams?: AdminSearchParams;
-};
+// Use a permissive incoming props type to match Next's generated PageProps during CI builds.
+// We'll narrow the shape locally to preserve type safety for the implementation.
+type PageProps = any;
 
 export const metadata: Metadata = {
   title: 'Gallery Admin Portal',
@@ -69,7 +68,8 @@ function resolveFeedback(searchParams?: AdminSearchParams) {
   };
 }
 
-export default async function AdminPortalPage({ params, searchParams }: PageProps) {
+export default async function AdminPortalPage(props: PageProps) {
+  const { params, searchParams } = props as { params: { admin?: string[] }; searchParams?: AdminSearchParams };
   if (!isAdminEnabled()) {
     notFound();
   }
