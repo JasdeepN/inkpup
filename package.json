@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-  "opennext:build": "npx --yes @opennextjs/cloudflare@latest build --skipWranglerConfigCheck --openNextConfigPath ./open-next.config.cjs",
+  "opennext:build": "npx --yes @opennextjs/cloudflare@latest build --skipWranglerConfigCheck",
   "opennext:deploy": "npx --yes @opennextjs/cloudflare@latest deploy",
     "test:e2e": "playwright test",
     "test:integration": "npm run test:e2e",
