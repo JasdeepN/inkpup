@@ -67,6 +67,9 @@ cypress/screenshots/
 # Cloudflare Pages build artifacts (if using)
 .cloudflare/
 
+# OpenNext generated build artifacts
+.open-next/
+
 # Generated social or large media assets
 /public/social/og-generated/
 
