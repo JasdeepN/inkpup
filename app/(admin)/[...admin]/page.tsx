@@ -29,7 +29,7 @@ type AdminSearchParams = Record<string, string | string[] | undefined>;
 
 type PageProps = {
   params: { admin?: string[] };
-  searchParams?: Promise<AdminSearchParams>;
+  searchParams?: AdminSearchParams;
 };
 
 export const metadata: Metadata = {
@@ -79,7 +79,7 @@ export default async function AdminPortalPage({ params, searchParams }: PageProp
     notFound();
   }
 
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const resolvedSearchParams = searchParams ?? undefined;
 
   const basePath = `/${slug}`;
   const category = resolveCategory(resolvedSearchParams);
