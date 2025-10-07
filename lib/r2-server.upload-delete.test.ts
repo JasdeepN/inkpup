@@ -29,15 +29,26 @@ jest.mock('@aws-sdk/client-s3', () => {
   };
 });
 
-const createSharpChain = () => {
-  const chain: any = {};
-  chain.metadata = jest.fn().mockResolvedValue({ width: 2400 }) as any;
-  chain.rotate = jest.fn().mockReturnValue(chain);
-  chain.resize = jest.fn().mockReturnValue(chain);
-  chain.webp = jest.fn().mockReturnValue(chain);
-  chain.toBuffer = jest
-    .fn()
-    .mockResolvedValue({ data: Buffer.from('optimized'), info: { size: 123456 } }) as any;
+type SharpChain = {
+  metadata: () => Promise<{ width: number }>;
+  rotate: (...args: any[]) => SharpChain;
+  resize: (...args: any[]) => SharpChain;
+  webp: (...args: any[]) => SharpChain;
+  toBuffer: () => Promise<{ data: Buffer; info: { size: number } }>;
+};
+
+const createSharpChain = (): SharpChain => {
+  const chain = {} as unknown as SharpChain;
+
+  const metadataMock = jest.fn(() => Promise.resolve({ width: 2400 }));
+  const toBufferMock = jest.fn(() => Promise.resolve({ data: Buffer.from('optimized'), info: { size: 123456 } }));
+
+  chain.metadata = metadataMock as unknown as () => Promise<{ width: number }>;
+  chain.rotate = jest.fn().mockReturnValue(chain) as unknown as (...args: any[]) => SharpChain;
+  chain.resize = jest.fn().mockReturnValue(chain) as unknown as (...args: any[]) => SharpChain;
+  chain.webp = jest.fn().mockReturnValue(chain) as unknown as (...args: any[]) => SharpChain;
+  chain.toBuffer = toBufferMock as unknown as () => Promise<{ data: Buffer; info: { size: number } }>;
+
   return chain;
 };
 
