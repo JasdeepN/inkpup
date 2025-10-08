@@ -58,15 +58,17 @@ The command should print membership details for the account. A failure that ment
 
 ### Confirm the Pages project exists
 
-The deploy job now verifies that `CF_PROJECT_NAME` matches an existing Pages project before attempting to upload. You can reproduce the same check locally with Wrangler v4+ and `jq`:
+The deploy job now verifies that `CF_PROJECT_NAME` matches an existing Pages project before attempting to upload. You can reproduce the same check locally with the Cloudflare Pages REST API and `jq`:
 
 ```bash
 export CLOUDFLARE_PROJECT_NAME=YOUR_PROJECT
-npx --yes wrangler@4 pages project list --account-id "$CLOUDFLARE_ACCOUNT_ID" --json \
-	| jq -e --arg name "$CLOUDFLARE_PROJECT_NAME" 'map(.name) | index($name)' >/dev/null
+curl --silent --show-error --fail-with-body \
+	-H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+	"https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$CLOUDFLARE_PROJECT_NAME" \
+	| jq -e --arg name "$CLOUDFLARE_PROJECT_NAME" '.success == true and .result.name == $name' >/dev/null
 ```
 
-If the command exits with status 0, the project is visible to your token. A non-zero exit means the project name or account ID is wrong, or the token lacks the required Pages scopes—fix those before pushing to `master` or `dev` so the workflow succeeds. Refer to the [Wrangler command reference](https://developers.cloudflare.com/workers/wrangler/commands/#pages-project-list) for the latest Pages CLI options.
+If the command exits with status 0, the project is visible to your token. A non-zero exit means the project name or account ID is wrong, or the token lacks the required Pages scopes—fix those before pushing to `master` or `dev` so the workflow succeeds. Cloudflare documents the endpoint under [Pages → Projects → Get Project](https://developers.cloudflare.com/api/resources/pages/).
 
 ### Troubleshooting error 7003
 
