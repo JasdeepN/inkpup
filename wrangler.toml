@@ -6,9 +6,11 @@ compatibility_flags = ["nodejs_compat"]
 workers_dev = false
 
 [env.dev]
+name = "inkpup-dev"
 route = "dev.inkpup.ca/*"
 zone_id = "${CLOUDFLARE_ZONE_ID}"
 
 [env.production]
+name = "inkpup"
 route = "inkpup.ca/*"
 zone_id = "${CLOUDFLARE_ZONE_ID}"
