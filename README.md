@@ -27,22 +27,22 @@ npm run build
 npm run start
 ```
 
-Cloudflare Pages notes
-- Use SSG/ISR pages where possible. For Cloudflare Pages, connect the repository and set the build command to `npm run build` and output directory to `.next` (or use adapter/Workers for SSR features).
+Cloudflare Workers notes
+- Build and deploy with the `@opennextjs/cloudflare` adapter (`npm run opennext:build` / `npm run opennext:deploy`) as documented in [OpenNext for Cloudflare – Get started](https://opennext.js.org/cloudflare/get-started).
+- Ensure `wrangler.toml` keeps the compatibility date at `2024-09-23` or later with `nodejs_compat` enabled so the Worker runtime matches the adapter requirements.
 
 Cloudflare deployment (GitHub Actions)
 
-This repo contains a GitHub Actions workflow at `.github/workflows/deploy-cloudflare-pages.yml` that builds the site. You'll still need to connect the repository to Cloudflare Pages (recommended) or implement a script to upload `.next` artifacts to Pages/Workers depending on your preferred deployment.
+This repo contains a GitHub Actions workflow at `.github/workflows/deploy-cloudflare-workers.yml` that builds, tests, and deploys the Worker via `@opennextjs/cloudflare`. The legacy `.github/workflows/deploy-cloudflare-pages.yml` file is deprecated and kept only as a stub to avoid duplicate runs.
 
 ### Required GitHub secrets
 
 Set the following repository secrets under **Settings → Secrets and variables → Actions**:
 
-- `CF_API_TOKEN` – a Cloudflare API token with the *Cloudflare Pages* "Edit" template or the granular permissions listed below.
+- `CF_API_TOKEN` – a Cloudflare API token with the Workers "Edit" template (or `Account.Workers Scripts:Edit`, `Account.Workers Scripts:Read`, and any additional resources your app binds to, such as R2 or KV). Wrangler 3.99+ is required by the adapter (see [OpenNext CLI docs](https://opennext.js.org/cloudflare/cli)).
 - `CF_ACCOUNT_ID` – the account identifier from the Cloudflare dashboard (**Manage Account → Overview → Account ID**).
-- `CF_PROJECT_NAME` – the Cloudflare Pages project name (used by OpenNext when uploading assets).
 
-The workflow exports these secrets to the OpenNext CLI as `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `CLOUDFLARE_PROJECT_NAME`. Tokens created before 2024 may be missing required scopes; recreate them if the deploy step reports permission errors.
+The workflow exports these secrets to the OpenNext CLI as `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. Tokens created before 2024 may be missing the Workers scripts scopes; recreate them if the deploy step reports permission errors.
 
 ### Validating credentials locally
 
@@ -56,23 +56,21 @@ npx --yes wrangler@4 whoami --config wrangler.toml --account "$CLOUDFLARE_ACCOUN
 
 The command should print membership details for the account. A failure that mentions "no route for that URI" or Cloudflare API error **7003** indicates an invalid identifier or missing permission; re-copy the Account ID or regenerate the token with Projects:Read/Write, Pages:Read/Write, and Workers Scripts:Read scopes. See [Bobcares – *How to Resolve Cloudflare API Error 7003* (Dec 2024)](https://bobcares.com/blog/cloudflare-api-error-7003/) for a deeper breakdown of common causes.
 
-### Confirm the Pages project exists
+### Verify the latest Worker deployment
 
-The deploy job now verifies that `CF_PROJECT_NAME` matches an existing Pages project before attempting to upload. You can reproduce the same check locally with the Cloudflare Pages REST API and `jq`:
+The workflow checks the active deployment after publishing. You can reproduce the same verification locally with Wrangler’s deployments API:
 
 ```bash
-export CLOUDFLARE_PROJECT_NAME=YOUR_PROJECT
-curl --silent --show-error --fail-with-body \
-	-H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-	"https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$CLOUDFLARE_PROJECT_NAME" \
-	| jq -e --arg name "$CLOUDFLARE_PROJECT_NAME" '.success == true and .result.name == $name' >/dev/null
+export CLOUDFLARE_API_TOKEN=YOUR_TOKEN
+export CLOUDFLARE_ACCOUNT_ID=YOUR_ACCOUNT_ID
+npx --yes wrangler@4 deployments status --config wrangler.toml
 ```
 
-If the command exits with status 0, the project is visible to your token. A non-zero exit means the project name or account ID is wrong, or the token lacks the required Pages scopes—fix those before pushing to `master` or `dev` so the workflow succeeds. Cloudflare documents the endpoint under [Pages → Projects → Get Project](https://developers.cloudflare.com/api/resources/pages/).
+`wrangler deployments status` prints the most recent Worker version and whether traffic is serving from it ([Wrangler command reference](https://developers.cloudflare.com/workers/wrangler/commands/#deployments)). A non-zero exit means the account ID or token scopes are incorrect, or the Worker has not been published yet.
 
 ### Troubleshooting error 7003
 
-Error 7003 means the request could not be routed to the targeted resource—most often because the Account ID, project name, or token scopes do not match the resource you're deploying to. Double-check the values saved in GitHub Secrets and verify that the OpenNext `wrangler.toml` file references the same account. If the issue persists, use the command above with `--account` to ensure the account exists and that the token can access it; Cloudflare will respond with a non-zero status when the combination is invalid.
+Error 7003 means the request could not be routed to the targeted resource—most often because the Account ID or token scopes do not match the Worker you're deploying to. Double-check the values saved in GitHub Secrets and verify that the OpenNext `wrangler.toml` file references the same account. If the issue persists, rerun `wrangler whoami` / `wrangler deployments status` locally to confirm the token can see the account; Cloudflare will respond with a non-zero status when the combination is invalid.
 
 Update business data
 - Edit `data/business.json` with exact address, phone, email, website domain before deploying. The layout uses this file to populate LocalBusiness JSON-LD.

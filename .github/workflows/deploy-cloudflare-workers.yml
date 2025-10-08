@@ -1,0 +1,73 @@
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches: [ master, dev ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    name: Build and deploy to Cloudflare Workers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        # Use a tolerant install so CI doesn't fail on dev-only peerDependency conflicts
+        run: npm install --legacy-peer-deps --silent
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build with OpenNext
+        run: npm run opennext:build
+
+      - name: Verify Cloudflare secrets
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+
+          for name in CF_API_TOKEN CF_ACCOUNT_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing GitHub secret ${name}. Please create it in Settings > Secrets and variables > Actions." >&2
+              exit 1
+            fi
+          done
+
+      - name: Validate Cloudflare account access
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+
+          npx --yes wrangler@4 whoami --config wrangler.toml --account "$CLOUDFLARE_ACCOUNT_ID"
+
+      - name: Deploy with OpenNext
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          npm run opennext:deploy
+
+      - name: Confirm latest deployment
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+
+          npx --yes wrangler@4 deployments status --config wrangler.toml
