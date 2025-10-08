@@ -2,7 +2,6 @@ name = "inkpup"
 compatibility_date = "2025-10-07"
 main = ".open-next/worker.js"
 account_id = "${CLOUDFLARE_ACCOUNT_ID}"
-zone_id = "${CLOUDFLARE_ZONE_ID}"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = false
 
@@ -11,6 +10,8 @@ command = "npm run opennext:build"
 
 [env.dev]
 route = "dev.inkpup.ca/*"
+zone_id = "${CLOUDFLARE_ZONE_ID}"
 
 [env.production]
 route = "inkpup.ca/*"
+zone_id = "${CLOUDFLARE_ZONE_ID}"
