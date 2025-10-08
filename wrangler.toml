@@ -1,21 +1,16 @@
 name = "inkpup"
 compatibility_date = "2025-10-07"
-
 main = ".open-next/worker.js"
-
+account_id = "${CLOUDFLARE_ACCOUNT_ID}"
+zone_id = "${CLOUDFLARE_ZONE_ID}"
 compatibility_flags = ["nodejs_compat"]
+workers_dev = false
 
 [build]
 command = "npm run opennext:build"
 
-# Use repository secret substitution at deploy-time. For preview deploys we set
-# workers_dev=true. For production, set workers_dev=false and fill route/zone_id
-# or use an `env.production` table.
-account_id = "${CLOUDFLARE_ACCOUNT_ID}"
-workers_dev = true
+[env.dev]
+route = "dev.inkpup.ca/*"
 
-# Production environment: deploy to the custom domain
 [env.production]
-workers_dev = false
 route = "inkpup.ca/*"
-zone_id = "${CLOUDFLARE_ZONE_ID}"
