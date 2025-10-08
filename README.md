@@ -34,6 +34,32 @@ Cloudflare deployment (GitHub Actions)
 
 This repo contains a GitHub Actions workflow at `.github/workflows/deploy-cloudflare-pages.yml` that builds the site. You'll still need to connect the repository to Cloudflare Pages (recommended) or implement a script to upload `.next` artifacts to Pages/Workers depending on your preferred deployment.
 
+### Required GitHub secrets
+
+Set the following repository secrets under **Settings → Secrets and variables → Actions**:
+
+- `CF_API_TOKEN` – a Cloudflare API token with the *Cloudflare Pages* "Edit" template or the granular permissions listed below.
+- `CF_ACCOUNT_ID` – the account identifier from the Cloudflare dashboard (**Manage Account → Overview → Account ID**).
+- `CF_PROJECT_NAME` – the Cloudflare Pages project name (used by OpenNext when uploading assets).
+
+The workflow exports these secrets to the OpenNext CLI as `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `CLOUDFLARE_PROJECT_NAME`. Tokens created before 2024 may be missing required scopes; recreate them if the deploy step reports permission errors.
+
+### Validating credentials locally
+
+Before triggering the workflow, confirm that the token and account ID line up:
+
+```bash
+export CLOUDFLARE_API_TOKEN=YOUR_TOKEN
+export CLOUDFLARE_ACCOUNT_ID=YOUR_ACCOUNT_ID
+npx --yes wrangler@4 whoami --config wrangler.toml --account "$CLOUDFLARE_ACCOUNT_ID"
+```
+
+The command should print membership details for the account. A failure that mentions "no route for that URI" or Cloudflare API error **7003** indicates an invalid identifier or missing permission; re-copy the Account ID or regenerate the token with Projects:Read/Write, Pages:Read/Write, and Workers Scripts:Read scopes. See [Bobcares – *How to Resolve Cloudflare API Error 7003* (Dec 2024)](https://bobcares.com/blog/cloudflare-api-error-7003/) for a deeper breakdown of common causes.
+
+### Troubleshooting error 7003
+
+Error 7003 means the request could not be routed to the targeted resource—most often because the Account ID, project name, or token scopes do not match the resource you're deploying to. Double-check the values saved in GitHub Secrets and verify that the OpenNext `wrangler.toml` file references the same account. If the issue persists, use the command above with `--account` to ensure the account exists and that the token can access it; Cloudflare will respond with a non-zero status when the combination is invalid.
+
 Update business data
 - Edit `data/business.json` with exact address, phone, email, website domain before deploying. The layout uses this file to populate LocalBusiness JSON-LD.
 
