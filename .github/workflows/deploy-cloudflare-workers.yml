@@ -59,6 +59,7 @@ jobs:
           path: |
             .open-next
             wrangler.toml
+          include-hidden-files: true
           if-no-files-found: error
 
   deploy-dev:
