@@ -1,9 +1,12 @@
-name = "inkpup-worker"
+name = "inkpup"
 compatibility_date = "2025-10-07"
 
 main = ".open-next/worker.js"
 
 compatibility_flags = ["nodejs_compat"]
+
+[build]
+command = "npm run opennext:build"
 
 # Use repository secret substitution at deploy-time. For preview deploys we set
 # workers_dev=true. For production, set workers_dev=false and fill route/zone_id
