@@ -5,9 +5,6 @@ account_id = "${CLOUDFLARE_ACCOUNT_ID}"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = false
 
-[build]
-command = "npm run opennext:build"
-
 [env.dev]
 route = "dev.inkpup.ca/*"
 zone_id = "${CLOUDFLARE_ZONE_ID}"
