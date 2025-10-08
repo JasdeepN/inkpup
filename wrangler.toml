@@ -3,8 +3,11 @@ compatibility_date = "2025-10-07"
 
 main = ".open-next/worker.js"
 
-[env.production]
+compatibility_flags = ["nodejs_compat"]
+
+# Use repository secret substitution at deploy-time. For preview deploys we set
+# workers_dev=true. For production, set workers_dev=false and fill route/zone_id
+# or use an `env.production` table.
 account_id = "${CLOUDFLARE_ACCOUNT_ID}"
-workers_dev = false
-route = ""
-zone_id = ""
+workers_dev = true
+
