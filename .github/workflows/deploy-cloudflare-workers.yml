@@ -37,7 +37,7 @@ jobs:
         with:
           name: open-next-bundle
           path: |
-            .open-next
+            .open-next/**
             wrangler.toml
           if-no-files-found: error
 
