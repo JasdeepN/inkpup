@@ -56,6 +56,18 @@ npx --yes wrangler@4 whoami --config wrangler.toml --account "$CLOUDFLARE_ACCOUN
 
 The command should print membership details for the account. A failure that mentions "no route for that URI" or Cloudflare API error **7003** indicates an invalid identifier or missing permission; re-copy the Account ID or regenerate the token with Projects:Read/Write, Pages:Read/Write, and Workers Scripts:Read scopes. See [Bobcares – *How to Resolve Cloudflare API Error 7003* (Dec 2024)](https://bobcares.com/blog/cloudflare-api-error-7003/) for a deeper breakdown of common causes.
 
+### Confirm the Pages project exists
+
+The deploy job now verifies that `CF_PROJECT_NAME` matches an existing Pages project before attempting to upload. You can reproduce the same check locally with Wrangler v4+ and `jq`:
+
+```bash
+export CLOUDFLARE_PROJECT_NAME=YOUR_PROJECT
+npx --yes wrangler@4 pages project list --account-id "$CLOUDFLARE_ACCOUNT_ID" --json \
+	| jq -e --arg name "$CLOUDFLARE_PROJECT_NAME" 'map(.name) | index($name)' >/dev/null
+```
+
+If the command exits with status 0, the project is visible to your token. A non-zero exit means the project name or account ID is wrong, or the token lacks the required Pages scopes—fix those before pushing to `master` or `dev` so the workflow succeeds. Refer to the [Wrangler command reference](https://developers.cloudflare.com/workers/wrangler/commands/#pages-project-list) for the latest Pages CLI options.
+
 ### Troubleshooting error 7003
 
 Error 7003 means the request could not be routed to the targeted resource—most often because the Account ID, project name, or token scopes do not match the resource you're deploying to. Double-check the values saved in GitHub Secrets and verify that the OpenNext `wrangler.toml` file references the same account. If the issue persists, use the command above with `--account` to ensure the account exists and that the token can access it; Cloudflare will respond with a non-zero status when the combination is invalid.

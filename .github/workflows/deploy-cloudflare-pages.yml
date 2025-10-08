@@ -57,6 +57,41 @@ jobs:
 
           npx --yes wrangler@4 whoami --config wrangler.toml --account "$CLOUDFLARE_ACCOUNT_ID"
 
+      - name: Verify Cloudflare Pages project exists
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CLOUDFLARE_PROJECT_NAME: ${{ secrets.CF_PROJECT_NAME }}
+        run: |
+          set -euo pipefail
+
+          tmp_file=$(mktemp)
+          if ! npx --yes wrangler@4 pages project list --account-id "$CLOUDFLARE_ACCOUNT_ID" --json >"$tmp_file" 2>"$tmp_file.err"; then
+            echo "::group::wrangler pages project list stderr"
+            cat "$tmp_file.err" || true
+            echo "::endgroup::"
+            echo "::error::Unable to list Pages projects for account $CLOUDFLARE_ACCOUNT_ID."
+            exit 1
+          fi
+
+          if ! [ -s "$tmp_file" ]; then
+            echo "::error::No data returned when listing Pages projects for account $CLOUDFLARE_ACCOUNT_ID."
+            exit 1
+          fi
+
+          if ! command -v jq >/dev/null 2>&1; then
+            echo "::error::jq is required to validate the Cloudflare Pages project list."
+            exit 1
+          fi
+
+          if ! jq -e --arg name "$CLOUDFLARE_PROJECT_NAME" 'map(.name) | index($name)' "$tmp_file" >/dev/null; then
+            echo "::error::Cloudflare Pages project \"$CLOUDFLARE_PROJECT_NAME\" was not found in the current account."
+            echo "Ensure the project exists or update CF_PROJECT_NAME to match an existing Pages project."
+            exit 1
+          fi
+
+          rm -f "$tmp_file" "$tmp_file.err"
+
       - name: Deploy with OpenNext
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
