@@ -121,7 +121,11 @@ jobs:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
         run: |
           set -euo pipefail
-          npx --yes wrangler@4 deploy --config wrangler.toml --env dev
+          npx --yes wrangler@4 deploy \
+            --config wrangler.toml \
+            --env dev \
+            --account-id "$CLOUDFLARE_ACCOUNT_ID" \
+            --zone-id "$CLOUDFLARE_ZONE_ID"
 
       - name: Confirm latest deployment (dev)
         env:
@@ -130,7 +134,10 @@ jobs:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
         run: |
           set -euo pipefail
-          npx --yes wrangler@4 deployments status --config wrangler.toml --env dev
+          npx --yes wrangler@4 deployments status \
+            --config wrangler.toml \
+            --env dev \
+            --account-id "$CLOUDFLARE_ACCOUNT_ID"
 
   deploy-production:
     name: Deploy to Cloudflare Workers (production)
@@ -191,7 +198,11 @@ jobs:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
         run: |
           set -euo pipefail
-          npx --yes wrangler@4 deploy --config wrangler.toml --env production
+          npx --yes wrangler@4 deploy \
+            --config wrangler.toml \
+            --env production \
+            --account-id "$CLOUDFLARE_ACCOUNT_ID" \
+            --zone-id "$CLOUDFLARE_ZONE_ID"
 
       - name: Confirm latest deployment (production)
         env:
@@ -200,4 +211,7 @@ jobs:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
         run: |
           set -euo pipefail
-          npx --yes wrangler@4 deployments status --config wrangler.toml --env production
+          npx --yes wrangler@4 deployments status \
+            --config wrangler.toml \
+            --env production \
+            --account-id "$CLOUDFLARE_ACCOUNT_ID"
