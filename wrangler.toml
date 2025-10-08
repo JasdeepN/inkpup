@@ -14,3 +14,8 @@ command = "npm run opennext:build"
 account_id = "${CLOUDFLARE_ACCOUNT_ID}"
 workers_dev = true
 
+# Production environment: deploy to the custom domain
+[env.production]
+workers_dev = false
+route = "inkpup.ca/*"
+zone_id = "${CLOUDFLARE_ZONE_ID}"
