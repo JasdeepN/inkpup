@@ -33,6 +33,21 @@ jobs:
       - name: Build with OpenNext
         run: npm run opennext:build
 
+      - name: Verify Cloudflare secrets
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_PROJECT_NAME: ${{ secrets.CF_PROJECT_NAME }}
+        run: |
+          set -euo pipefail
+
+          for name in CF_API_TOKEN CF_ACCOUNT_ID CF_PROJECT_NAME; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing GitHub secret ${name}. Please create it in Settings > Secrets and variables > Actions." >&2
+              exit 1
+            fi
+          done
+
       - name: Deploy with OpenNext
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
