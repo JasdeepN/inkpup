@@ -114,6 +114,14 @@ jobs:
             fi
           done
 
+      - name: Render Wrangler config with environment secrets (dev)
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+        run: |
+          set -euo pipefail
+          envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID}' < wrangler.toml > wrangler.resolved.toml
+
       - name: Deploy to dev environment
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
@@ -121,11 +129,9 @@ jobs:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
         run: |
           set -euo pipefail
-          npx --yes wrangler@4 deploy \
-            --config wrangler.toml \
-            --env dev \
-            --account-id "$CLOUDFLARE_ACCOUNT_ID" \
-            --zone-id "$CLOUDFLARE_ZONE_ID"
+          CLOUDFLARE_ACCOUNT_ID="$CLOUDFLARE_ACCOUNT_ID" \
+          CLOUDFLARE_ZONE_ID="$CLOUDFLARE_ZONE_ID" \
+          npx --yes wrangler@4 deploy --config wrangler.resolved.toml --env dev
 
       - name: Confirm latest deployment (dev)
         env:
@@ -134,10 +140,8 @@ jobs:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
         run: |
           set -euo pipefail
-          npx --yes wrangler@4 deployments status \
-            --config wrangler.toml \
-            --env dev \
-            --account-id "$CLOUDFLARE_ACCOUNT_ID"
+          CLOUDFLARE_ACCOUNT_ID="$CLOUDFLARE_ACCOUNT_ID" \
+          npx --yes wrangler@4 deployments status --config wrangler.resolved.toml --env dev
 
   deploy-production:
     name: Deploy to Cloudflare Workers (production)
@@ -191,6 +195,14 @@ jobs:
             fi
           done
 
+      - name: Render Wrangler config with environment secrets (production)
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+        run: |
+          set -euo pipefail
+          envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID}' < wrangler.toml > wrangler.resolved.toml
+
       - name: Deploy to production environment
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
@@ -198,11 +210,9 @@ jobs:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
         run: |
           set -euo pipefail
-          npx --yes wrangler@4 deploy \
-            --config wrangler.toml \
-            --env production \
-            --account-id "$CLOUDFLARE_ACCOUNT_ID" \
-            --zone-id "$CLOUDFLARE_ZONE_ID"
+          CLOUDFLARE_ACCOUNT_ID="$CLOUDFLARE_ACCOUNT_ID" \
+          CLOUDFLARE_ZONE_ID="$CLOUDFLARE_ZONE_ID" \
+          npx --yes wrangler@4 deploy --config wrangler.resolved.toml --env production
 
       - name: Confirm latest deployment (production)
         env:
@@ -211,7 +221,5 @@ jobs:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
         run: |
           set -euo pipefail
-          npx --yes wrangler@4 deployments status \
-            --config wrangler.toml \
-            --env production \
-            --account-id "$CLOUDFLARE_ACCOUNT_ID"
+          CLOUDFLARE_ACCOUNT_ID="$CLOUDFLARE_ACCOUNT_ID" \
+          npx --yes wrangler@4 deployments status --config wrangler.resolved.toml --env production
