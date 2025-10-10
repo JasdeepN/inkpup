@@ -1,3 +1,21 @@
+const SECURITY_HEADERS = [
+  {
+    key: 'Content-Security-Policy',
+    value: [
+      "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://cloudflareinsights.com",
+  "connect-src 'self' https://cloudflareinsights.com https://static.cloudflareinsights.com",
+  "img-src 'self' data: blob: https://cloudflareinsights.com https://static.cloudflareinsights.com",
+      "style-src 'self' 'unsafe-inline'",
+      "font-src 'self' data:",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'self'",
+      "object-src 'none'",
+    ].join('; '),
+  },
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -18,7 +36,15 @@ const nextConfig = {
         pathname: '/**'
       }
     ]
-  }
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: SECURITY_HEADERS,
+      },
+    ];
+  },
 };
 
 const publicHostname = process.env.R2_PUBLIC_HOSTNAME;
