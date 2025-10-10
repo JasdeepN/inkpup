@@ -49,30 +49,63 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps --silent
 
-      - name: Derive R2 secret for build
+      - name: Derive R2 credentials for build
         id: derive-r2-secret
         env:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
+          R2_SECRET_SOURCE: "${{ secrets.R2_SECRET_ACCESS_KEY != '' && 'secret-key' || secrets.R2_API_TOKEN != '' && 'api-token' || '' }}"
         run: |
           set -euo pipefail
 
           secret="${R2_SECRET_ACCESS_KEY:-}"
+          access="${R2_ACCESS_KEY_ID:-}"
           token="${R2_API_TOKEN:-}"
+          source="${R2_SECRET_SOURCE:-}"
 
-          if [ -z "$secret" ] && [ -n "$token" ]; then
-            secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
-          elif [ -n "$secret" ] && [ -n "$token" ] && [ "$secret" = "$token" ]; then
-            secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
+          if [ -n "$token" ]; then
+            if [ -z "$access" ] || [ "$access" = "$token" ]; then
+              verify_response="$(
+                curl --fail --silent --show-error \
+                  --retry 3 --retry-delay 2 --retry-all-errors \
+                  -H "Authorization: Bearer $token" \
+                  https://api.cloudflare.com/client/v4/user/tokens/verify
+              )"
+              access_candidate="$(printf '%s' "$verify_response" | jq -er '.result.id // empty' || true)"
+              if [ -n "$access_candidate" ]; then
+                access="$access_candidate"
+                echo 'Resolved R2 access key id via Cloudflare token verification.'
+              elif [ -z "$access" ] || [ "$access" = "$token" ]; then
+                echo '::error::Failed to resolve R2 access key id from R2_API_TOKEN via Cloudflare verification endpoint.' >&2
+                exit 1
+              fi
+            fi
+
+            if [ -z "$secret" ] || [ "$secret" = "$token" ] || ! echo "$secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
+              secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
+              echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum.'
+            fi
+          elif [ "$source" = 'secret-key' ] && [ -n "$secret" ]; then
+            echo 'Using provided R2 secret access key from Workers R2 Access Key credentials as-is.'
           fi
 
-          if [ -n "$secret" ]; then
-            echo "secret=$secret" >> "$GITHUB_OUTPUT"
+          if [ -z "$access" ]; then
+            echo '::error::Unable to resolve an R2 access key id for OpenNext build. Provide R2_ACCESS_KEY_ID or R2_API_TOKEN.' >&2
+            exit 1
           fi
+
+          if [ -z "$secret" ]; then
+            echo '::error::Unable to resolve an R2 secret access key for OpenNext build. Provide R2_SECRET_ACCESS_KEY or R2_API_TOKEN.' >&2
+            exit 1
+          fi
+
+          echo "access_key_id=$access" >> "$GITHUB_OUTPUT"
+          echo "secret=$secret" >> "$GITHUB_OUTPUT"
 
       - name: Build with OpenNext
         env:
-          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_ACCESS_KEY_ID: ${{ steps.derive-r2-secret.outputs.access_key_id != '' && steps.derive-r2-secret.outputs.access_key_id || secrets.R2_ACCESS_KEY_ID || secrets.R2_API_TOKEN }}
           R2_SECRET_ACCESS_KEY: ${{ steps.derive-r2-secret.outputs.secret != '' && steps.derive-r2-secret.outputs.secret || secrets.R2_SECRET_ACCESS_KEY || secrets.R2_API_TOKEN }}
           R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
           R2_SECRET_SOURCE: "${{ secrets.R2_SECRET_ACCESS_KEY != '' && 'secret-key' || secrets.R2_API_TOKEN != '' && 'api-token' || '' }}"
@@ -159,15 +192,17 @@ jobs:
             echo "::warning::R2_PUBLIC_HOSTNAME is set to ${R2_PUBLIC_HOSTNAME}. Ensure all environments share ${expected_hostname}." >&2
           fi
 
-      - name: Resolve R2 secret access key (dev)
+      - name: Resolve R2 credentials (dev)
         env:
           R2_SECRET_ACCESS_KEY: ${{ env.R2_SECRET_ACCESS_KEY }}
+          R2_ACCESS_KEY_ID: ${{ env.R2_ACCESS_KEY_ID }}
           R2_API_TOKEN: ${{ env.R2_API_TOKEN }}
           R2_SECRET_SOURCE: ${{ env.R2_SECRET_SOURCE }}
         run: |
           set -euo pipefail
 
           secret="${R2_SECRET_ACCESS_KEY:-}"
+          access="${R2_ACCESS_KEY_ID:-}"
           token="${R2_API_TOKEN:-}"
           source="${R2_SECRET_SOURCE:-}"
 
@@ -186,11 +221,36 @@ jobs:
             echo '::notice::R2 secret access key is not a 64-character hex string; assuming a pre-existing S3 credential.'
           fi
 
+          if [ -n "$token" ]; then
+            if [ -z "$access" ] || [ "$access" = "$token" ]; then
+              verify_response="$(
+                curl --fail --silent --show-error \
+                  --retry 3 --retry-delay 2 --retry-all-errors \
+                  -H "Authorization: Bearer $token" \
+                  https://api.cloudflare.com/client/v4/user/tokens/verify
+              )"
+              access_candidate="$(printf '%s' "$verify_response" | jq -er '.result.id // empty' || true)"
+              if [ -n "$access_candidate" ]; then
+                access="$access_candidate"
+                echo 'Resolved R2 access key id via Cloudflare token verification.'
+              elif [ -z "$access" ] || [ "$access" = "$token" ]; then
+                echo '::error::Failed to resolve R2 access key id from R2_API_TOKEN via Cloudflare verification endpoint.' >&2
+                exit 1
+              fi
+            fi
+          fi
+
           if [ -z "$secret" ]; then
             echo '::error::Unable to resolve an R2 secret access key for downstream scripts. Provide R2_SECRET_ACCESS_KEY or R2_API_TOKEN.' >&2
             exit 1
           fi
 
+          if [ -z "$access" ]; then
+            echo '::error::Unable to resolve an R2 access key id for downstream scripts. Provide R2_ACCESS_KEY_ID or R2_API_TOKEN.' >&2
+            exit 1
+          fi
+
+          echo "R2_ACCESS_KEY_ID=$access" >> "$GITHUB_ENV"
           echo "R2_SECRET_ACCESS_KEY=$secret" >> "$GITHUB_ENV"
 
       - name: Debug Cloudflare environment values (dev)
@@ -249,6 +309,67 @@ jobs:
         with:
           name: open-next-bundle
           path: .
+
+      - name: Resolve R2 credentials for deploy (dev)
+        env:
+          R2_SECRET_ACCESS_KEY: ${{ env.R2_SECRET_ACCESS_KEY }}
+          R2_ACCESS_KEY_ID: ${{ env.R2_ACCESS_KEY_ID }}
+          R2_API_TOKEN: ${{ env.R2_API_TOKEN }}
+          R2_SECRET_SOURCE: ${{ env.R2_SECRET_SOURCE }}
+        run: |
+          set -euo pipefail
+
+          secret="${R2_SECRET_ACCESS_KEY:-}"
+          access="${R2_ACCESS_KEY_ID:-}"
+          token="${R2_API_TOKEN:-}"
+          source="${R2_SECRET_SOURCE:-}"
+
+          if [ -z "$secret" ] && [ -n "$token" ]; then
+            secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
+            echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum.'
+          elif [ -n "$secret" ] && [ -n "$token" ] && [ "$secret" = "$token" ]; then
+            secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
+            echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum (matched raw token).'
+          elif [ "$source" = 'api-token' ] && [ -n "$secret" ] && ! echo "$secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
+            secret="$(printf '%s' "$secret" | sha256sum | awk '{print $1}')"
+            echo 'Normalized R2 secret access key sourced from API token via sha256sum to enforce 64-character hex format.'
+          elif [ "$source" = 'secret-key' ] && [ -n "$secret" ]; then
+            echo 'Using provided R2 secret access key from Workers R2 Access Key credentials as-is.'
+          elif [ -n "$secret" ] && ! echo "$secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
+            echo '::notice::R2 secret access key is not a 64-character hex string; assuming a pre-existing S3 credential.'
+          fi
+
+          if [ -n "$token" ]; then
+            if [ -z "$access" ] || [ "$access" = "$token" ]; then
+              verify_response="$(
+                curl --fail --silent --show-error \
+                  --retry 3 --retry-delay 2 --retry-all-errors \
+                  -H "Authorization: Bearer $token" \
+                  https://api.cloudflare.com/client/v4/user/tokens/verify
+              )"
+              access_candidate="$(printf '%s' "$verify_response" | jq -er '.result.id // empty' || true)"
+              if [ -n "$access_candidate" ]; then
+                access="$access_candidate"
+                echo 'Resolved R2 access key id via Cloudflare token verification.'
+              elif [ -z "$access" ] || [ "$access" = "$token" ]; then
+                echo '::error::Failed to resolve R2 access key id from R2_API_TOKEN via Cloudflare verification endpoint.' >&2
+                exit 1
+              fi
+            fi
+          fi
+
+          if [ -z "$secret" ]; then
+            echo '::error::Unable to resolve an R2 secret access key for deployment. Provide R2_SECRET_ACCESS_KEY or R2_API_TOKEN.' >&2
+            exit 1
+          fi
+
+          if [ -z "$access" ]; then
+            echo '::error::Unable to resolve an R2 access key id for deployment. Provide R2_ACCESS_KEY_ID or R2_API_TOKEN.' >&2
+            exit 1
+          fi
+
+          echo "R2_ACCESS_KEY_ID=$access" >> "$GITHUB_ENV"
+          echo "R2_SECRET_ACCESS_KEY=$secret" >> "$GITHUB_ENV"
 
       - name: Render Wrangler config with environment secrets (dev)
         env:
@@ -353,15 +474,17 @@ jobs:
             echo '::notice::Using R2_API_TOKEN as the secret access key for S3-compatible requests. The workflow will derive the SHA-256 hash automatically before use.' >&2
           fi
 
-      - name: Resolve R2 secret access key (production)
+      - name: Resolve R2 credentials (production)
         env:
           R2_SECRET_ACCESS_KEY: ${{ env.R2_SECRET_ACCESS_KEY }}
+          R2_ACCESS_KEY_ID: ${{ env.R2_ACCESS_KEY_ID }}
           R2_API_TOKEN: ${{ env.R2_API_TOKEN }}
           R2_SECRET_SOURCE: ${{ env.R2_SECRET_SOURCE }}
         run: |
           set -euo pipefail
 
           secret="${R2_SECRET_ACCESS_KEY:-}"
+          access="${R2_ACCESS_KEY_ID:-}"
           token="${R2_API_TOKEN:-}"
           source="${R2_SECRET_SOURCE:-}"
 
@@ -380,11 +503,36 @@ jobs:
             echo '::notice::R2 secret access key is not a 64-character hex string; assuming a pre-existing S3 credential.'
           fi
 
+          if [ -n "$token" ]; then
+            if [ -z "$access" ] || [ "$access" = "$token" ]; then
+              verify_response="$(
+                curl --fail --silent --show-error \
+                  --retry 3 --retry-delay 2 --retry-all-errors \
+                  -H "Authorization: Bearer $token" \
+                  https://api.cloudflare.com/client/v4/user/tokens/verify
+              )"
+              access_candidate="$(printf '%s' "$verify_response" | jq -er '.result.id // empty' || true)"
+              if [ -n "$access_candidate" ]; then
+                access="$access_candidate"
+                echo 'Resolved R2 access key id via Cloudflare token verification.'
+              elif [ -z "$access" ] || [ "$access" = "$token" ]; then
+                echo '::error::Failed to resolve R2 access key id from R2_API_TOKEN via Cloudflare verification endpoint.' >&2
+                exit 1
+              fi
+            fi
+          fi
+
           if [ -z "$secret" ]; then
             echo '::error::Unable to resolve an R2 secret access key for downstream scripts. Provide R2_SECRET_ACCESS_KEY or R2_API_TOKEN.' >&2
             exit 1
           fi
 
+          if [ -z "$access" ]; then
+            echo '::error::Unable to resolve an R2 access key id for downstream scripts. Provide R2_ACCESS_KEY_ID or R2_API_TOKEN.' >&2
+            exit 1
+          fi
+
+          echo "R2_ACCESS_KEY_ID=$access" >> "$GITHUB_ENV"
           echo "R2_SECRET_ACCESS_KEY=$secret" >> "$GITHUB_ENV"
 
       - name: Debug Cloudflare environment values (production)
@@ -443,6 +591,67 @@ jobs:
         with:
           name: open-next-bundle
           path: .
+
+      - name: Resolve R2 credentials for deploy (production)
+        env:
+          R2_SECRET_ACCESS_KEY: ${{ env.R2_SECRET_ACCESS_KEY }}
+          R2_ACCESS_KEY_ID: ${{ env.R2_ACCESS_KEY_ID }}
+          R2_API_TOKEN: ${{ env.R2_API_TOKEN }}
+          R2_SECRET_SOURCE: ${{ env.R2_SECRET_SOURCE }}
+        run: |
+          set -euo pipefail
+
+          secret="${R2_SECRET_ACCESS_KEY:-}"
+          access="${R2_ACCESS_KEY_ID:-}"
+          token="${R2_API_TOKEN:-}"
+          source="${R2_SECRET_SOURCE:-}"
+
+          if [ -z "$secret" ] && [ -n "$token" ]; then
+            secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
+            echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum.'
+          elif [ -n "$secret" ] && [ -n "$token" ] && [ "$secret" = "$token" ]; then
+            secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
+            echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum (matched raw token).'
+          elif [ "$source" = 'api-token' ] && [ -n "$secret" ] && ! echo "$secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
+            secret="$(printf '%s' "$secret" | sha256sum | awk '{print $1}')"
+            echo 'Normalized R2 secret access key sourced from API token via sha256sum to enforce 64-character hex format.'
+          elif [ "$source" = 'secret-key' ] && [ -n "$secret" ]; then
+            echo 'Using provided R2 secret access key from Workers R2 Access Key credentials as-is.'
+          elif [ -n "$secret" ] && ! echo "$secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
+            echo '::notice::R2 secret access key is not a 64-character hex string; assuming a pre-existing S3 credential.'
+          fi
+
+          if [ -n "$token" ]; then
+            if [ -z "$access" ] || [ "$access" = "$token" ]; then
+              verify_response="$(
+                curl --fail --silent --show-error \
+                  --retry 3 --retry-delay 2 --retry-all-errors \
+                  -H "Authorization: Bearer $token" \
+                  https://api.cloudflare.com/client/v4/user/tokens/verify
+              )"
+              access_candidate="$(printf '%s' "$verify_response" | jq -er '.result.id // empty' || true)"
+              if [ -n "$access_candidate" ]; then
+                access="$access_candidate"
+                echo 'Resolved R2 access key id via Cloudflare token verification.'
+              elif [ -z "$access" ] || [ "$access" = "$token" ]; then
+                echo '::error::Failed to resolve R2 access key id from R2_API_TOKEN via Cloudflare verification endpoint.' >&2
+                exit 1
+              fi
+            fi
+          fi
+
+          if [ -z "$secret" ]; then
+            echo '::error::Unable to resolve an R2 secret access key for deployment. Provide R2_SECRET_ACCESS_KEY or R2_API_TOKEN.' >&2
+            exit 1
+          fi
+
+          if [ -z "$access" ]; then
+            echo '::error::Unable to resolve an R2 access key id for deployment. Provide R2_ACCESS_KEY_ID or R2_API_TOKEN.' >&2
+            exit 1
+          fi
+
+          echo "R2_ACCESS_KEY_ID=$access" >> "$GITHUB_ENV"
+          echo "R2_SECRET_ACCESS_KEY=$secret" >> "$GITHUB_ENV"
 
       - name: Render Wrangler config with environment secrets (production)
         env:
