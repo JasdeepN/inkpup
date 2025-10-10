@@ -196,4 +196,32 @@ describe('upload and delete gallery images', () => {
     expect(items[0].src).toBe('https://cdn.example.com/flash/demo-piece.webp');
     expect(items[1].src).toBe('https://cdn.example.com/flash/older-piece.webp');
   });
+
+  test('listGalleryImages falls back to bundled data when R2 lookup fails', async () => {
+    process.env.R2_ACCOUNT_ID = 'account';
+    process.env.R2_BUCKET = 'bucket';
+    process.env.R2_ACCESS_KEY_ID = 'access';
+    process.env.R2_SECRET_ACCESS_KEY = 'secret';
+
+    const server = await import('./r2-server');
+
+    sendMock.mockImplementationOnce(async () => {
+      throw new Error('R2 outage');
+    });
+
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    try {
+      const items = await server.listGalleryImages('flash');
+
+      expect(sendMock).toHaveBeenCalledTimes(1);
+      expect(consoleSpy).toHaveBeenCalled();
+      expect(items).toHaveLength(1);
+      expect(items[0].id).toBe('flash-1');
+      expect(items[0].category).toBe('flash');
+      expect(items[0].src).toContain('Flash');
+    } finally {
+      consoleSpy.mockRestore();
+    }
+  });
 });

@@ -209,31 +209,39 @@ export async function listGalleryImages(category: GalleryCategory): Promise<Gall
   let continuationToken: string | undefined = undefined;
   const images: GalleryItem[] = [];
 
-  do {
-    const command = new ListObjectsV2Command({
-      Bucket: bucket,
-      Prefix: `${prefix}/`,
-      ContinuationToken: continuationToken,
-    });
-
-    const response: ListObjectsV2CommandOutput = await clientInstance.send(command);
-    for (const obj of response.Contents || []) {
-      if (!obj.Key || obj.Key.endsWith('/')) continue;
-  const url = toPublicR2Url(`/${obj.Key}`);
-      images.push({
-        id: obj.ETag || obj.Key,
-        src: url,
-        alt: formatLabelFromKey(obj.Key, prefix),
-        caption: formatLabelFromKey(obj.Key, prefix),
-        category,
-        size: obj.Size,
-        lastModified: obj.LastModified ? obj.LastModified.toISOString() : undefined,
-        key: obj.Key,
+  try {
+    do {
+      const command = new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: `${prefix}/`,
+        ContinuationToken: continuationToken,
       });
-    }
 
-    continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
-  } while (continuationToken);
+      const response: ListObjectsV2CommandOutput = await clientInstance.send(command);
+      for (const obj of response.Contents || []) {
+        if (!obj.Key || obj.Key.endsWith('/')) continue;
+        const url = toPublicR2Url(`/${obj.Key}`);
+        images.push({
+          id: obj.ETag || obj.Key,
+          src: url,
+          alt: formatLabelFromKey(obj.Key, prefix),
+          caption: formatLabelFromKey(obj.Key, prefix),
+          category,
+          size: obj.Size,
+          lastModified: obj.LastModified ? obj.LastModified.toISOString() : undefined,
+          key: obj.Key,
+        });
+      }
+
+      continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
+    } while (continuationToken);
+  } catch (error) {
+    console.error(
+      `Failed to list gallery images from R2 for category "${category}". Falling back to bundled data.`,
+      error
+    );
+    return buildFallbackItems(category);
+  }
 
   images.sort((a, b) => {
     const aTime = a.lastModified ? Date.parse(a.lastModified) : 0;
