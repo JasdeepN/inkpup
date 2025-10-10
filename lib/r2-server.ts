@@ -94,6 +94,14 @@ function formatLabelFromKey(key: string, prefix: string): string {
 
 const fallbackData = fallbackDataRaw as Array<Partial<GalleryItem> & { src: string; category?: string }>;
 
+function isBundledFallbackAllowed(): boolean {
+  if (process.env.NODE_ENV === 'test') {
+    return true;
+  }
+  const flag = process.env.ALLOW_BUNDLED_GALLERY_FALLBACK?.trim().toLowerCase();
+  return flag === 'true' || flag === '1';
+}
+
 function sanitizeFilename(originalName: string): string {
   if (!originalName) return 'image';
   const base = originalName.replace(/\.[^.]+$/u, '').toLowerCase();
@@ -323,6 +331,7 @@ export type GalleryFetchResult = {
   items: GalleryItem[];
   isFallback: boolean;
   fallbackReason?: GalleryFallbackReason;
+  usedBundledFallback: boolean;
 };
 
 export async function listGalleryImages(
@@ -334,11 +343,16 @@ export async function listGalleryImages(
   }
 
   const fallbackEnabled = options?.fallback !== false;
-  const fallbackResult = (reason: GalleryFallbackReason): GalleryFetchResult => ({
-    items: fallbackEnabled ? buildFallbackItems(category) : [],
-    isFallback: true,
-    fallbackReason: reason,
-  });
+  const bundledFallbackAllowed = fallbackEnabled && isBundledFallbackAllowed();
+  const fallbackResult = (reason: GalleryFallbackReason): GalleryFetchResult => {
+    const items = bundledFallbackAllowed ? buildFallbackItems(category) : [];
+    return {
+      items,
+      isFallback: true,
+      fallbackReason: reason,
+      usedBundledFallback: items.length > 0,
+    };
+  };
 
   if (!hasR2Credentials()) {
     return fallbackResult('missing_credentials');
@@ -361,6 +375,7 @@ export async function listGalleryImages(
     return {
       items: images,
       isFallback: false,
+      usedBundledFallback: false,
     };
   } catch (error) {
     console.error(

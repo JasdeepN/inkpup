@@ -17,11 +17,12 @@ type GalleryViewProps = {
     items: GalleryItem[];
     fallback: boolean;
     fallbackReason?: GalleryFallbackCode;
+    usedBundledFallback: boolean;
   };
 };
 
 type GalleryRecord = Partial<Record<GalleryCategory, GalleryItem[]>>;
-type FallbackRecord = Partial<Record<GalleryCategory, { fallback: boolean; fallbackReason?: GalleryFallbackCode }>>;
+type FallbackRecord = Partial<Record<GalleryCategory, { fallback: boolean; fallbackReason?: GalleryFallbackCode; usedBundledFallback: boolean }>>;
 
 export default function GalleryView({ initialCategory, initialData }: GalleryViewProps) {
   const captionsEnabled = isGalleryCaptionsEnabled();
@@ -31,6 +32,7 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
     [initialCategory]: {
       fallback: initialData.fallback,
       fallbackReason: initialData.fallbackReason,
+      usedBundledFallback: initialData.usedBundledFallback,
     },
   });
   const [loading, setLoading] = useState(false);
@@ -40,7 +42,7 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
   const [modalSize, setModalSize] = useState<{ width: number; height: number } | null>(null);
 
   const items = useMemo(() => itemsByCategory[activeCategory] ?? [], [activeCategory, itemsByCategory]);
-  const fallbackState = fallbackByCategory[activeCategory] ?? { fallback: false };
+  const fallbackState = fallbackByCategory[activeCategory] ?? { fallback: false, usedBundledFallback: false };
   const fallbackDetail = useMemo(() => {
     switch (fallbackState.fallbackReason) {
       case 'missing_credentials':
@@ -74,6 +76,7 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
         items: GalleryItem[];
         fallback?: boolean;
         fallbackReason?: GalleryFallbackCode;
+        usedBundledFallback?: boolean;
       };
       setItemsByCategory((prev) => ({ ...prev, [category]: payload.items }));
       setFallbackByCategory((prev) => ({
@@ -81,6 +84,7 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
         [category]: {
           fallback: Boolean(payload.fallback),
           fallbackReason: payload.fallbackReason,
+          usedBundledFallback: Boolean(payload.usedBundledFallback),
         },
       }));
       setActiveCategory(category);
@@ -169,8 +173,10 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
       {fallbackState.fallback && (
         <section className="gallery-warning">
           <output aria-live="polite">
-            We&apos;re having trouble reaching our Cloudflare R2 storage container right now. These photos are from a backup
-            set and might be a little out of date.{fallbackDetail ? ` ${fallbackDetail}` : ''}
+            {fallbackState.usedBundledFallback
+              ? "We're having trouble reaching our Cloudflare R2 storage container right now. These photos are from a backup set and might be a little out of date."
+              : "We're having trouble reaching our Cloudflare R2 storage container right now. The gallery will repopulate once storage is back online."}
+            {fallbackDetail ? ` ${fallbackDetail}` : ''}
           </output>
         </section>
       )}
@@ -179,7 +185,7 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
         items={items}
         loading={loading}
         onSelect={setSelected}
-        fallbackActive={fallbackState.fallback}
+        fallbackActive={fallbackState.usedBundledFallback}
       />
 
       {selected && (

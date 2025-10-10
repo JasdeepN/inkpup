@@ -24,6 +24,7 @@ export const Default: Story = {
     initialData: {
       items: healedItems,
       fallback: false,
+      usedBundledFallback: false,
     },
   },
 };

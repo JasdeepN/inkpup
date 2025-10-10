@@ -30,7 +30,7 @@ describe('GalleryView', () => {
       { id: '1', src: '/img1.webp', category: 'flash', alt: 'One' },
     ];
 
-  render(<GalleryView initialCategory="flash" initialData={{ items, fallback: false }} />);
+  render(<GalleryView initialCategory="flash" initialData={{ items, fallback: false, usedBundledFallback: false }} />);
 
     // Click another category tab (the component renders buttons for all categories)
     const buttons = screen.getAllByRole('tab');
@@ -58,7 +58,7 @@ describe('GalleryView', () => {
       },
     ];
 
-  render(<GalleryView initialCategory="flash" initialData={{ items, fallback: false }} />);
+  render(<GalleryView initialCategory="flash" initialData={{ items, fallback: false, usedBundledFallback: false }} />);
 
     // Click the gallery item to open modal
   // the gallery button aria-label contains the item alt, so match the generic pattern
@@ -82,10 +82,10 @@ describe('GalleryView', () => {
 
     global.fetch = jest.fn(async () => ({
       ok: true,
-      json: async () => ({ items, fallback: false }),
+  json: async () => ({ items, fallback: false, usedBundledFallback: false }),
     } as unknown as Response));
 
-    render(<GalleryView initialCategory="healed" initialData={{ items: [], fallback: false }} />);
+  render(<GalleryView initialCategory="healed" initialData={{ items: [], fallback: false, usedBundledFallback: false }} />);
 
     // Click the flash tab
     const flashBtn = screen.getByRole('tab', { name: /Flash/i });
@@ -102,7 +102,7 @@ describe('GalleryView', () => {
       { id: '1', src: '/img1.webp', category: 'flash', alt: 'One' },
     ] as unknown as GalleryItem[];
 
-    render(<GalleryView initialCategory="flash" initialData={{ items, fallback: false }} />);
+  render(<GalleryView initialCategory="flash" initialData={{ items, fallback: false, usedBundledFallback: false }} />);
 
     // Click to open modal
     const button = screen.getByRole('button', { name: /View .* in full size/i });
@@ -132,7 +132,7 @@ describe('GalleryView', () => {
     render(
       <GalleryView
         initialCategory="flash"
-        initialData={{ items, fallback: true, fallbackReason: 'missing_credentials' }}
+  initialData={{ items, fallback: true, fallbackReason: 'missing_credentials', usedBundledFallback: true }}
       />
     );
 

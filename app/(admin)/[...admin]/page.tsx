@@ -223,7 +223,7 @@ export default async function AdminPortalPage(props: PageProps) {
     );
   }
 
-  const { items, isFallback: isFallbackGallery, fallbackReason } = await listGalleryImages(category);
+  const { items, isFallback: isFallbackGallery, fallbackReason, usedBundledFallback } = await listGalleryImages(category);
   const canMutate = hasR2Credentials();
   const fallbackDetail = (() => {
     switch (fallbackReason) {
@@ -317,8 +317,9 @@ export default async function AdminPortalPage(props: PageProps) {
         {isFallbackGallery && (
           <section className="admin-alert admin-alert--warning admin-alert--compact">
             <output aria-live="polite">
-              Gallery items below are served from bundled backups because the Cloudflare R2 storage container is currently unreachable.{' '}
-              The images may be outdated until connectivity is restored.
+              {usedBundledFallback
+                ? 'Gallery items below are served from bundled backups because the Cloudflare R2 storage container is currently unreachable. The images may be outdated until connectivity is restored.'
+                : 'The Cloudflare R2 storage container is currently unreachable and bundled gallery backups are disabled in this environment. Gallery items will appear again once connectivity is restored.'}
               {fallbackDetail ? ` ${fallbackDetail}` : ''}
             </output>
           </section>
@@ -338,8 +339,12 @@ export default async function AdminPortalPage(props: PageProps) {
           })}
         </nav>
 
-  {items.length === 0 ? (
-          <p className="admin-empty-state">No artwork uploaded yet for this category.</p>
+        {items.length === 0 ? (
+          <p className="admin-empty-state">
+            {isFallbackGallery && !usedBundledFallback
+              ? 'Gallery items are temporarily unavailable because bundled backups are disabled outside automated tests.'
+              : 'No artwork uploaded yet for this category.'}
+          </p>
         ) : (
           <ul className="admin-gallery__grid">
             {items.map((item) => (

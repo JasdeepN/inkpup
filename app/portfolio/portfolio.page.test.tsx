@@ -15,6 +15,7 @@ jest.mock('../../lib/r2-server', () => ({
       },
     ],
     isFallback: false,
+    usedBundledFallback: false,
   }),
 }));
 

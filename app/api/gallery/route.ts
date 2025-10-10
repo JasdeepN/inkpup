@@ -17,21 +17,27 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { items, isFallback, fallbackReason } = await listGalleryImages(categoryParam);
+    const { items, isFallback, fallbackReason, usedBundledFallback } = await listGalleryImages(categoryParam);
     return NextResponse.json({
       items,
       fallback: isFallback,
       fallbackReason,
+      usedBundledFallback,
     });
   } catch (error) {
     console.error('Gallery API error', error);
-    const fallbackItems = getFallbackGalleryItems(categoryParam);
+    const flag = process.env.ALLOW_BUNDLED_GALLERY_FALLBACK?.trim().toLowerCase();
+    const bundledAllowed = process.env.NODE_ENV === 'test' || flag === 'true' || flag === '1';
+    const fallbackItems = bundledAllowed ? getFallbackGalleryItems(categoryParam) : [];
     return NextResponse.json(
       {
         items: fallbackItems,
         fallback: true,
         fallbackReason: 'unexpected_error',
-        error: 'Unable to load gallery images from R2. Serving bundled fallback data.',
+        usedBundledFallback: fallbackItems.length > 0,
+        error: bundledAllowed
+          ? 'Unable to load gallery images from R2. Serving bundled fallback data.'
+          : 'Unable to load gallery images from R2 and bundled fallbacks are disabled in this environment.',
       },
       { status: 200 }
     );
