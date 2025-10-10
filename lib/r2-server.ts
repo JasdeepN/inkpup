@@ -10,6 +10,7 @@ import fallbackDataRaw from '../data/gallery.json';
 import type { GalleryItem, GalleryCategory } from './gallery-types';
 import { GALLERY_CATEGORIES, getCategoryLabel, isGalleryCategory } from './gallery-types';
 import sharp from 'sharp';
+import { createHash } from 'crypto';
 
 const DEFAULT_MAX_IMAGE_WIDTH = 1800;
 const MAX_IMAGE_WIDTH = (() => {
@@ -24,10 +25,28 @@ const MAX_IMAGE_WIDTH = (() => {
 const CACHE_CONTROL_IMMUTABLE = 'public, max-age=31536000, immutable';
 const OPTIMIZED_CONTENT_TYPE = 'image/webp';
 
-const accountId = process.env.R2_ACCOUNT_ID;
-const bucket = process.env.R2_BUCKET;
-const accessKey = process.env.R2_ACCESS_KEY_ID;
-const secretKey = process.env.R2_SECRET_ACCESS_KEY || process.env.R2_API_TOKEN;
+const accountId = process.env.R2_ACCOUNT_ID?.trim();
+const bucket = process.env.R2_BUCKET?.trim();
+const accessKey = process.env.R2_ACCESS_KEY_ID?.trim();
+const rawSecretKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
+const rawApiToken = process.env.R2_API_TOKEN?.trim();
+
+const secretKey = (() => {
+  if (rawSecretKey) {
+    return rawSecretKey;
+  }
+  if (!rawApiToken) {
+    return undefined;
+  }
+  if (/^[0-9a-f]{64}$/i.test(rawApiToken)) {
+    return rawApiToken;
+  }
+  return createHash('sha256').update(rawApiToken).digest('hex');
+})();
+
+if (secretKey && !rawSecretKey) {
+  process.env.R2_SECRET_ACCESS_KEY = secretKey;
+}
 
 let client: S3Client | null = null;
 

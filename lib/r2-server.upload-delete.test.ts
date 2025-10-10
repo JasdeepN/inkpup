@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
+import { createHash } from 'crypto';
 
 const sendMock = jest.fn();
 const S3ClientMock = jest.fn(() => ({ send: sendMock }));
@@ -119,6 +120,30 @@ describe('upload and delete gallery images', () => {
     }) as Array<[Record<string, unknown>]>;
 
     expect(resizeCalls.some(([options]) => (options as { width?: number }).width === 1200)).toBe(true);
+  });
+
+  test('derives secret access key from API token when no secret is provided', async () => {
+    process.env.R2_ACCOUNT_ID = 'account';
+    process.env.R2_BUCKET = 'bucket';
+    process.env.R2_ACCESS_KEY_ID = 'token-id';
+    delete process.env.R2_SECRET_ACCESS_KEY;
+    const apiToken = 'v1.0-test-api-token';
+    process.env.R2_API_TOKEN = apiToken;
+
+    const expectedHash = createHash('sha256').update(apiToken).digest('hex');
+
+    const server = await import('./r2-server');
+
+    expect(server.hasR2Credentials()).toBe(true);
+    await server.deleteGalleryImage('flash/image.webp', 'flash');
+
+    expect(process.env.R2_SECRET_ACCESS_KEY).toBe(expectedHash);
+    const clientConfig = ((S3ClientMock as jest.Mock).mock.calls[0][0] ?? {}) as any;
+    expect(clientConfig).toBeDefined();
+    expect(clientConfig.credentials).toMatchObject({
+      accessKeyId: 'token-id',
+      secretAccessKey: expectedHash,
+    });
   });
 
   test('deleteGalleryImage validates category prefix and issues delete', async () => {

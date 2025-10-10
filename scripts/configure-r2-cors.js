@@ -15,16 +15,32 @@ const {
   PutBucketCorsCommand,
   DeleteBucketCorsCommand,
 } = require('@aws-sdk/client-s3');
+const { createHash } = require('crypto');
 
 const argv = minimist(process.argv.slice(2), {
   boolean: ['dry', 'show', 'clear'],
   string: ['config'],
 });
 
-const account = process.env.R2_ACCOUNT_ID;
-const bucket = process.env.R2_BUCKET;
-const accessKeyId = process.env.R2_ACCESS_KEY_ID;
-const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY || process.env.R2_API_TOKEN;
+const account = process.env.R2_ACCOUNT_ID?.trim();
+const bucket = process.env.R2_BUCKET?.trim();
+const accessKeyId = process.env.R2_ACCESS_KEY_ID?.trim();
+const rawSecretAccessKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
+const rawApiToken = process.env.R2_API_TOKEN?.trim();
+
+let credentialSource = 'secret access key';
+let secretAccessKey = rawSecretAccessKey;
+
+if (!secretAccessKey && rawApiToken) {
+  credentialSource = 'API token';
+  const tokenLooksHashed = /^[0-9a-f]{64}$/i.test(rawApiToken);
+  secretAccessKey = tokenLooksHashed
+    ? rawApiToken
+    : createHash('sha256').update(rawApiToken).digest('hex');
+  if (!tokenLooksHashed) {
+    console.log('Derived R2 secret access key from R2_API_TOKEN via SHA-256 per Cloudflare guidance.');
+  }
+}
 
 if (!account || !bucket || !accessKeyId || !secretAccessKey) {
   console.error(
@@ -42,6 +58,13 @@ const client = new S3Client({
     secretAccessKey,
   },
 });
+
+if (credentialSource === 'API token') {
+  console.log('Using R2 API token credentials for CORS operations.');
+}
+
+const VALID_METHODS = new Set(['GET', 'HEAD', 'POST', 'PUT', 'DELETE']);
+const ORIGIN_PATTERN = /^[a-z][a-z0-9+.-]*:\/\/[^/]+$/i;
 
 async function getCurrentPolicy() {
   try {
@@ -101,11 +124,61 @@ function loadPolicyFromDisk(policyPath) {
       process.exit(1);
     }
 
+    const normalizedOrigins = AllowedOrigins.map((origin, originIndex) => {
+      if (typeof origin !== 'string') {
+        console.error(`Rule ${index} origin at position ${originIndex} must be a string.`);
+        process.exit(1);
+      }
+      const trimmed = origin.trim();
+      if (!ORIGIN_PATTERN.test(trimmed)) {
+        console.error(
+          `Rule ${index} origin "${origin}" is not a valid Origin header value. Expected scheme://host[:port] without a path.`
+        );
+        process.exit(1);
+      }
+      return trimmed;
+    });
+
+    const normalizedMethods = AllowedMethods.map((method, methodIndex) => {
+      if (typeof method !== 'string') {
+        console.error(`Rule ${index} method at position ${methodIndex} must be a string.`);
+        process.exit(1);
+      }
+      const upper = method.trim().toUpperCase();
+      if (!VALID_METHODS.has(upper)) {
+        console.error(
+          `Rule ${index} method "${method}" is not supported. Allowed values are ${Array.from(VALID_METHODS).join(', ')}.`
+        );
+        process.exit(1);
+      }
+      return upper;
+    });
+
+    const normalizedHeaders = Array.isArray(AllowedHeaders) && AllowedHeaders.length > 0
+      ? AllowedHeaders.map((header, headerIndex) => {
+          if (typeof header !== 'string' || !header.trim()) {
+            console.error(`Rule ${index} AllowedHeaders entry at position ${headerIndex} must be a non-empty string.`);
+            process.exit(1);
+          }
+          return header.trim();
+        })
+      : undefined;
+
+    const normalizedExposeHeaders = Array.isArray(ExposeHeaders) && ExposeHeaders.length > 0
+      ? ExposeHeaders.map((header, headerIndex) => {
+          if (typeof header !== 'string' || !header.trim()) {
+            console.error(`Rule ${index} ExposeHeaders entry at position ${headerIndex} must be a non-empty string.`);
+            process.exit(1);
+          }
+          return header.trim();
+        })
+      : undefined;
+
     return {
-      AllowedOrigins,
-      AllowedMethods,
-      AllowedHeaders: Array.isArray(AllowedHeaders) && AllowedHeaders.length > 0 ? AllowedHeaders : undefined,
-      ExposeHeaders: Array.isArray(ExposeHeaders) && ExposeHeaders.length > 0 ? ExposeHeaders : undefined,
+      AllowedOrigins: normalizedOrigins,
+      AllowedMethods: normalizedMethods,
+      AllowedHeaders: normalizedHeaders,
+      ExposeHeaders: normalizedExposeHeaders,
       MaxAgeSeconds:
         typeof MaxAgeSeconds === 'number' && Number.isFinite(MaxAgeSeconds) && MaxAgeSeconds >= 0
           ? Math.floor(MaxAgeSeconds)
@@ -170,6 +243,18 @@ async function applyPolicy(rules) {
       console.error(
         'Failed to configure R2 CORS policy: AccessDenied. Ensure the R2 access key was created with "Workers R2 Storage Write" (or Admin Read & Write) permissions so it can edit bucket configuration.'
       );
+    } else if (error?.name === 'MalformedXML' || error?.Code === 'MalformedXML' || error?.message?.includes('not well formed')) {
+      console.error(
+        'Failed to configure R2 CORS policy: MalformedXML. Confirm that AllowedMethods only include GET, PUT, POST, DELETE, or HEAD and that AllowedOrigins match the scheme://host[:port] format (no trailing slash). See https://developers.cloudflare.com/r2/buckets/cors/ for details.'
+      );
+      if (error?.$response?.body?.transformToString) {
+        try {
+          const xml = await error.$response.body.transformToString();
+          console.error('Service response:', xml);
+        } catch {
+          // ignore body parse issues
+        }
+      }
     } else {
       console.error('Failed to configure R2 CORS policy:', error.message || error);
     }
