@@ -1,7 +1,23 @@
 import SmartImage from './SmartImage';
 import Link from 'next/link';
 
-export default function Hero({ title = 'Custom Tattoos, Consults & Re-Works', subtitle = 'InkPup Tattoos — Toronto (GTA). Book by appointment.' }) {
+type HeroImageProps = Readonly<{
+  src: string;
+  alt: string;
+  caption?: string;
+}>;
+
+type HeroProps = Readonly<{
+  title?: string;
+  subtitle?: string;
+  heroImage?: HeroImageProps | null;
+}>;
+
+export default function Hero({
+  title = 'Custom Tattoos, Consults & Re-Works',
+  subtitle = 'InkPup Tattoos — Toronto (GTA). Book by appointment.',
+  heroImage,
+}: HeroProps) {
   return (
     <section className="hero-section">
       <div className="container">
@@ -21,17 +37,23 @@ export default function Hero({ title = 'Custom Tattoos, Consults & Re-Works', su
             </a>
           </div>
         </div>
-        <div className="hidden md:block">
-          <div className="hero-image">
-            <SmartImage
-              src={'/istockphoto-1147544807-612x612.jpg'}
-              alt="tattoo sample"
-              width={800}
-              height={600}
-              className="w-full h-auto object-cover"
-            />
+        {heroImage?.src && (
+          <div className="hidden md:block">
+            <div className="hero-image">
+              <SmartImage
+                src={heroImage.src}
+                alt={heroImage.alt}
+                fill
+                className="w-full h-full object-cover"
+                sizes="(min-width: 1024px) 640px, 90vw"
+                priority
+              />
+            </div>
+            {heroImage.caption && (
+              <p className="sr-only">{heroImage.caption}</p>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </section>
   );

@@ -1,9 +1,14 @@
 import Hero from '../components/Hero';
+import { getHeroImage } from '../lib/hero-image';
 
-export default function Home() {
+export const revalidate = 300;
+
+export default async function Home() {
+  const heroImage = await getHeroImage();
+
   return (
     <>
-      <Hero />
+      <Hero heroImage={heroImage} />
 
       <section className="container py-8">
         <h3 className="text-xl font-semibold">Portfolio</h3>

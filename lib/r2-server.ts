@@ -254,13 +254,66 @@ export function getFallbackGalleryItems(category: GalleryCategory): GalleryItem[
   return buildFallbackItems(category);
 }
 
-export async function listGalleryImages(category: GalleryCategory): Promise<GalleryItem[]> {
+async function fetchGalleryImagesFromR2(
+  clientInstance: S3Client,
+  prefix: string,
+  category: GalleryCategory
+): Promise<GalleryItem[]> {
+  let continuationToken: string | undefined = undefined;
+  const images: GalleryItem[] = [];
+
+  do {
+    const command = new ListObjectsV2Command({
+      Bucket: bucket,
+      Prefix: `${prefix}/`,
+      ContinuationToken: continuationToken,
+    });
+
+    const response: ListObjectsV2CommandOutput = await clientInstance.send(command);
+    for (const obj of response.Contents || []) {
+      if (!obj.Key || obj.Key.endsWith('/')) continue;
+      const url = toPublicR2Url(`/${obj.Key}`);
+      images.push({
+        id: obj.ETag || obj.Key,
+        src: url,
+        alt: formatLabelFromKey(obj.Key, prefix),
+        caption: formatLabelFromKey(obj.Key, prefix),
+        category,
+        size: obj.Size,
+        lastModified: obj.LastModified ? obj.LastModified.toISOString() : undefined,
+        key: obj.Key,
+      });
+    }
+
+    continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
+  } while (continuationToken);
+
+  images.sort((a, b) => {
+    const aTime = a.lastModified ? Date.parse(a.lastModified) : 0;
+    const bTime = b.lastModified ? Date.parse(b.lastModified) : 0;
+    return bTime - aTime;
+  });
+
+  return images;
+}
+
+type ListGalleryImagesOptions = {
+  fallback?: boolean;
+};
+
+export async function listGalleryImages(
+  category: GalleryCategory,
+  options?: ListGalleryImagesOptions
+): Promise<GalleryItem[]> {
   if (!GALLERY_CATEGORIES.includes(category)) {
     throw new Error(`Unsupported gallery category '${category}'.`);
   }
 
+  const fallbackEnabled = options?.fallback !== false;
+  const fallbackResult = () => (fallbackEnabled ? buildFallbackItems(category) : []);
+
   if (!hasR2Credentials()) {
-    return buildFallbackItems(category);
+    return fallbackResult();
   }
 
   let clientInstance: S3Client;
@@ -275,48 +328,14 @@ export async function listGalleryImages(category: GalleryCategory): Promise<Gall
   }
   const prefix = `${category}`.replace(/\/+$/, '');
 
-  let continuationToken: string | undefined = undefined;
-  const images: GalleryItem[] = [];
-
   try {
-    do {
-      const command = new ListObjectsV2Command({
-        Bucket: bucket,
-        Prefix: `${prefix}/`,
-        ContinuationToken: continuationToken,
-      });
-
-      const response: ListObjectsV2CommandOutput = await clientInstance.send(command);
-      for (const obj of response.Contents || []) {
-        if (!obj.Key || obj.Key.endsWith('/')) continue;
-        const url = toPublicR2Url(`/${obj.Key}`);
-        images.push({
-          id: obj.ETag || obj.Key,
-          src: url,
-          alt: formatLabelFromKey(obj.Key, prefix),
-          caption: formatLabelFromKey(obj.Key, prefix),
-          category,
-          size: obj.Size,
-          lastModified: obj.LastModified ? obj.LastModified.toISOString() : undefined,
-          key: obj.Key,
-        });
-      }
-
-      continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
-    } while (continuationToken);
+    const images = await fetchGalleryImagesFromR2(clientInstance, prefix, category);
+    return images;
   } catch (error) {
     console.error(
       `Failed to list gallery images from R2 for category "${category}". Falling back to bundled data.`,
       error
     );
-    return buildFallbackItems(category);
+    return fallbackResult();
   }
-
-  images.sort((a, b) => {
-    const aTime = a.lastModified ? Date.parse(a.lastModified) : 0;
-    const bTime = b.lastModified ? Date.parse(b.lastModified) : 0;
-    return bTime - aTime;
-  });
-
-  return images;
 }
