@@ -106,7 +106,7 @@ jobs:
       CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY || secrets.R2_API_TOKEN }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
       R2_SECRET_SOURCE: "${{ secrets.R2_SECRET_ACCESS_KEY != '' && 'secret-key' || secrets.R2_API_TOKEN != '' && 'api-token' || '' }}"
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
@@ -146,7 +146,7 @@ jobs:
           fi
 
           if [ "${R2_SECRET_SOURCE}" = 'api-token' ]; then
-            echo '::notice::Using R2_API_TOKEN as the secret access key for S3-compatible requests. Ensure the token value is hashed per Cloudflare guidance.' >&2
+            echo '::notice::Using R2_API_TOKEN as the secret access key for S3-compatible requests. The workflow will derive the SHA-256 hash automatically before use.' >&2
           fi
 
           expected_hostname="https://r2.inkpup.ca"
@@ -158,6 +158,34 @@ jobs:
           if [ "${R2_PUBLIC_HOSTNAME}" != "${expected_hostname}" ]; then
             echo "::warning::R2_PUBLIC_HOSTNAME is set to ${R2_PUBLIC_HOSTNAME}. Ensure all environments share ${expected_hostname}." >&2
           fi
+
+      - name: Resolve R2 secret access key (dev)
+        env:
+          R2_SECRET_ACCESS_KEY: ${{ env.R2_SECRET_ACCESS_KEY }}
+          R2_API_TOKEN: ${{ env.R2_API_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          secret="${R2_SECRET_ACCESS_KEY:-}"
+          token="${R2_API_TOKEN:-}"
+
+          if [ -z "$secret" ] && [ -n "$token" ]; then
+            secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
+            echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum.'
+          elif [ -n "$secret" ] && [ -n "$token" ] && [ "$secret" = "$token" ]; then
+            secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
+            echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum (matched raw token).'
+          elif [ -n "$secret" ] && ! echo "$secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
+            secret="$(printf '%s' "$secret" | sha256sum | awk '{print $1}')"
+            echo 'Normalized provided R2 secret access key via sha256sum to enforce 64-character hex format.'
+          fi
+
+          if [ -z "$secret" ]; then
+            echo '::error::Unable to resolve an R2 secret access key for downstream scripts. Provide R2_SECRET_ACCESS_KEY or R2_API_TOKEN.' >&2
+            exit 1
+          fi
+
+          echo "R2_SECRET_ACCESS_KEY=$secret" >> "$GITHUB_ENV"
 
       - name: Debug Cloudflare environment values (dev)
         run: |
@@ -193,7 +221,7 @@ jobs:
       CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY || secrets.R2_API_TOKEN }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
       R2_SECRET_SOURCE: "${{ secrets.R2_SECRET_ACCESS_KEY != '' && 'secret-key' || secrets.R2_API_TOKEN != '' && 'api-token' || '' }}"
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
@@ -277,7 +305,7 @@ jobs:
       CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY || secrets.R2_API_TOKEN }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
       R2_SECRET_SOURCE: "${{ secrets.R2_SECRET_ACCESS_KEY != '' && 'secret-key' || secrets.R2_API_TOKEN != '' && 'api-token' || '' }}"
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
@@ -316,8 +344,36 @@ jobs:
           fi
 
           if [ "${R2_SECRET_SOURCE}" = 'api-token' ]; then
-            echo '::notice::Using R2_API_TOKEN as the secret access key for S3-compatible requests. Ensure the token value is hashed per Cloudflare guidance.' >&2
+            echo '::notice::Using R2_API_TOKEN as the secret access key for S3-compatible requests. The workflow will derive the SHA-256 hash automatically before use.' >&2
           fi
+
+      - name: Resolve R2 secret access key (production)
+        env:
+          R2_SECRET_ACCESS_KEY: ${{ env.R2_SECRET_ACCESS_KEY }}
+          R2_API_TOKEN: ${{ env.R2_API_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          secret="${R2_SECRET_ACCESS_KEY:-}"
+          token="${R2_API_TOKEN:-}"
+
+          if [ -z "$secret" ] && [ -n "$token" ]; then
+            secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
+            echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum.'
+          elif [ -n "$secret" ] && [ -n "$token" ] && [ "$secret" = "$token" ]; then
+            secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
+            echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum (matched raw token).'
+          elif [ -n "$secret" ] && ! echo "$secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
+            secret="$(printf '%s' "$secret" | sha256sum | awk '{print $1}')"
+            echo 'Normalized provided R2 secret access key via sha256sum to enforce 64-character hex format.'
+          fi
+
+          if [ -z "$secret" ]; then
+            echo '::error::Unable to resolve an R2 secret access key for downstream scripts. Provide R2_SECRET_ACCESS_KEY or R2_API_TOKEN.' >&2
+            exit 1
+          fi
+
+          echo "R2_SECRET_ACCESS_KEY=$secret" >> "$GITHUB_ENV"
 
       - name: Debug Cloudflare environment values (production)
         run: |
@@ -353,7 +409,7 @@ jobs:
       CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY || secrets.R2_API_TOKEN }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
       R2_SECRET_SOURCE: "${{ secrets.R2_SECRET_ACCESS_KEY != '' && 'secret-key' || secrets.R2_API_TOKEN != '' && 'api-token' || '' }}"
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
