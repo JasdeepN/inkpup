@@ -163,11 +163,13 @@ jobs:
         env:
           R2_SECRET_ACCESS_KEY: ${{ env.R2_SECRET_ACCESS_KEY }}
           R2_API_TOKEN: ${{ env.R2_API_TOKEN }}
+          R2_SECRET_SOURCE: ${{ env.R2_SECRET_SOURCE }}
         run: |
           set -euo pipefail
 
           secret="${R2_SECRET_ACCESS_KEY:-}"
           token="${R2_API_TOKEN:-}"
+          source="${R2_SECRET_SOURCE:-}"
 
           if [ -z "$secret" ] && [ -n "$token" ]; then
             secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
@@ -175,9 +177,13 @@ jobs:
           elif [ -n "$secret" ] && [ -n "$token" ] && [ "$secret" = "$token" ]; then
             secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
             echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum (matched raw token).'
-          elif [ -n "$secret" ] && ! echo "$secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
+          elif [ "$source" = 'api-token' ] && [ -n "$secret" ] && ! echo "$secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
             secret="$(printf '%s' "$secret" | sha256sum | awk '{print $1}')"
-            echo 'Normalized provided R2 secret access key via sha256sum to enforce 64-character hex format.'
+            echo 'Normalized R2 secret access key sourced from API token via sha256sum to enforce 64-character hex format.'
+          elif [ "$source" = 'secret-key' ] && [ -n "$secret" ]; then
+            echo 'Using provided R2 secret access key from Workers R2 Access Key credentials as-is.'
+          elif [ -n "$secret" ] && ! echo "$secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
+            echo '::notice::R2 secret access key is not a 64-character hex string; assuming a pre-existing S3 credential.'
           fi
 
           if [ -z "$secret" ]; then
@@ -351,11 +357,13 @@ jobs:
         env:
           R2_SECRET_ACCESS_KEY: ${{ env.R2_SECRET_ACCESS_KEY }}
           R2_API_TOKEN: ${{ env.R2_API_TOKEN }}
+          R2_SECRET_SOURCE: ${{ env.R2_SECRET_SOURCE }}
         run: |
           set -euo pipefail
 
           secret="${R2_SECRET_ACCESS_KEY:-}"
           token="${R2_API_TOKEN:-}"
+          source="${R2_SECRET_SOURCE:-}"
 
           if [ -z "$secret" ] && [ -n "$token" ]; then
             secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
@@ -363,9 +371,13 @@ jobs:
           elif [ -n "$secret" ] && [ -n "$token" ] && [ "$secret" = "$token" ]; then
             secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
             echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum (matched raw token).'
-          elif [ -n "$secret" ] && ! echo "$secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
+          elif [ "$source" = 'api-token' ] && [ -n "$secret" ] && ! echo "$secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
             secret="$(printf '%s' "$secret" | sha256sum | awk '{print $1}')"
-            echo 'Normalized provided R2 secret access key via sha256sum to enforce 64-character hex format.'
+            echo 'Normalized R2 secret access key sourced from API token via sha256sum to enforce 64-character hex format.'
+          elif [ "$source" = 'secret-key' ] && [ -n "$secret" ]; then
+            echo 'Using provided R2 secret access key from Workers R2 Access Key credentials as-is.'
+          elif [ -n "$secret" ] && ! echo "$secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
+            echo '::notice::R2 secret access key is not a 64-character hex string; assuming a pre-existing S3 credential.'
           fi
 
           if [ -z "$secret" ]; then
