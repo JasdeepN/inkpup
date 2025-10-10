@@ -4,6 +4,7 @@ main = ".open-next/worker.js"
 account_id = "${CLOUDFLARE_ACCOUNT_ID}"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = false
+logpush = true
 
 [assets]
 directory = ".open-next/assets"
@@ -21,6 +22,7 @@ CF_WEB_ANALYTICS_TOKEN = "${CF_WEB_ANALYTICS_TOKEN}"
 name = "inkpup-dev"
 route = "dev.inkpup.ca/*"
 zone_id = "${CLOUDFLARE_ZONE_ID}"
+logpush = true
 
 [env.dev.vars]
 R2_PUBLIC_HOSTNAME = "${R2_PUBLIC_HOSTNAME}"
@@ -34,6 +36,7 @@ CF_WEB_ANALYTICS_TOKEN = "${CF_WEB_ANALYTICS_TOKEN}"
 name = "inkpup"
 route = "inkpup.ca/*"
 zone_id = "${CLOUDFLARE_ZONE_ID}"
+logpush = true
 
 [env.production.vars]
 R2_PUBLIC_HOSTNAME = "${R2_PUBLIC_HOSTNAME}"
