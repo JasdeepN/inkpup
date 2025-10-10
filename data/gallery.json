@@ -2,16 +2,16 @@
   {
     "id": "healed-1",
     "category": "healed",
-    "src": "/social/sample1.jpg",
-    "alt": "Healed blackwork skull",
-    "caption": "Freshly healed blackwork skull by Alex"
+    "src": "/tattoo-1900921.png",
+    "alt": "Healed blackwork tattoo",
+    "caption": "Freshly healed blackwork by InkPup"
   },
   {
     "id": "available-1",
     "category": "available",
-    "src": "/social/sample2.jpg",
-    "alt": "Available floral sleeve",
-    "caption": "Available floral sleeve design by Jamie"
+    "src": "/wolf-101711.png",
+    "alt": "Available wolf flash",
+    "caption": "Available wolf flash design"
   },
   {
     "id": "flash-1",
