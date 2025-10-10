@@ -43,6 +43,22 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: '/:path*',
+        has: [
+          {
+            type: 'header',
+            key: 'accept',
+            value: '.*text/html.*',
+          },
+        ],
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'private, no-cache, no-store, must-revalidate, no-transform',
+          },
+        ],
+      },
+      {
         source: '/(.*)',
         headers: SECURITY_HEADERS,
       },
