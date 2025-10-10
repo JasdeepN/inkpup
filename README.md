@@ -30,6 +30,7 @@ npm run start
 Cloudflare Workers notes
 - Build and deploy with the `@opennextjs/cloudflare` adapter (`npm run opennext:build` / `npm run opennext:deploy`) as documented in [OpenNext for Cloudflare – Get started](https://opennext.js.org/cloudflare/get-started).
 - Ensure `wrangler.toml` keeps the compatibility date at `2024-09-23` or later with `nodejs_compat` enabled so the Worker runtime matches the adapter requirements.
+- Production traffic serves media from the `https://r2.inkpup.ca` custom hostname. Leave `R2_PUBLIC_HOSTNAME` unset in dev to exercise the default `<account>.r2.cloudflarestorage.com/<bucket>` URL when testing locally.
 
 Cloudflare deployment (GitHub Actions)
 

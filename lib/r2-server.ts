@@ -5,7 +5,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import type { ListObjectsV2CommandOutput, PutObjectCommandInput } from '@aws-sdk/client-s3';
-import { resolveR2Url } from './r2';
+import { toPublicR2Url } from './r2';
 import fallbackDataRaw from '../data/gallery.json';
 import type { GalleryItem, GalleryCategory } from './gallery-types';
 import { GALLERY_CATEGORIES, getCategoryLabel, isGalleryCategory } from './gallery-types';
@@ -146,7 +146,7 @@ export async function uploadGalleryImage({
 
   const item: GalleryItem = {
     id: key,
-    src: resolveR2Url(`/${key}`),
+    src: toPublicR2Url(`/${key}`),
     alt: alt || formatLabelFromKey(key, category),
     caption,
     category,
@@ -218,7 +218,7 @@ export async function listGalleryImages(category: GalleryCategory): Promise<Gall
     const response: ListObjectsV2CommandOutput = await clientInstance.send(command);
     for (const obj of response.Contents || []) {
       if (!obj.Key || obj.Key.endsWith('/')) continue;
-      const url = resolveR2Url(`/${obj.Key}`);
+  const url = toPublicR2Url(`/${obj.Key}`);
       images.push({
         id: obj.ETag || obj.Key,
         src: url,

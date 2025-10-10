@@ -50,6 +50,12 @@ jobs:
         run: npm install --legacy-peer-deps --silent
 
       - name: Build with OpenNext
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_PUBLIC_HOSTNAME: https://r2.inkpup.ca
         run: npm run opennext:build
 
       - name: Upload OpenNext artifact
@@ -82,7 +88,7 @@ jobs:
           name: open-next-bundle
           path: .
 
-      - name: Verify Cloudflare secrets
+      - name: Verify required secrets (dev)
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
@@ -90,12 +96,41 @@ jobs:
         run: |
           set -euo pipefail
 
-          for name in CF_API_TOKEN CF_ACCOUNT_ID CF_ZONE_ID; do
+          R2_ACCESS_KEY_ID='${{ secrets.R2_ACCESS_KEY_ID }}'
+          R2_SECRET_ACCESS_KEY='${{ secrets.R2_SECRET_ACCESS_KEY }}'
+          R2_ACCOUNT_ID='${{ secrets.R2_ACCOUNT_ID }}'
+          R2_BUCKET='${{ secrets.R2_BUCKET }}'
+          R2_PUBLIC_HOSTNAME='${{ secrets.R2_PUBLIC_HOSTNAME }}'
+
+          required=(CF_API_TOKEN CF_ACCOUNT_ID CF_ZONE_ID)
+
+          for name in "${required[@]}"; do
             if [ -z "${!name}" ]; then
               echo "::error::Missing GitHub secret ${name}. Please create it in Settings > Secrets and variables > Actions." >&2
               exit 1
             fi
           done
+
+          if [ -z "$R2_ACCESS_KEY_ID" ]; then
+            echo "::error::Missing GitHub secret R2_ACCESS_KEY_ID. Please create it in Settings > Secrets and variables > Actions." >&2
+            exit 1
+          fi
+          if [ -z "$R2_SECRET_ACCESS_KEY" ]; then
+            echo "::error::Missing GitHub secret R2_SECRET_ACCESS_KEY. Please create it in Settings > Secrets and variables > Actions." >&2
+            exit 1
+          fi
+          if [ -z "$R2_ACCOUNT_ID" ]; then
+            echo "::error::Missing GitHub secret R2_ACCOUNT_ID. Please create it in Settings > Secrets and variables > Actions." >&2
+            exit 1
+          fi
+          if [ -z "$R2_BUCKET" ]; then
+            echo "::error::Missing GitHub secret R2_BUCKET. Please create it in Settings > Secrets and variables > Actions." >&2
+            exit 1
+          fi
+
+          if [ -z "$R2_PUBLIC_HOSTNAME" ]; then
+            echo "::notice::Optional secret R2_PUBLIC_HOSTNAME is not configured. Falling back to the default Cloudflare R2 public URL." >&2
+          fi
 
       - name: Debug Cloudflare environment values (dev)
         env:
@@ -120,7 +155,12 @@ jobs:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
         run: |
           set -euo pipefail
-          envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID}' < wrangler.toml > wrangler.resolved.toml
+          export R2_ACCESS_KEY_ID='${{ secrets.R2_ACCESS_KEY_ID }}'
+          export R2_SECRET_ACCESS_KEY='${{ secrets.R2_SECRET_ACCESS_KEY }}'
+          export R2_ACCOUNT_ID='${{ secrets.R2_ACCOUNT_ID }}'
+          export R2_BUCKET='${{ secrets.R2_BUCKET }}'
+          export R2_PUBLIC_HOSTNAME='${{ secrets.R2_PUBLIC_HOSTNAME }}'
+          envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID} ${R2_PUBLIC_HOSTNAME} ${R2_ACCESS_KEY_ID} ${R2_SECRET_ACCESS_KEY} ${R2_ACCOUNT_ID} ${R2_BUCKET}' < wrangler.toml > wrangler.resolved.toml
 
       - name: Deploy to dev environment
         env:
@@ -163,15 +203,21 @@ jobs:
           name: open-next-bundle
           path: .
 
-      - name: Verify Cloudflare secrets
+      - name: Verify required secrets (production)
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_PUBLIC_HOSTNAME: https://r2.inkpup.ca
         run: |
           set -euo pipefail
 
-          for name in CF_API_TOKEN CF_ACCOUNT_ID CF_ZONE_ID; do
+          required=(CF_API_TOKEN CF_ACCOUNT_ID CF_ZONE_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_ACCOUNT_ID R2_BUCKET)
+          for name in "${required[@]}"; do
             if [ -z "${!name}" ]; then
               echo "::error::Missing GitHub secret ${name}. Please create it in Settings > Secrets and variables > Actions." >&2
               exit 1
@@ -199,9 +245,14 @@ jobs:
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_PUBLIC_HOSTNAME: https://r2.inkpup.ca
         run: |
           set -euo pipefail
-          envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID}' < wrangler.toml > wrangler.resolved.toml
+          envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID} ${R2_PUBLIC_HOSTNAME} ${R2_ACCESS_KEY_ID} ${R2_SECRET_ACCESS_KEY} ${R2_ACCOUNT_ID} ${R2_BUCKET}' < wrangler.toml > wrangler.resolved.toml
 
       - name: Deploy to production environment
         env:

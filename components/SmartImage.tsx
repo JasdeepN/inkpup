@@ -1,5 +1,4 @@
 import Image from 'next/image';
-import { resolveR2Url } from '../lib/r2';
 
 type Props = {
   src: string;
@@ -24,11 +23,10 @@ export default function SmartImage({
   sizes,
   onLoadingComplete,
 }: Readonly<Props>) {
-  const resolved = resolveR2Url(src);
   if (fill) {
     return (
       <Image
-        src={resolved}
+        src={src}
         alt={alt}
         fill
         sizes={sizes}
@@ -41,7 +39,7 @@ export default function SmartImage({
 
   return (
     <Image
-      src={resolved}
+      src={src}
       alt={alt}
       width={width}
       height={height}

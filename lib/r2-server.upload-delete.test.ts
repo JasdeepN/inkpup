@@ -70,12 +70,12 @@ describe('upload and delete gallery images', () => {
   });
 
   test('uploadGalleryImage throws when credentials missing', async () => {
-  delete process.env.R2_ACCOUNT_ID;
-  delete process.env.R2_BUCKET;
-  delete process.env.R2_ACCESS_KEY_ID;
-  delete process.env.R2_SECRET_ACCESS_KEY;
+    delete process.env.R2_ACCOUNT_ID;
+    delete process.env.R2_BUCKET;
+    delete process.env.R2_ACCESS_KEY_ID;
+    delete process.env.R2_SECRET_ACCESS_KEY;
 
-  const server = await import('./r2-server');
+    const server = await import('./r2-server');
     await expect(
       server.uploadGalleryImage({
         category: 'healed',
@@ -90,7 +90,7 @@ describe('upload and delete gallery images', () => {
     process.env.R2_BUCKET = 'bucket';
     process.env.R2_ACCESS_KEY_ID = 'access';
     process.env.R2_SECRET_ACCESS_KEY = 'secret';
-    process.env.NEXT_PUBLIC_R2_BASE_URL = 'https://cdn.example.com';
+    process.env.R2_PUBLIC_HOSTNAME = 'https://cdn.example.com';
     process.env.R2_MAX_IMAGE_WIDTH = '1200';
 
     const server = await import('./r2-server');
@@ -105,7 +105,7 @@ describe('upload and delete gallery images', () => {
 
     expect(sendMock).toHaveBeenCalledTimes(1);
     const commandInstance = sendMock.mock.calls[0][0] as { params: Record<string, unknown> };
-  expect(commandInstance.params.Key).toBe('flash/creme-brulee.webp');
+    expect(commandInstance.params.Key).toBe('flash/creme-brulee.webp');
     expect(commandInstance.params.ContentType).toBe('image/webp');
     expect(commandInstance.params.Metadata).toEqual({ alt: 'Alt text', caption: 'Caption text' });
     expect(commandInstance.params.CacheControl).toContain('max-age');
@@ -143,10 +143,9 @@ describe('upload and delete gallery images', () => {
     process.env.R2_BUCKET = 'bucket';
     process.env.R2_ACCESS_KEY_ID = 'access';
     process.env.R2_SECRET_ACCESS_KEY = 'secret';
-    process.env.NEXT_PUBLIC_R2_BASE_URL = 'https://cdn.example.com';
+    process.env.R2_PUBLIC_HOSTNAME = 'https://cdn.example.com';
 
-
-  const server = await import('./r2-server');
+    const server = await import('./r2-server');
 
     const firstPage = {
       Contents: [
@@ -164,8 +163,8 @@ describe('upload and delete gallery images', () => {
 
     const secondPage = {
       Contents: [
-  { Key: 'flash/older-piece.webp', Size: 777 },
-  { Key: 'flash/folder/', Size: undefined },
+        { Key: 'flash/older-piece.webp', Size: 777 },
+        { Key: 'flash/folder/', Size: undefined },
       ],
       IsTruncated: false,
     };
@@ -187,11 +186,14 @@ describe('upload and delete gallery images', () => {
     });
 
     expect(items).toHaveLength(2);
-  expect(items[0].key).toBe('flash/demo-piece.webp');
+    expect(items[0].key).toBe('flash/demo-piece.webp');
     expect(items[0].alt).toBe('Demo piece');
     expect(items[0].caption).toBe('Demo piece');
     expect(items[0].lastModified).toBe('2024-02-01T00:00:00.000Z');
-  expect(items[1].key).toBe('flash/older-piece.webp');
+    expect(items[1].key).toBe('flash/older-piece.webp');
     expect(items[1].lastModified).toBeUndefined();
+
+    expect(items[0].src).toBe('https://cdn.example.com/flash/demo-piece.webp');
+    expect(items[1].src).toBe('https://cdn.example.com/flash/older-piece.webp');
   });
 });
