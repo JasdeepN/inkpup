@@ -1,0 +1,17 @@
+{
+  "rules": [
+    {
+      "AllowedOrigins": [
+        "https://inkpup.ca",
+        "https://www.inkpup.ca",
+        "https://dev.inkpup.ca",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+      ],
+      "AllowedMethods": ["GET", "HEAD", "OPTIONS"],
+      "AllowedHeaders": ["*"],
+      "ExposeHeaders": ["Content-Length", "Content-Type", "Cache-Control", "ETag"],
+      "MaxAgeSeconds": 3600
+    }
+  ]
+}

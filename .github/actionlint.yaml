@@ -10,4 +10,5 @@ secrets:
 paths:
   .github/workflows/deploy-cloudflare-workers.yml:
     ignore:
-      - 'Context access might be invalid: R2_[A-Z_]+'
+      - 'Context access might be invalid: (?:CF|CLOUDFLARE|R2)_[A-Z_]+'
+      - "Value 'production' is not valid"

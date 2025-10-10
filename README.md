@@ -31,6 +31,7 @@ Cloudflare Workers notes
 - Build and deploy with the `@opennextjs/cloudflare` adapter (`npm run opennext:build` / `npm run opennext:deploy`) as documented in [OpenNext for Cloudflare – Get started](https://opennext.js.org/cloudflare/get-started).
 - Ensure `wrangler.toml` keeps the compatibility date at `2024-09-23` or later with `nodejs_compat` enabled so the Worker runtime matches the adapter requirements.
 - Production traffic serves media from the `https://r2.inkpup.ca` custom hostname. Leave `R2_PUBLIC_HOSTNAME` unset in dev to exercise the default `<account>.r2.cloudflarestorage.com/<bucket>` URL when testing locally.
+- Keep the R2 bucket public access and CORS policy in sync with every environment. Update `configs/r2-cors.default.json` with the hostnames that should be able to read objects (for example `https://inkpup.ca`, `https://dev.inkpup.ca`, and local development ports) and apply it with `npm run r2:cors:apply`. The script uses Cloudflare’s S3-compatible API to call [`PutBucketCors`](https://developers.cloudflare.com/r2/api/s3/api/) following the public bucket guidance in [Public buckets](https://developers.cloudflare.com/r2/buckets/public-buckets/) and [Configure CORS](https://developers.cloudflare.com/r2/buckets/cors/). Run `npm run r2:cors:show` to inspect the current rules when troubleshooting 404s or preflight failures.
 - Optional: set `CF_WEB_ANALYTICS_TOKEN` (or the build-time `NEXT_PUBLIC_CF_WEB_ANALYTICS_TOKEN`) to embed the Cloudflare Web Analytics beacon manually. If you enable this path, disable the automatic injection toggle in the Cloudflare dashboard to avoid duplicate scripts or stale SRI hashes. The value comes from **Web Analytics → Manage site → JS Snippet**. Add each hostname you plan to serve (for example `inkpup.ca` and `dev.inkpup.ca`) so the beacon request passes the CORS/hostname validation step documented in [Cloudflare Web Analytics FAQ → Errors](https://developers.cloudflare.com/web-analytics/faq/#when-i-add-the-beacon-to-my-website-and-load-the-webpage-i-see-an-error-that-includes-is-not-allowed-by-access-control-allow-origin-cors-what-is-happening).
 
 Cloudflare deployment (GitHub Actions)
@@ -43,8 +44,13 @@ Set the following repository secrets under **Settings → Secrets and variables 
 
 - `CF_API_TOKEN` – a Cloudflare API token with the Workers "Edit" template (or `Account.Workers Scripts:Edit`, `Account.Workers Scripts:Read`, and any additional resources your app binds to, such as R2 or KV). Wrangler 3.99+ is required by the adapter (see [OpenNext CLI docs](https://opennext.js.org/cloudflare/cli)).
 - `CF_ACCOUNT_ID` – the account identifier from the Cloudflare dashboard (**Manage Account → Overview → Account ID**).
+- `CF_ZONE_ID` – the zone that maps to `inkpup.ca`. The workflow attaches the R2 custom domain through this zone on each deploy.
+- `R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` – R2 credentials with permission to manage the public bucket used for media.
+- Optional: `R2_PUBLIC_HOSTNAME` – when set, the deploy workflow renders Wrangler config with this hostname for dev/staging previews. Production always uses `https://r2.inkpup.ca`.
 
-The workflow exports these secrets to the OpenNext CLI as `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. Tokens created before 2024 may be missing the Workers scripts scopes; recreate them if the deploy step reports permission errors.
+The workflow exports these secrets to the OpenNext CLI as `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and the matching `R2_*` variables. Tokens created before 2024 may be missing the Workers scripts scopes; recreate them if the deploy step reports permission errors.
+
+On each run the workflow installs the runtime dependencies (no dev packages), applies the canonical CORS policy from `configs/r2-cors.default.json`, and enforces the custom domain TLS minimum via `scripts/configure-r2-custom-domain.js`. Those steps keep the R2 bucket aligned across dev and production without a manual sync after local changes.
 
 ### Validating credentials locally
 
