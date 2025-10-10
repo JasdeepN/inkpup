@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 
 const sendMock = jest.fn();
+const S3ClientMock = jest.fn(() => ({ send: sendMock }));
 
 jest.mock('@aws-sdk/client-s3', () => {
   class PutObjectCommand {
@@ -18,11 +19,10 @@ jest.mock('@aws-sdk/client-s3', () => {
   }
 
   const ListObjectsV2Command = jest.fn((params) => ({ params }));
-  const S3Client = jest.fn(() => ({ send: sendMock }));
 
   return {
     __esModule: true,
-    S3Client,
+    S3Client: S3ClientMock,
     PutObjectCommand,
     DeleteObjectCommand,
     ListObjectsV2Command,
@@ -59,12 +59,15 @@ jest.mock('sharp', () => ({
   default: sharpMock,
 }));
 
+
 describe('upload and delete gallery images', () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
     jest.resetModules();
     sendMock.mockReset();
+    S3ClientMock.mockReset();
+    S3ClientMock.mockImplementation(() => ({ send: sendMock }));
     sharpMock.mockClear();
     process.env = { ...originalEnv };
   });
@@ -195,6 +198,32 @@ describe('upload and delete gallery images', () => {
 
     expect(items[0].src).toBe('https://cdn.example.com/flash/demo-piece.webp');
     expect(items[1].src).toBe('https://cdn.example.com/flash/older-piece.webp');
+  });
+
+  test('listGalleryImages falls back when R2 client initialization fails', async () => {
+    process.env.R2_ACCOUNT_ID = 'account';
+    process.env.R2_BUCKET = 'bucket';
+    process.env.R2_ACCESS_KEY_ID = 'access';
+    process.env.R2_SECRET_ACCESS_KEY = 'secret';
+
+    const server = await import('./r2-server');
+
+    S3ClientMock.mockImplementationOnce(() => {
+      throw new Error('init fail');
+    });
+
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    try {
+      const items = await server.listGalleryImages('flash');
+
+      expect(S3ClientMock).toHaveBeenCalled();
+      expect(items).toHaveLength(1);
+      expect(items[0].id).toBe('flash-1');
+      expect(items[0].category).toBe('flash');
+    } finally {
+      consoleSpy.mockRestore();
+    }
   });
 
   test('listGalleryImages falls back to bundled data when R2 lookup fails', async () => {

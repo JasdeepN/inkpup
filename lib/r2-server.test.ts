@@ -29,4 +29,12 @@ describe('r2-server fallback behaviour', () => {
       "Unsupported gallery category 'unknown'."
     );
   });
+
+  test('getFallbackGalleryItems returns bundled data for valid category', async () => {
+    const { getFallbackGalleryItems } = await import(modulePath);
+
+    const items = getFallbackGalleryItems('flash');
+    expect(items.length).toBeGreaterThan(0);
+    expect(items.every((item) => item.category === 'flash')).toBe(true);
+  });
 });

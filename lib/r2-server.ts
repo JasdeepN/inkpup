@@ -194,6 +194,14 @@ function buildFallbackItems(category: GalleryCategory): GalleryItem[] {
     }));
 }
 
+export function getFallbackGalleryItems(category: GalleryCategory): GalleryItem[] {
+  if (!GALLERY_CATEGORIES.includes(category)) {
+    throw new Error(`Unsupported gallery category '${category}'.`);
+  }
+
+  return buildFallbackItems(category);
+}
+
 export async function listGalleryImages(category: GalleryCategory): Promise<GalleryItem[]> {
   if (!GALLERY_CATEGORIES.includes(category)) {
     throw new Error(`Unsupported gallery category '${category}'.`);
@@ -203,7 +211,16 @@ export async function listGalleryImages(category: GalleryCategory): Promise<Gall
     return buildFallbackItems(category);
   }
 
-  const clientInstance = getClient();
+  let clientInstance: S3Client;
+  try {
+    clientInstance = getClient();
+  } catch (error) {
+    console.error(
+      `Failed to initialize R2 client for category "${category}". Falling back to bundled data.`,
+      error
+    );
+    return buildFallbackItems(category);
+  }
   const prefix = `${category}`.replace(/\/+$/, '');
 
   let continuationToken: string | undefined = undefined;

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { listGalleryImages } from '../../../lib/r2-server';
+import { getFallbackGalleryItems, listGalleryImages } from '../../../lib/r2-server';
 import { GALLERY_CATEGORIES, isGalleryCategory } from '../../../lib/gallery-types';
 
 export async function GET(request: Request) {
@@ -21,6 +21,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ items });
   } catch (error) {
     console.error('Gallery API error', error);
-    return NextResponse.json({ error: 'Unable to load gallery images.' }, { status: 500 });
+    const fallbackItems = getFallbackGalleryItems(categoryParam);
+    return NextResponse.json(
+      {
+        items: fallbackItems,
+        fallback: true,
+        error: 'Unable to load gallery images from R2. Serving bundled fallback data.',
+      },
+      { status: 200 }
+    );
   }
 }
