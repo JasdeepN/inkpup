@@ -16,6 +16,12 @@ jest.mock('../../lib/r2-server', () => ({
     ],
     isFallback: false,
     usedBundledFallback: false,
+    credentialStatus: {
+      accountId: true,
+      bucket: true,
+      accessKey: true,
+      secretAccessKey: true,
+    },
   }),
 }));
 

@@ -20,6 +20,7 @@ export default async function PortfolioPage() {
           fallback: initialData.isFallback,
           fallbackReason: initialData.fallbackReason,
           usedBundledFallback: initialData.usedBundledFallback,
+          credentialStatus: initialData.credentialStatus,
         }}
       />
     </section>

@@ -17,12 +17,13 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { items, isFallback, fallbackReason, usedBundledFallback } = await listGalleryImages(categoryParam);
+    const { items, isFallback, fallbackReason, usedBundledFallback, credentialStatus } = await listGalleryImages(categoryParam);
     return NextResponse.json({
       items,
       fallback: isFallback,
       fallbackReason,
       usedBundledFallback,
+      credentialStatus,
     });
   } catch (error) {
     console.error('Gallery API error', error);
@@ -35,6 +36,12 @@ export async function GET(request: Request) {
         fallback: true,
         fallbackReason: 'unexpected_error',
         usedBundledFallback: fallbackItems.length > 0,
+        credentialStatus: {
+          accountId: Boolean(process.env.R2_ACCOUNT_ID?.trim()),
+          bucket: Boolean(process.env.R2_BUCKET?.trim()),
+          accessKey: Boolean(process.env.R2_ACCESS_KEY_ID?.trim()),
+          secretAccessKey: Boolean(process.env.R2_SECRET_ACCESS_KEY?.trim() || process.env.R2_API_TOKEN?.trim()),
+        },
         error: bundledAllowed
           ? 'Unable to load gallery images from R2. Serving bundled fallback data.'
           : 'Unable to load gallery images from R2 and bundled fallbacks are disabled in this environment.',

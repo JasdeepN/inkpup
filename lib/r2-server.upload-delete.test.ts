@@ -201,7 +201,7 @@ describe('upload and delete gallery images', () => {
       .mockImplementationOnce(async () => firstPage)
       .mockImplementationOnce(async () => secondPage);
 
-    const { items, isFallback } = await server.listGalleryImages('flash');
+  const { items, isFallback, credentialStatus } = await server.listGalleryImages('flash');
 
     expect(sendMock).toHaveBeenCalledTimes(2);
     expect((sendMock.mock.calls[0][0] as { params: Record<string, unknown> }).params).toMatchObject({
@@ -224,6 +224,12 @@ describe('upload and delete gallery images', () => {
     expect(items[0].src).toBe('https://cdn.example.com/flash/demo-piece.webp');
     expect(items[1].src).toBe('https://cdn.example.com/flash/older-piece.webp');
     expect(isFallback).toBe(false);
+    expect(credentialStatus).toEqual({
+      accountId: true,
+      bucket: true,
+      accessKey: true,
+      secretAccessKey: true,
+    });
   });
 
   test('listGalleryImages falls back when R2 client initialization fails', async () => {
@@ -241,7 +247,7 @@ describe('upload and delete gallery images', () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
 
     try {
-      const { items, isFallback, fallbackReason } = await server.listGalleryImages('flash');
+  const { items, isFallback, fallbackReason, credentialStatus } = await server.listGalleryImages('flash');
 
       expect(S3ClientMock).toHaveBeenCalled();
       expect(isFallback).toBe(true);
@@ -251,6 +257,12 @@ describe('upload and delete gallery images', () => {
       expect(items[0].category).toBe('flash');
       expect(items[0].src).toBe('/wolf-101711.png');
       expect(items[0].alt).toBe('Flash wolf design');
+      expect(credentialStatus).toEqual({
+        accountId: true,
+        bucket: true,
+        accessKey: true,
+        secretAccessKey: true,
+      });
     } finally {
       consoleSpy.mockRestore();
     }
@@ -271,7 +283,7 @@ describe('upload and delete gallery images', () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
 
     try {
-      const { items, isFallback, fallbackReason } = await server.listGalleryImages('flash');
+  const { items, isFallback, fallbackReason, credentialStatus } = await server.listGalleryImages('flash');
 
       expect(sendMock).toHaveBeenCalledTimes(1);
       expect(consoleSpy).toHaveBeenCalled();
@@ -281,6 +293,12 @@ describe('upload and delete gallery images', () => {
       expect(items[0].id).toBe('flash-1');
       expect(items[0].category).toBe('flash');
       expect(items[0].src).toBe('/wolf-101711.png');
+      expect(credentialStatus).toEqual({
+        accountId: true,
+        bucket: true,
+        accessKey: true,
+        secretAccessKey: true,
+      });
     } finally {
       consoleSpy.mockRestore();
     }

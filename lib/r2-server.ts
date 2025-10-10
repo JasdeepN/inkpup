@@ -94,6 +94,22 @@ function formatLabelFromKey(key: string, prefix: string): string {
 
 const fallbackData = fallbackDataRaw as Array<Partial<GalleryItem> & { src: string; category?: string }>;
 
+type CredentialStatus = {
+  accountId: boolean;
+  bucket: boolean;
+  accessKey: boolean;
+  secretAccessKey: boolean;
+};
+
+function getCredentialStatus(): CredentialStatus {
+  return {
+    accountId: Boolean(accountId),
+    bucket: Boolean(bucket),
+    accessKey: Boolean(accessKey),
+    secretAccessKey: Boolean(secretKey),
+  };
+}
+
 function isBundledFallbackAllowed(): boolean {
   if (process.env.NODE_ENV === 'test') {
     return true;
@@ -332,6 +348,7 @@ export type GalleryFetchResult = {
   isFallback: boolean;
   fallbackReason?: GalleryFallbackReason;
   usedBundledFallback: boolean;
+  credentialStatus?: CredentialStatus;
 };
 
 export async function listGalleryImages(
@@ -344,6 +361,7 @@ export async function listGalleryImages(
 
   const fallbackEnabled = options?.fallback !== false;
   const bundledFallbackAllowed = fallbackEnabled && isBundledFallbackAllowed();
+  const credentialStatus = getCredentialStatus();
   const fallbackResult = (reason: GalleryFallbackReason): GalleryFetchResult => {
     const items = bundledFallbackAllowed ? buildFallbackItems(category) : [];
     return {
@@ -351,10 +369,12 @@ export async function listGalleryImages(
       isFallback: true,
       fallbackReason: reason,
       usedBundledFallback: items.length > 0,
+      credentialStatus,
     };
   };
 
   if (!hasR2Credentials()) {
+    console.error('R2 credentials are incomplete; skipping remote gallery fetch.', credentialStatus);
     return fallbackResult('missing_credentials');
   }
 
@@ -372,10 +392,12 @@ export async function listGalleryImages(
 
   try {
     const images = await fetchGalleryImagesFromR2(clientInstance, prefix, category);
+    console.info('Fetched gallery listing from Cloudflare R2.', { bucket, prefix, count: images.length });
     return {
       items: images,
       isFallback: false,
       usedBundledFallback: false,
+      credentialStatus,
     };
   } catch (error) {
     console.error(

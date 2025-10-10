@@ -223,7 +223,13 @@ export default async function AdminPortalPage(props: PageProps) {
     );
   }
 
-  const { items, isFallback: isFallbackGallery, fallbackReason, usedBundledFallback } = await listGalleryImages(category);
+  const {
+    items,
+    isFallback: isFallbackGallery,
+    fallbackReason,
+    usedBundledFallback,
+    credentialStatus,
+  } = await listGalleryImages(category);
   const canMutate = hasR2Credentials();
   const fallbackDetail = (() => {
     switch (fallbackReason) {
@@ -321,6 +327,9 @@ export default async function AdminPortalPage(props: PageProps) {
                 ? 'Gallery items below are served from bundled backups because the Cloudflare R2 storage container is currently unreachable. The images may be outdated until connectivity is restored.'
                 : 'The Cloudflare R2 storage container is currently unreachable and bundled gallery backups are disabled in this environment. Gallery items will appear again once connectivity is restored.'}
               {fallbackDetail ? ` ${fallbackDetail}` : ''}
+              {fallbackReason === 'missing_credentials' && credentialStatus && (
+                ` Missing credentials — accountId: ${credentialStatus.accountId ? 'ok' : 'missing'}, bucket: ${credentialStatus.bucket ? 'ok' : 'missing'}, accessKey: ${credentialStatus.accessKey ? 'ok' : 'missing'}, secret: ${credentialStatus.secretAccessKey ? 'ok' : 'missing'}.`
+              )}
             </output>
           </section>
         )}

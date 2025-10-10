@@ -18,11 +18,27 @@ type GalleryViewProps = {
     fallback: boolean;
     fallbackReason?: GalleryFallbackCode;
     usedBundledFallback: boolean;
+    credentialStatus?: {
+      accountId: boolean;
+      bucket: boolean;
+      accessKey: boolean;
+      secretAccessKey: boolean;
+    };
   };
 };
 
 type GalleryRecord = Partial<Record<GalleryCategory, GalleryItem[]>>;
-type FallbackRecord = Partial<Record<GalleryCategory, { fallback: boolean; fallbackReason?: GalleryFallbackCode; usedBundledFallback: boolean }>>;
+type FallbackRecord = Partial<Record<GalleryCategory, {
+  fallback: boolean;
+  fallbackReason?: GalleryFallbackCode;
+  usedBundledFallback: boolean;
+  credentialStatus?: {
+    accountId: boolean;
+    bucket: boolean;
+    accessKey: boolean;
+    secretAccessKey: boolean;
+  };
+}>>;
 
 export default function GalleryView({ initialCategory, initialData }: GalleryViewProps) {
   const captionsEnabled = isGalleryCaptionsEnabled();
@@ -33,6 +49,7 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
       fallback: initialData.fallback,
       fallbackReason: initialData.fallbackReason,
       usedBundledFallback: initialData.usedBundledFallback,
+      credentialStatus: initialData.credentialStatus,
     },
   });
   const [loading, setLoading] = useState(false);
@@ -77,6 +94,12 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
         fallback?: boolean;
         fallbackReason?: GalleryFallbackCode;
         usedBundledFallback?: boolean;
+        credentialStatus?: {
+          accountId: boolean;
+          bucket: boolean;
+          accessKey: boolean;
+          secretAccessKey: boolean;
+        };
       };
       setItemsByCategory((prev) => ({ ...prev, [category]: payload.items }));
       setFallbackByCategory((prev) => ({
@@ -85,6 +108,7 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
           fallback: Boolean(payload.fallback),
           fallbackReason: payload.fallbackReason,
           usedBundledFallback: Boolean(payload.usedBundledFallback),
+          credentialStatus: payload.credentialStatus,
         },
       }));
       setActiveCategory(category);

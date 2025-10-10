@@ -21,6 +21,12 @@ describe('r2-server fallback behaviour', () => {
     expect(result.isFallback).toBe(true);
     expect(result.fallbackReason).toBe('missing_credentials');
     expect(result.usedBundledFallback).toBe(true);
+    expect(result.credentialStatus).toEqual({
+      accountId: false,
+      bucket: false,
+      accessKey: false,
+      secretAccessKey: false,
+    });
     expect(result.items.length).toBeGreaterThan(0);
     expect(result.items.every((item) => item.category === 'healed')).toBe(true);
     expect(result.items.every((item) => item.alt && item.alt.length > 0)).toBe(true);
