@@ -23,7 +23,10 @@ const nextConfig = {
     appDir: true
   },
   images: {
-    // Use the default loader; when using Cloudflare Images you can change this
+  // Cloudflare Workers does not support Next.js default image optimizer; serve originals instead.
+  // https://nextjs.org/docs/app/api-reference/components/image#unoptimized
+  // https://opennext.js.org/cloudflare/howtos/image
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',

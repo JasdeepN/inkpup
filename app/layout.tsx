@@ -12,11 +12,28 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
-  const cfBeaconToken = (() => {
-    const raw = process.env.CF_WEB_ANALYTICS_TOKEN ?? process.env.NEXT_PUBLIC_CF_WEB_ANALYTICS_TOKEN;
-    if (!raw) return null;
-    const trimmed = raw.trim();
-    return trimmed.length > 0 ? trimmed : null;
+  const cfBeaconConfig = (() => {
+    const rawToken = process.env.CF_WEB_ANALYTICS_TOKEN ?? process.env.NEXT_PUBLIC_CF_WEB_ANALYTICS_TOKEN;
+    const token = rawToken?.trim();
+    if (!token) {
+      return null;
+    }
+
+    const config: Record<string, unknown> = { token };
+
+    const rawSpa = process.env.CF_WEB_ANALYTICS_SPA ?? process.env.NEXT_PUBLIC_CF_WEB_ANALYTICS_SPA;
+    if (typeof rawSpa === 'string') {
+      const normalized = rawSpa.trim().toLowerCase();
+      if (normalized.length > 0) {
+        if (['false', '0', 'off', 'no'].includes(normalized)) {
+          config.spa = false;
+        } else if (['true', '1', 'on', 'yes'].includes(normalized)) {
+          config.spa = true;
+        }
+      }
+    }
+
+    return JSON.stringify(config);
   })();
 
   return (
@@ -68,12 +85,12 @@ export default function RootLayout({ children }) {
             </div>
           </footer>
         </div>
-        {cfBeaconToken && (
+        {cfBeaconConfig && (
           <Script
             id="cloudflare-web-analytics"
             strategy="afterInteractive"
             src="https://static.cloudflareinsights.com/beacon.min.js"
-            data-cf-beacon={JSON.stringify({ token: cfBeaconToken })}
+            data-cf-beacon={cfBeaconConfig}
           />
         )}
       </body>
