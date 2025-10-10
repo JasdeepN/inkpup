@@ -74,3 +74,18 @@ test('Gallery invokes onSelect and renders captions for items', async () => {
   expect(handleSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'item-1' }));
   expect(screen.getByText('Featured piece')).toBeInTheDocument();
 });
+
+test('Gallery shows backup badge when fallbackActive', () => {
+  const items: GalleryItem[] = [
+    {
+      id: 'backup-1',
+      category: 'flash',
+      src: '/flash/backup-1.webp',
+      alt: 'Backup Item',
+    },
+  ];
+
+  render(<Gallery items={items} fallbackActive />);
+
+  expect(screen.getByText(/^Backup$/i)).toBeInTheDocument();
+});

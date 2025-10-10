@@ -201,7 +201,7 @@ describe('upload and delete gallery images', () => {
       .mockImplementationOnce(async () => firstPage)
       .mockImplementationOnce(async () => secondPage);
 
-    const items = await server.listGalleryImages('flash');
+    const { items, isFallback } = await server.listGalleryImages('flash');
 
     expect(sendMock).toHaveBeenCalledTimes(2);
     expect((sendMock.mock.calls[0][0] as { params: Record<string, unknown> }).params).toMatchObject({
@@ -223,6 +223,7 @@ describe('upload and delete gallery images', () => {
 
     expect(items[0].src).toBe('https://cdn.example.com/flash/demo-piece.webp');
     expect(items[1].src).toBe('https://cdn.example.com/flash/older-piece.webp');
+    expect(isFallback).toBe(false);
   });
 
   test('listGalleryImages falls back when R2 client initialization fails', async () => {
@@ -240,14 +241,16 @@ describe('upload and delete gallery images', () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
 
     try {
-      const items = await server.listGalleryImages('flash');
+      const { items, isFallback, fallbackReason } = await server.listGalleryImages('flash');
 
       expect(S3ClientMock).toHaveBeenCalled();
-  expect(items).toHaveLength(1);
-  expect(items[0].id).toBe('flash-1');
-  expect(items[0].category).toBe('flash');
-  expect(items[0].src).toBe('/wolf-101711.png');
-  expect(items[0].alt).toBe('Flash wolf design');
+      expect(isFallback).toBe(true);
+      expect(fallbackReason).toBe('client_initialization_failed');
+      expect(items).toHaveLength(1);
+      expect(items[0].id).toBe('flash-1');
+      expect(items[0].category).toBe('flash');
+      expect(items[0].src).toBe('/wolf-101711.png');
+      expect(items[0].alt).toBe('Flash wolf design');
     } finally {
       consoleSpy.mockRestore();
     }
@@ -268,14 +271,16 @@ describe('upload and delete gallery images', () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
 
     try {
-      const items = await server.listGalleryImages('flash');
+      const { items, isFallback, fallbackReason } = await server.listGalleryImages('flash');
 
       expect(sendMock).toHaveBeenCalledTimes(1);
       expect(consoleSpy).toHaveBeenCalled();
-  expect(items).toHaveLength(1);
-  expect(items[0].id).toBe('flash-1');
-  expect(items[0].category).toBe('flash');
-  expect(items[0].src).toBe('/wolf-101711.png');
+      expect(isFallback).toBe(true);
+      expect(fallbackReason).toBe('r2_fetch_failed');
+      expect(items).toHaveLength(1);
+      expect(items[0].id).toBe('flash-1');
+      expect(items[0].category).toBe('flash');
+      expect(items[0].src).toBe('/wolf-101711.png');
     } finally {
       consoleSpy.mockRestore();
     }

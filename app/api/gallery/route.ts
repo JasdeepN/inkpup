@@ -17,8 +17,12 @@ export async function GET(request: Request) {
   }
 
   try {
-    const items = await listGalleryImages(categoryParam);
-    return NextResponse.json({ items });
+    const { items, isFallback, fallbackReason } = await listGalleryImages(categoryParam);
+    return NextResponse.json({
+      items,
+      fallback: isFallback,
+      fallbackReason,
+    });
   } catch (error) {
     console.error('Gallery API error', error);
     const fallbackItems = getFallbackGalleryItems(categoryParam);
@@ -26,6 +30,7 @@ export async function GET(request: Request) {
       {
         items: fallbackItems,
         fallback: true,
+        fallbackReason: 'unexpected_error',
         error: 'Unable to load gallery images from R2. Serving bundled fallback data.',
       },
       { status: 200 }

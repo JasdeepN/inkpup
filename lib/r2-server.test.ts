@@ -17,10 +17,12 @@ describe('r2-server fallback behaviour', () => {
 
     expect(hasR2Credentials()).toBe(false);
 
-    const items = await listGalleryImages('healed');
-    expect(items.length).toBeGreaterThan(0);
-    expect(items.every((item) => item.category === 'healed')).toBe(true);
-    expect(items.every((item) => item.alt && item.alt.length > 0)).toBe(true);
+  const result = await listGalleryImages('healed');
+  expect(result.isFallback).toBe(true);
+  expect(result.fallbackReason).toBe('missing_credentials');
+  expect(result.items.length).toBeGreaterThan(0);
+  expect(result.items.every((item) => item.category === 'healed')).toBe(true);
+  expect(result.items.every((item) => item.alt && item.alt.length > 0)).toBe(true);
   });
 
   test('throws for unsupported gallery categories', async () => {

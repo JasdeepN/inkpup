@@ -9,11 +9,12 @@ type GalleryProps = {
   readonly items: GalleryItem[];
   readonly loading?: boolean;
   readonly onSelect?: (item: GalleryItem) => void;
+  readonly fallbackActive?: boolean;
 };
 
 const skeletonKeys = ['one', 'two', 'three', 'four', 'five', 'six'];
 
-export default function Gallery({ items, loading = false, onSelect }: GalleryProps) {
+export default function Gallery({ items, loading = false, onSelect, fallbackActive = false }: GalleryProps) {
   const captionsEnabled = isGalleryCaptionsEnabled();
   const content = useMemo(() => {
     if (loading && !items.length) {
@@ -34,6 +35,7 @@ export default function Gallery({ items, loading = false, onSelect }: GalleryPro
           onClick={() => onSelect?.(item)}
           aria-label={`View ${item.alt || 'tattoo artwork'} in full size`}
         >
+          {fallbackActive && <span className="gallery-card__badge">Backup</span>}
           <div className="gallery-card__image">
             <SmartImage
               src={item.src}
@@ -56,7 +58,7 @@ export default function Gallery({ items, loading = false, onSelect }: GalleryPro
         </button>
       </figure>
     ));
-  }, [captionsEnabled, items, loading, onSelect]);
+  }, [captionsEnabled, fallbackActive, items, loading, onSelect]);
 
   return (
     <div className="gallery-grid" data-state={loading ? 'loading' : 'idle'}>

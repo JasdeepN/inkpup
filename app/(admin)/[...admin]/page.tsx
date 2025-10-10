@@ -223,8 +223,20 @@ export default async function AdminPortalPage(props: PageProps) {
     );
   }
 
-  const items = await listGalleryImages(category);
+  const { items, isFallback: isFallbackGallery, fallbackReason } = await listGalleryImages(category);
   const canMutate = hasR2Credentials();
+  const fallbackDetail = (() => {
+    switch (fallbackReason) {
+      case 'missing_credentials':
+        return 'Verify Cloudflare R2 credentials to restore live syncing.';
+      case 'client_initialization_failed':
+        return 'The R2 client failed to initialize; check API credentials and network access.';
+      case 'r2_fetch_failed':
+        return 'Requests to Cloudflare R2 are failing; review storage status in the dashboard.';
+      default:
+        return null;
+    }
+  })();
 
   return (
     <div className="admin-shell">
@@ -302,6 +314,15 @@ export default async function AdminPortalPage(props: PageProps) {
           <h2>{getCategoryLabel(category)} gallery</h2>
           <p className="text-muted">Browse previously uploaded artwork and remove items that no longer belong.</p>
         </div>
+        {isFallbackGallery && (
+          <section className="admin-alert admin-alert--warning admin-alert--compact">
+            <output aria-live="polite">
+              Gallery items below are served from bundled backups because the Cloudflare R2 storage container is currently unreachable.{' '}
+              The images may be outdated until connectivity is restored.
+              {fallbackDetail ? ` ${fallbackDetail}` : ''}
+            </output>
+          </section>
+        )}
         <nav className="admin-category-nav" aria-label="Gallery categories">
           {GALLERY_CATEGORIES.map((cat) => {
             const isActive = cat === category;
@@ -317,7 +338,7 @@ export default async function AdminPortalPage(props: PageProps) {
           })}
         </nav>
 
-        {items.length === 0 ? (
+  {items.length === 0 ? (
           <p className="admin-empty-state">No artwork uploaded yet for this category.</p>
         ) : (
           <ul className="admin-gallery__grid">

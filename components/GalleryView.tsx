@@ -7,18 +7,32 @@ import { GALLERY_CATEGORIES, getCategoryLabel } from '../lib/gallery-types';
 import Gallery from './Gallery';
 import SmartImage from './SmartImage';
 import { isGalleryCaptionsEnabled } from '../lib/featureFlags';
+import type { GalleryFallbackReason } from '../lib/r2-server';
+
+type GalleryFallbackCode = GalleryFallbackReason | 'unexpected_error';
 
 type GalleryViewProps = {
   readonly initialCategory: GalleryCategory;
-  readonly initialItems: GalleryItem[];
+  readonly initialData: {
+    items: GalleryItem[];
+    fallback: boolean;
+    fallbackReason?: GalleryFallbackCode;
+  };
 };
 
 type GalleryRecord = Partial<Record<GalleryCategory, GalleryItem[]>>;
+type FallbackRecord = Partial<Record<GalleryCategory, { fallback: boolean; fallbackReason?: GalleryFallbackCode }>>;
 
-export default function GalleryView({ initialCategory, initialItems }: GalleryViewProps) {
+export default function GalleryView({ initialCategory, initialData }: GalleryViewProps) {
   const captionsEnabled = isGalleryCaptionsEnabled();
   const [activeCategory, setActiveCategory] = useState<GalleryCategory>(initialCategory);
-  const [itemsByCategory, setItemsByCategory] = useState<GalleryRecord>({ [initialCategory]: initialItems });
+  const [itemsByCategory, setItemsByCategory] = useState<GalleryRecord>({ [initialCategory]: initialData.items });
+  const [fallbackByCategory, setFallbackByCategory] = useState<FallbackRecord>({
+    [initialCategory]: {
+      fallback: initialData.fallback,
+      fallbackReason: initialData.fallbackReason,
+    },
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<GalleryItem | null>(null);
@@ -26,6 +40,21 @@ export default function GalleryView({ initialCategory, initialItems }: GalleryVi
   const [modalSize, setModalSize] = useState<{ width: number; height: number } | null>(null);
 
   const items = useMemo(() => itemsByCategory[activeCategory] ?? [], [activeCategory, itemsByCategory]);
+  const fallbackState = fallbackByCategory[activeCategory] ?? { fallback: false };
+  const fallbackDetail = useMemo(() => {
+    switch (fallbackState.fallbackReason) {
+      case 'missing_credentials':
+        return 'We need to refresh our storage credentials to resume live updates.';
+      case 'client_initialization_failed':
+        return 'Our storage client could not initialize; we are investigating the connection.';
+      case 'r2_fetch_failed':
+        return 'Cloudflare R2 is currently unreachable, so image updates may be delayed.';
+      case 'unexpected_error':
+        return 'An unexpected error occurred while retrieving live images.';
+      default:
+        return null;
+    }
+  }, [fallbackState.fallbackReason]);
 
   const fetchCategory = useCallback(async (category: GalleryCategory) => {
     if (itemsByCategory[category]) {
@@ -41,8 +70,19 @@ export default function GalleryView({ initialCategory, initialItems }: GalleryVi
       if (!res.ok) {
         throw new Error(`Could not load ${category} artwork.`);
       }
-      const payload = (await res.json()) as { items: GalleryItem[] };
+      const payload = (await res.json()) as {
+        items: GalleryItem[];
+        fallback?: boolean;
+        fallbackReason?: GalleryFallbackCode;
+      };
       setItemsByCategory((prev) => ({ ...prev, [category]: payload.items }));
+      setFallbackByCategory((prev) => ({
+        ...prev,
+        [category]: {
+          fallback: Boolean(payload.fallback),
+          fallbackReason: payload.fallbackReason,
+        },
+      }));
       setActiveCategory(category);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to load gallery.';
@@ -126,7 +166,21 @@ export default function GalleryView({ initialCategory, initialItems }: GalleryVi
 
       {error && <div className="gallery-error" role="alert">{error}</div>}
 
-      <Gallery items={items} loading={loading} onSelect={setSelected} />
+      {fallbackState.fallback && (
+        <section className="gallery-warning">
+          <output aria-live="polite">
+            We&apos;re having trouble reaching our Cloudflare R2 storage container right now. These photos are from a backup
+            set and might be a little out of date.{fallbackDetail ? ` ${fallbackDetail}` : ''}
+          </output>
+        </section>
+      )}
+
+      <Gallery
+        items={items}
+        loading={loading}
+        onSelect={setSelected}
+        fallbackActive={fallbackState.fallback}
+      />
 
       {selected && (
         <dialog

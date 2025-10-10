@@ -21,6 +21,9 @@ type Story = StoryObj<typeof GalleryView>;
 export const Default: Story = {
   args: {
     initialCategory: 'healed',
-    initialItems: healedItems,
+    initialData: {
+      items: healedItems,
+      fallback: false,
+    },
   },
 };

@@ -30,7 +30,7 @@ describe('GalleryView', () => {
       { id: '1', src: '/img1.webp', category: 'flash', alt: 'One' },
     ];
 
-    render(<GalleryView initialCategory="flash" initialItems={items} />);
+  render(<GalleryView initialCategory="flash" initialData={{ items, fallback: false }} />);
 
     // Click another category tab (the component renders buttons for all categories)
     const buttons = screen.getAllByRole('tab');
@@ -58,7 +58,7 @@ describe('GalleryView', () => {
       },
     ];
 
-    render(<GalleryView initialCategory="flash" initialItems={items} />);
+  render(<GalleryView initialCategory="flash" initialData={{ items, fallback: false }} />);
 
     // Click the gallery item to open modal
   // the gallery button aria-label contains the item alt, so match the generic pattern
@@ -82,10 +82,10 @@ describe('GalleryView', () => {
 
     global.fetch = jest.fn(async () => ({
       ok: true,
-      json: async () => ({ items }),
+      json: async () => ({ items, fallback: false }),
     } as unknown as Response));
 
-    render(<GalleryView initialCategory="healed" initialItems={[]} />);
+    render(<GalleryView initialCategory="healed" initialData={{ items: [], fallback: false }} />);
 
     // Click the flash tab
     const flashBtn = screen.getByRole('tab', { name: /Flash/i });
@@ -102,10 +102,10 @@ describe('GalleryView', () => {
       { id: '1', src: '/img1.webp', category: 'flash', alt: 'One' },
     ] as unknown as GalleryItem[];
 
-    render(<GalleryView initialCategory="flash" initialItems={items} />);
+    render(<GalleryView initialCategory="flash" initialData={{ items, fallback: false }} />);
 
     // Click to open modal
-  const button = screen.getByRole('button', { name: /View .* in full size/i });
+    const button = screen.getByRole('button', { name: /View .* in full size/i });
     await userEvent.click(button);
 
     // Mock natural size via calling onLoadingComplete by finding the image and invoking the callback
@@ -120,5 +120,23 @@ describe('GalleryView', () => {
     expect(dialog).toBeInTheDocument();
     // ensure style applied or modal content present
     expect(dialog.querySelector('.gallery-modal__image')).toBeTruthy();
+  });
+
+  test('shows fallback warning when backup data is active', () => {
+    (isGalleryCaptionsEnabled as jest.Mock).mockReturnValue(false);
+
+    const items: GalleryItem[] = [
+      { id: '1', src: '/img1.webp', category: 'flash', alt: 'One' },
+    ];
+
+    render(
+      <GalleryView
+        initialCategory="flash"
+        initialData={{ items, fallback: true, fallbackReason: 'missing_credentials' }}
+      />
+    );
+
+    expect(screen.getByText(/Cloudflare R2 storage container/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Backup/i).length).toBeGreaterThan(0);
   });
 });

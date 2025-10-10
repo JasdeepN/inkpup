@@ -314,19 +314,34 @@ type ListGalleryImagesOptions = {
   fallback?: boolean;
 };
 
+export type GalleryFallbackReason =
+  | 'missing_credentials'
+  | 'client_initialization_failed'
+  | 'r2_fetch_failed';
+
+export type GalleryFetchResult = {
+  items: GalleryItem[];
+  isFallback: boolean;
+  fallbackReason?: GalleryFallbackReason;
+};
+
 export async function listGalleryImages(
   category: GalleryCategory,
   options?: ListGalleryImagesOptions
-): Promise<GalleryItem[]> {
+): Promise<GalleryFetchResult> {
   if (!GALLERY_CATEGORIES.includes(category)) {
     throw new Error(`Unsupported gallery category '${category}'.`);
   }
 
   const fallbackEnabled = options?.fallback !== false;
-  const fallbackResult = () => (fallbackEnabled ? buildFallbackItems(category) : []);
+  const fallbackResult = (reason: GalleryFallbackReason): GalleryFetchResult => ({
+    items: fallbackEnabled ? buildFallbackItems(category) : [],
+    isFallback: true,
+    fallbackReason: reason,
+  });
 
   if (!hasR2Credentials()) {
-    return fallbackResult();
+    return fallbackResult('missing_credentials');
   }
 
   let clientInstance: S3Client;
@@ -337,18 +352,21 @@ export async function listGalleryImages(
       `Failed to initialize R2 client for category "${category}". Falling back to bundled data.`,
       error
     );
-    return buildFallbackItems(category);
+    return fallbackResult('client_initialization_failed');
   }
   const prefix = `${category}`.replace(/\/+$/, '');
 
   try {
     const images = await fetchGalleryImagesFromR2(clientInstance, prefix, category);
-    return images;
+    return {
+      items: images,
+      isFallback: false,
+    };
   } catch (error) {
     console.error(
       `Failed to list gallery images from R2 for category "${category}". Falling back to bundled data.`,
       error
     );
-    return fallbackResult();
+    return fallbackResult('r2_fetch_failed');
   }
 }
