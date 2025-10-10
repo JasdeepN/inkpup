@@ -45,7 +45,7 @@ Set the following repository secrets under **Settings → Secrets and variables 
 - `CF_API_TOKEN` – a Cloudflare API token with the Workers "Edit" template (or `Account.Workers Scripts:Edit`, `Account.Workers Scripts:Read`, and any additional resources your app binds to, such as R2 or KV). Wrangler 3.99+ is required by the adapter (see [OpenNext CLI docs](https://opennext.js.org/cloudflare/cli)).
 - `CF_ACCOUNT_ID` – the account identifier from the Cloudflare dashboard (**Manage Account → Overview → Account ID**).
 - `CF_ZONE_ID` – the zone that maps to `inkpup.ca`. The workflow attaches the R2 custom domain through this zone on each deploy.
-- `R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` – R2 credentials with permission to manage the public bucket used for media.
+- `R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` – R2 credentials with permission to manage the public bucket used for media. Generate these with the **Workers R2 Storage Write** (or Admin Read & Write) permission group so the key can edit bucket configuration such as CORS.
 - Optional: `R2_PUBLIC_HOSTNAME` – when set, the deploy workflow renders Wrangler config with this hostname for dev/staging previews. Production always uses `https://r2.inkpup.ca`.
 
 The workflow exports these secrets to the OpenNext CLI as `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and the matching `R2_*` variables. Tokens created before 2024 may be missing the Workers scripts scopes; recreate them if the deploy step reports permission errors.

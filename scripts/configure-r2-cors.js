@@ -166,7 +166,13 @@ async function applyPolicy(rules) {
 
     await applyPolicy(desiredRules);
   } catch (error) {
-    console.error('Failed to configure R2 CORS policy:', error.message || error);
+    if (error?.name === 'AccessDenied' || error?.Code === 'AccessDenied' || error?.$metadata?.httpStatusCode === 403) {
+      console.error(
+        'Failed to configure R2 CORS policy: AccessDenied. Ensure the R2 access key was created with "Workers R2 Storage Write" (or Admin Read & Write) permissions so it can edit bucket configuration.'
+      );
+    } else {
+      console.error('Failed to configure R2 CORS policy:', error.message || error);
+    }
     process.exit(1);
   }
 })();
