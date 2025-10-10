@@ -27,7 +27,7 @@ const OPTIMIZED_CONTENT_TYPE = 'image/webp';
 const accountId = process.env.R2_ACCOUNT_ID;
 const bucket = process.env.R2_BUCKET;
 const accessKey = process.env.R2_ACCESS_KEY_ID;
-const secretKey = process.env.R2_SECRET_ACCESS_KEY;
+const secretKey = process.env.R2_SECRET_ACCESS_KEY || process.env.R2_API_TOKEN;
 
 let client: S3Client | null = null;
 
@@ -37,7 +37,7 @@ export function hasR2Credentials(): boolean {
 
 function getClient(): S3Client {
   if (!hasR2Credentials()) {
-    throw new Error('R2 credentials are not fully configured. Please set R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY.');
+    throw new Error('R2 credentials are not fully configured. Please set R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, and either R2_SECRET_ACCESS_KEY or R2_API_TOKEN.');
   }
 
   client ??= new S3Client({

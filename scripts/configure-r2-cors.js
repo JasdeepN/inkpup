@@ -24,11 +24,11 @@ const argv = minimist(process.argv.slice(2), {
 const account = process.env.R2_ACCOUNT_ID;
 const bucket = process.env.R2_BUCKET;
 const accessKeyId = process.env.R2_ACCESS_KEY_ID;
-const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY || process.env.R2_API_TOKEN;
 
 if (!account || !bucket || !accessKeyId || !secretAccessKey) {
   console.error(
-    'Missing R2 credentials. Set R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY before running this script.'
+    'Missing R2 credentials. Set R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, and either R2_SECRET_ACCESS_KEY or R2_API_TOKEN before running this script.'
   );
   process.exit(1);
 }

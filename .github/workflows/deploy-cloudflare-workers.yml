@@ -52,7 +52,9 @@ jobs:
       - name: Build with OpenNext
         env:
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY || secrets.R2_API_TOKEN }}
+          R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
+          R2_SECRET_SOURCE: "${{ secrets.R2_SECRET_ACCESS_KEY != '' && 'secret-key' || secrets.R2_API_TOKEN != '' && 'api-token' || '' }}"
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
           R2_PUBLIC_HOSTNAME: https://r2.inkpup.ca
@@ -83,7 +85,9 @@ jobs:
       CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY || secrets.R2_API_TOKEN }}
+      R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
+      R2_SECRET_SOURCE: "${{ secrets.R2_SECRET_ACCESS_KEY != '' && 'secret-key' || secrets.R2_API_TOKEN != '' && 'api-token' || '' }}"
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       R2_PUBLIC_HOSTNAME: ${{ secrets.R2_PUBLIC_HOSTNAME }}
@@ -103,7 +107,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          required=(CF_API_TOKEN CF_ACCOUNT_ID CF_ZONE_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_ACCOUNT_ID R2_BUCKET)
+          required=(CF_API_TOKEN CF_ACCOUNT_ID CF_ZONE_ID R2_ACCESS_KEY_ID R2_ACCOUNT_ID R2_BUCKET)
 
           for name in "${required[@]}"; do
             value="${!name:-}"
@@ -112,6 +116,15 @@ jobs:
               exit 1
             fi
           done
+
+          if [ -z "${R2_SECRET_SOURCE:-}" ]; then
+            echo '::error::Missing GitHub secret R2_SECRET_ACCESS_KEY or R2_API_TOKEN. Provide a credential with Workers R2 Storage Write permissions.' >&2
+            exit 1
+          fi
+
+          if [ "${R2_SECRET_SOURCE}" = 'api-token' ]; then
+            echo '::notice::Using R2_API_TOKEN as the secret access key for S3-compatible requests. Ensure the token value is hashed per Cloudflare guidance.' >&2
+          fi
 
           if [ -z "${R2_PUBLIC_HOSTNAME:-}" ]; then
             echo "::notice::Optional secret R2_PUBLIC_HOSTNAME is not configured. Falling back to the default Cloudflare R2 public URL." >&2
@@ -148,7 +161,9 @@ jobs:
       CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY || secrets.R2_API_TOKEN }}
+      R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
+      R2_SECRET_SOURCE: "${{ secrets.R2_SECRET_ACCESS_KEY != '' && 'secret-key' || secrets.R2_API_TOKEN != '' && 'api-token' || '' }}"
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       R2_PUBLIC_HOSTNAME: ${{ secrets.R2_PUBLIC_HOSTNAME }}
@@ -173,11 +188,25 @@ jobs:
           CLOUDFLARE_ZONE_ID: ${{ env.CLOUDFLARE_ZONE_ID }}
           R2_ACCESS_KEY_ID: ${{ env.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ env.R2_SECRET_ACCESS_KEY }}
+          R2_API_TOKEN: ${{ env.R2_API_TOKEN }}
+          R2_SECRET_SOURCE: ${{ env.R2_SECRET_SOURCE }}
           R2_ACCOUNT_ID: ${{ env.R2_ACCOUNT_ID }}
           R2_BUCKET: ${{ env.R2_BUCKET }}
           R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
         run: |
           set -euo pipefail
+          resolved_secret="${R2_SECRET_ACCESS_KEY:-}"
+
+          if [ -z "$resolved_secret" ] && [ -n "${R2_API_TOKEN:-}" ]; then
+            resolved_secret="$R2_API_TOKEN"
+          fi
+
+          if [ -z "$resolved_secret" ]; then
+            echo '::error::Unable to resolve an R2 secret for templating wrangler.toml. Provide R2_SECRET_ACCESS_KEY or R2_API_TOKEN.' >&2
+            exit 1
+          fi
+
+          export R2_SECRET_ACCESS_KEY="$resolved_secret"
           envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID} ${R2_PUBLIC_HOSTNAME} ${R2_ACCESS_KEY_ID} ${R2_SECRET_ACCESS_KEY} ${R2_ACCOUNT_ID} ${R2_BUCKET}' < wrangler.toml > wrangler.resolved.toml
 
       - name: Deploy to dev environment
@@ -208,7 +237,9 @@ jobs:
       CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY || secrets.R2_API_TOKEN }}
+      R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
+      R2_SECRET_SOURCE: "${{ secrets.R2_SECRET_ACCESS_KEY != '' && 'secret-key' || secrets.R2_API_TOKEN != '' && 'api-token' || '' }}"
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       R2_PUBLIC_HOSTNAME: https://r2.inkpup.ca
@@ -230,7 +261,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          required=(CF_API_TOKEN CF_ACCOUNT_ID CF_ZONE_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_ACCOUNT_ID R2_BUCKET)
+          required=(CF_API_TOKEN CF_ACCOUNT_ID CF_ZONE_ID R2_ACCESS_KEY_ID R2_ACCOUNT_ID R2_BUCKET)
           for name in "${required[@]}"; do
             value="${!name:-}"
             if [ -z "$value" ]; then
@@ -238,6 +269,15 @@ jobs:
               exit 1
             fi
           done
+
+          if [ -z "${R2_SECRET_SOURCE:-}" ]; then
+            echo '::error::Missing GitHub secret R2_SECRET_ACCESS_KEY or R2_API_TOKEN. Provide a credential with Workers R2 Storage Write permissions.' >&2
+            exit 1
+          fi
+
+          if [ "${R2_SECRET_SOURCE}" = 'api-token' ]; then
+            echo '::notice::Using R2_API_TOKEN as the secret access key for S3-compatible requests. Ensure the token value is hashed per Cloudflare guidance.' >&2
+          fi
 
       - name: Debug Cloudflare environment values (production)
         run: |
@@ -273,7 +313,9 @@ jobs:
       CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY || secrets.R2_API_TOKEN }}
+      R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
+      R2_SECRET_SOURCE: "${{ secrets.R2_SECRET_ACCESS_KEY != '' && 'secret-key' || secrets.R2_API_TOKEN != '' && 'api-token' || '' }}"
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       R2_PUBLIC_HOSTNAME: https://r2.inkpup.ca
@@ -300,11 +342,25 @@ jobs:
           CLOUDFLARE_ZONE_ID: ${{ env.CLOUDFLARE_ZONE_ID }}
           R2_ACCESS_KEY_ID: ${{ env.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ env.R2_SECRET_ACCESS_KEY }}
+          R2_API_TOKEN: ${{ env.R2_API_TOKEN }}
+          R2_SECRET_SOURCE: ${{ env.R2_SECRET_SOURCE }}
           R2_ACCOUNT_ID: ${{ env.R2_ACCOUNT_ID }}
           R2_BUCKET: ${{ env.R2_BUCKET }}
           R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
         run: |
           set -euo pipefail
+          resolved_secret="${R2_SECRET_ACCESS_KEY:-}"
+
+          if [ -z "$resolved_secret" ] && [ -n "${R2_API_TOKEN:-}" ]; then
+            resolved_secret="$R2_API_TOKEN"
+          fi
+
+          if [ -z "$resolved_secret" ]; then
+            echo '::error::Unable to resolve an R2 secret for templating wrangler.toml. Provide R2_SECRET_ACCESS_KEY or R2_API_TOKEN.' >&2
+            exit 1
+          fi
+
+          export R2_SECRET_ACCESS_KEY="$resolved_secret"
           envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID} ${R2_PUBLIC_HOSTNAME} ${R2_ACCESS_KEY_ID} ${R2_SECRET_ACCESS_KEY} ${R2_ACCOUNT_ID} ${R2_BUCKET}' < wrangler.toml > wrangler.resolved.toml
 
       - name: Deploy to production environment
