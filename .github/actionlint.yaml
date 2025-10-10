@@ -1,0 +1,13 @@
+secrets:
+  - CF_API_TOKEN
+  - CF_ACCOUNT_ID
+  - CF_ZONE_ID
+  - R2_ACCESS_KEY_ID
+  - R2_SECRET_ACCESS_KEY
+  - R2_ACCOUNT_ID
+  - R2_BUCKET
+  - R2_PUBLIC_HOSTNAME
+paths:
+  .github/workflows/deploy-cloudflare-workers.yml:
+    ignore:
+      - 'Context access might be invalid: R2_[A-Z_]+'
