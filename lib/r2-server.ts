@@ -30,20 +30,33 @@ const accessKey = process.env.R2_ACCESS_KEY_ID?.trim();
 const rawSecretKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
 const rawApiToken = process.env.R2_API_TOKEN?.trim();
 
+const HEX_64 = /^[0-9a-f]{64}$/i;
+
 const secretKey = (() => {
   if (rawSecretKey) {
+    if (HEX_64.test(rawSecretKey)) {
+      return rawSecretKey;
+    }
+
+    if (rawApiToken && rawSecretKey === rawApiToken) {
+      return createHash('sha256').update(rawApiToken).digest('hex');
+    }
+
     return rawSecretKey;
   }
+
   if (!rawApiToken) {
     return undefined;
   }
-  if (/^[0-9a-f]{64}$/i.test(rawApiToken)) {
+
+  if (HEX_64.test(rawApiToken)) {
     return rawApiToken;
   }
+
   return createHash('sha256').update(rawApiToken).digest('hex');
 })();
 
-if (secretKey && !rawSecretKey) {
+if (secretKey && (!rawSecretKey || rawSecretKey === rawApiToken)) {
   process.env.R2_SECRET_ACCESS_KEY = secretKey;
 }
 
