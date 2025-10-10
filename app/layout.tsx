@@ -74,7 +74,6 @@ export default function RootLayout({ children }) {
             strategy="afterInteractive"
             src="https://static.cloudflareinsights.com/beacon.min.js"
             data-cf-beacon={JSON.stringify({ token: cfBeaconToken })}
-            crossOrigin="anonymous"
           />
         )}
       </body>

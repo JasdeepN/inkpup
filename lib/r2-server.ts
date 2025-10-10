@@ -9,7 +9,6 @@ import { toPublicR2Url } from './r2';
 import fallbackDataRaw from '../data/gallery.json';
 import type { GalleryItem, GalleryCategory } from './gallery-types';
 import { GALLERY_CATEGORIES, getCategoryLabel, isGalleryCategory } from './gallery-types';
-import sharp from 'sharp';
 import { createHash } from 'crypto';
 
 const DEFAULT_MAX_IMAGE_WIDTH = 1800;
@@ -105,13 +104,47 @@ export function generateGalleryObjectKey(
   return `${category}/${slug}.webp`;
 }
 
+type SharpFactory = typeof import('sharp');
+
+let sharpFactoryPromise: Promise<SharpFactory | null> | null = null;
+
+async function loadSharpFactory(): Promise<SharpFactory | null> {
+  sharpFactoryPromise ??=
+    import('sharp')
+      .then((mod) => {
+        const factory = (mod as unknown as { default?: SharpFactory }).default ?? (mod as unknown as SharpFactory);
+        if (typeof factory !== 'function') {
+          console.warn('The `sharp` module did not export a callable factory. Skipping image optimization.');
+          return null;
+        }
+        return factory;
+      })
+      .catch((error) => {
+        console.warn('Optional dependency `sharp` failed to load. Falling back to uploading original image buffers.', error);
+        return null;
+      });
+
+  return sharpFactoryPromise;
+}
+
 async function createOptimizedImage(buffer: Buffer) {
-  const pipeline = sharp(buffer);
+  const sharpFactory = await loadSharpFactory();
+
+  if (!sharpFactory) {
+    return {
+      buffer,
+      info: {
+        size: buffer.length,
+      },
+    };
+  }
+
+  const pipeline = sharpFactory(buffer);
   const metadata = await pipeline.metadata();
   const width = metadata.width ?? MAX_IMAGE_WIDTH;
   const targetWidth = Math.min(width, MAX_IMAGE_WIDTH);
 
-  const { data, info } = await sharp(buffer)
+  const { data, info } = await sharpFactory(buffer)
     .rotate()
     .resize({ width: targetWidth, withoutEnlargement: true })
     .webp({ quality: 82, effort: 5 })
