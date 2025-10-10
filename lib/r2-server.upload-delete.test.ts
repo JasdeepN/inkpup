@@ -218,9 +218,11 @@ describe('upload and delete gallery images', () => {
       const items = await server.listGalleryImages('flash');
 
       expect(S3ClientMock).toHaveBeenCalled();
-      expect(items).toHaveLength(1);
-      expect(items[0].id).toBe('flash-1');
-      expect(items[0].category).toBe('flash');
+  expect(items).toHaveLength(1);
+  expect(items[0].id).toBe('flash-1');
+  expect(items[0].category).toBe('flash');
+  expect(items[0].src).toBe('/wolf-101711.png');
+  expect(items[0].alt).toBe('Flash wolf design');
     } finally {
       consoleSpy.mockRestore();
     }
@@ -245,10 +247,10 @@ describe('upload and delete gallery images', () => {
 
       expect(sendMock).toHaveBeenCalledTimes(1);
       expect(consoleSpy).toHaveBeenCalled();
-      expect(items).toHaveLength(1);
-      expect(items[0].id).toBe('flash-1');
-      expect(items[0].category).toBe('flash');
-      expect(items[0].src).toContain('Flash');
+  expect(items).toHaveLength(1);
+  expect(items[0].id).toBe('flash-1');
+  expect(items[0].category).toBe('flash');
+  expect(items[0].src).toBe('/wolf-101711.png');
     } finally {
       consoleSpy.mockRestore();
     }

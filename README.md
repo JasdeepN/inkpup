@@ -31,6 +31,7 @@ Cloudflare Workers notes
 - Build and deploy with the `@opennextjs/cloudflare` adapter (`npm run opennext:build` / `npm run opennext:deploy`) as documented in [OpenNext for Cloudflare – Get started](https://opennext.js.org/cloudflare/get-started).
 - Ensure `wrangler.toml` keeps the compatibility date at `2024-09-23` or later with `nodejs_compat` enabled so the Worker runtime matches the adapter requirements.
 - Production traffic serves media from the `https://r2.inkpup.ca` custom hostname. Leave `R2_PUBLIC_HOSTNAME` unset in dev to exercise the default `<account>.r2.cloudflarestorage.com/<bucket>` URL when testing locally.
+- Optional: set `CF_WEB_ANALYTICS_TOKEN` (or the build-time `NEXT_PUBLIC_CF_WEB_ANALYTICS_TOKEN`) to embed the Cloudflare Web Analytics beacon manually. If you enable this path, disable the automatic injection toggle in the Cloudflare dashboard to avoid duplicate scripts or stale SRI hashes. The value comes from **Web Analytics → Manage site → JS Snippet**.
 
 Cloudflare deployment (GitHub Actions)
 

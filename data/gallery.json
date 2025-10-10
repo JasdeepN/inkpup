@@ -16,14 +16,14 @@
   {
     "id": "flash-1",
     "category": "flash",
-    "src": "https://via.placeholder.com/800x800?text=Flash+Wolf",
+    "src": "/wolf-101711.png",
     "alt": "Flash wolf design",
     "caption": "Wolf flash ready to tattoo"
   },
   {
     "id": "art-1",
     "category": "art",
-    "src": "https://via.placeholder.com/800x800?text=Art+Print",
+    "src": "/tattoo-1900921.png",
     "alt": "Art print sample",
     "caption": "Mixed media art print"
   }

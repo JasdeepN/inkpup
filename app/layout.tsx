@@ -1,4 +1,5 @@
 import './globals.scss';
+import Script from 'next/script';
 import { Meta } from '../components/Meta';
 import LocalBusinessJsonLd from '../components/LocalBusinessJsonLd';
 import business from '../data/business.json';
@@ -11,6 +12,9 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  const cfBeaconToken =
+    process.env.CF_WEB_ANALYTICS_TOKEN ?? process.env.NEXT_PUBLIC_CF_WEB_ANALYTICS_TOKEN ?? null;
+
   return (
     <html lang="en" className="dark">
       <head />
@@ -60,6 +64,15 @@ export default function RootLayout({ children }) {
             </div>
           </footer>
         </div>
+        {cfBeaconToken && (
+          <Script
+            id="cloudflare-web-analytics"
+            strategy="afterInteractive"
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon={JSON.stringify({ token: cfBeaconToken })}
+            crossOrigin="anonymous"
+          />
+        )}
       </body>
     </html>
   );
