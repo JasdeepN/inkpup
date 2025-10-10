@@ -12,8 +12,12 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
-  const cfBeaconToken =
-    process.env.CF_WEB_ANALYTICS_TOKEN ?? process.env.NEXT_PUBLIC_CF_WEB_ANALYTICS_TOKEN ?? null;
+  const cfBeaconToken = (() => {
+    const raw = process.env.CF_WEB_ANALYTICS_TOKEN ?? process.env.NEXT_PUBLIC_CF_WEB_ANALYTICS_TOKEN;
+    if (!raw) return null;
+    const trimmed = raw.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  })();
 
   return (
     <html lang="en" className="dark">
