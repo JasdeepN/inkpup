@@ -7,40 +7,87 @@
 const { S3Client, ListObjectsV2Command, CopyObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
 const argv = require('minimist')(process.argv.slice(2));
 
+const { createHash } = require('crypto');
+
 const account = process.env.R2_ACCOUNT_ID;
 const bucket = process.env.R2_BUCKET;
-const accessKey = process.env.R2_ACCESS_KEY_ID;
+let accessKey = process.env.R2_ACCESS_KEY_ID;
 const secretKey = process.env.R2_SECRET_ACCESS_KEY;
+const apiToken = process.env.R2_API_TOKEN;
 
-if (!account || !bucket || !accessKey || !secretKey) {
-  console.error('Missing R2 credentials. Set R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY');
-  process.exit(1);
+// Auto-derive credentials from API token if needed
+async function deriveAccessKeyId() {
+  if (!apiToken) {
+    return null;
+  }
+  try {
+    const response = await fetch('https://api.cloudflare.com/client/v4/user/tokens/verify', {
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+      },
+    });
+    if (!response.ok) {
+      console.warn(`Failed to verify API token (HTTP ${response.status}). Unable to auto-derive access key ID.`);
+      return null;
+    }
+    const data = await response.json();
+    return data.result?.id ?? null;
+  } catch (error) {
+    console.warn('Error verifying API token:', error.message);
+    return null;
+  }
 }
 
-const endpoint = `https://${account}.r2.cloudflarestorage.com`;
-const prefix = argv.prefix || '';
-const cacheControl = argv.cache || 'public, max-age=31536000';
-const dry = Boolean(argv.dry);
-const force = Boolean(argv.force || argv.f);
+async function validateCredentials() {
+  if (!account || !bucket) {
+    console.error('Missing R2_ACCOUNT_ID or R2_BUCKET. Set these environment variables.');
+    process.exit(1);
+  }
 
-const client = new S3Client({
-  region: 'auto',
-  endpoint,
-  credentials: { accessKeyId: accessKey, secretAccessKey: secretKey },
-  forcePathStyle: false,
-});
+  if (!accessKey && apiToken) {
+    console.log('R2_ACCESS_KEY_ID not provided. Attempting to derive from R2_API_TOKEN...');
+    accessKey = await deriveAccessKeyId();
+    if (accessKey) {
+      console.log(`Successfully derived access key ID: ${accessKey}`);
+    } else {
+      console.error('Unable to derive access key ID from R2_API_TOKEN. Please set R2_ACCESS_KEY_ID explicitly.');
+      process.exit(1);
+    }
+  }
 
-// Debug: show parsed flags so it's obvious what the script received
-console.log(`Flags: prefix='${prefix}' cache='${cacheControl}' dry=${dry} force=${force}`);
-
-async function listAllKeys(continuationToken) {
-  const cmd = new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix, ContinuationToken: continuationToken });
-  const res = await client.send(cmd);
-  const keys = (res.Contents || []).map(o => o.Key).filter(Boolean);
-  return { keys, nextToken: res.IsTruncated ? res.NextContinuationToken : null };
+  if (!accessKey || !secretKey) {
+    console.error('Missing R2_ACCESS_KEY_ID or R2_SECRET_ACCESS_KEY. Set these environment variables or provide R2_API_TOKEN.');
+    process.exit(1);
+  }
 }
 
-async function run() {
+async function main() {
+  await validateCredentials();
+
+  const endpoint = `https://${account}.r2.cloudflarestorage.com`;
+  const prefix = argv.prefix || '';
+  const cacheControl = argv.cache || 'public, max-age=31536000';
+  const dry = Boolean(argv.dry);
+  const force = Boolean(argv.force || argv.f);
+
+  const client = new S3Client({
+    region: 'auto',
+    endpoint,
+    credentials: { accessKeyId: accessKey, secretAccessKey: secretKey },
+    forcePathStyle: false,
+  });
+
+  // Debug: show parsed flags so it's obvious what the script received
+  console.log(`Flags: prefix='${prefix}' cache='${cacheControl}' dry=${dry} force=${force}`);
+
+  async function listAllKeys(continuationToken) {
+    const cmd = new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix, ContinuationToken: continuationToken });
+    const res = await client.send(cmd);
+    const keys = (res.Contents || []).map(o => o.Key).filter(Boolean);
+    return { keys, nextToken: res.IsTruncated ? res.NextContinuationToken : null };
+  }
+
+  async function run() {
   console.log(`Setting Cache-Control="${cacheControl}" for objects in ${bucket}/${prefix} (dry=${dry})`);
   let token = undefined;
   let total = 0;
@@ -93,9 +140,12 @@ async function run() {
     }
   } while (token);
   console.log(`Done. Processed ${total} objects.`);
+  }
+
+  await run();
 }
 
-run().catch(err => {
+main().catch(err => {
   console.error(err && err.message ? err.message : err);
   process.exit(1);
 });

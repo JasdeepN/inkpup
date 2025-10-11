@@ -22,9 +22,9 @@ const argv = minimist(process.argv.slice(2), {
   string: ['config'],
 });
 
-const account = process.env.CF_ACCOUNT_ID?.trim();
+const account = process.env.R2_ACCOUNT_ID?.trim();
 const bucket = process.env.R2_BUCKET?.trim();
-const accessKeyId = process.env.R2_ACCESS_KEY_ID?.trim();
+let accessKeyId = process.env.R2_ACCESS_KEY_ID?.trim();
 const rawSecretAccessKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
 const rawApiToken = process.env.R2_API_TOKEN?.trim();
 
@@ -42,12 +42,58 @@ if (!secretAccessKey && rawApiToken) {
   }
 }
 
-if (!account || !bucket || !accessKeyId || !secretAccessKey) {
-  console.error(
-    'Missing R2 credentials. Set R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, and either R2_SECRET_ACCESS_KEY or R2_API_TOKEN before running this script.'
-  );
-  process.exit(1);
+// Auto-derive access key ID from API token if not provided
+async function deriveAccessKeyId() {
+  if (!rawApiToken) {
+    return null;
+  }
+  try {
+    const response = await fetch('https://api.cloudflare.com/client/v4/user/tokens/verify', {
+      headers: {
+        Authorization: `Bearer ${rawApiToken}`,
+      },
+    });
+    if (!response.ok) {
+      console.warn(`Failed to verify API token (HTTP ${response.status}). Unable to auto-derive access key ID.`);
+      return null;
+    }
+    const data = await response.json();
+    return data.result?.id ?? null;
+  } catch (error) {
+    console.warn('Error verifying API token:', error.message);
+    return null;
+  }
 }
+
+async function validateCredentials() {
+  if (!account || !bucket) {
+    console.error('Missing R2_ACCOUNT_ID or R2_BUCKET environment variables.');
+    process.exit(1);
+  }
+
+  if (!secretAccessKey) {
+    console.error('Missing R2_SECRET_ACCESS_KEY or R2_API_TOKEN environment variables.');
+    process.exit(1);
+  }
+
+  if (!accessKeyId && rawApiToken) {
+    console.log('R2_ACCESS_KEY_ID not provided. Attempting to derive from R2_API_TOKEN...');
+    accessKeyId = await deriveAccessKeyId();
+    if (accessKeyId) {
+      console.log(`Successfully derived access key ID: ${accessKeyId}`);
+    } else {
+      console.error('Unable to derive access key ID from R2_API_TOKEN. Please set R2_ACCESS_KEY_ID explicitly.');
+      process.exit(1);
+    }
+  }
+
+  if (!accessKeyId) {
+    console.error('Missing R2_ACCESS_KEY_ID. Set it explicitly or provide R2_API_TOKEN with "User Details: Read" permission.');
+    process.exit(1);
+  }
+}
+
+await validateCredentials();
 
 const endpoint = `https://${account}.r2.cloudflarestorage.com`;
 const client = new S3Client({
