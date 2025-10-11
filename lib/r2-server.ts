@@ -46,18 +46,16 @@ let clientPromise: Promise<S3Client> | null = null;
 // Check if R2 binding is available
 function hasR2Binding(): boolean {
   try {
-    // @ts-expect-error - R2_BUCKET is injected by Cloudflare Workers runtime
     return typeof R2_BUCKET !== 'undefined';
   } catch {
     return false;
   }
 }
 
-function getR2Binding(): any {
+function getR2Binding(): R2Bucket {
   if (!hasR2Binding()) {
     throw new Error('R2_BUCKET binding is not available');
   }
-  // @ts-expect-error - R2_BUCKET is injected by Cloudflare Workers runtime
   return R2_BUCKET;
 }
 
@@ -459,7 +457,7 @@ export function getFallbackGalleryItems(category: GalleryCategory): GalleryItem[
 
 // Fetch images using R2 binding (native Cloudflare Workers API)
 async function fetchGalleryImagesFromR2Binding(
-  bucket: any,
+  bucket: R2Bucket,
   prefix: string,
   category: GalleryCategory
 ): Promise<GalleryItem[]> {
