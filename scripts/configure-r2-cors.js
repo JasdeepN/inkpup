@@ -22,7 +22,7 @@ const argv = minimist(process.argv.slice(2), {
   string: ['config'],
 });
 
-const account = process.env.R2_ACCOUNT_ID?.trim();
+const account = process.env.CF_ACCOUNT_ID?.trim();
 const bucket = process.env.R2_BUCKET?.trim();
 const accessKeyId = process.env.R2_ACCESS_KEY_ID?.trim();
 const rawSecretAccessKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
