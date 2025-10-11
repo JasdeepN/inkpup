@@ -65,24 +65,55 @@ jobs:
           source="${R2_SECRET_SOURCE:-}"
 
           if [ -n "$token" ]; then
-            verify_response="$(
+            if verify_response="$(
               curl --fail --silent --show-error \
                 --retry 3 --retry-delay 2 --retry-all-errors \
                 -H "Authorization: Bearer $token" \
                 https://api.cloudflare.com/client/v4/user/tokens/verify
-            )"
-            access_candidate="$(printf '%s' "$verify_response" | jq -er '.result.id // empty' || true)"
-            if [ -n "$access_candidate" ]; then
-              if [ -n "$access" ] && [ "$access" != "$access_candidate" ]; then
-                echo "::warning::Provided R2 access key id ('$access') does not match the token id; replacing it with the verified value." >&2
+            )"; then
+              access_candidate="$(printf '%s' "$verify_response" | jq -er '.result.id // empty' || true)"
+              if [ -n "$access_candidate" ]; then
+                if [ -n "$access" ] && [ "$access" != "$access_candidate" ]; then
+                  echo "::warning::Provided R2 access key id ('$access') does not match the token id; replacing it with the verified value." >&2
+                fi
+                access="$access_candidate"
+                echo 'Resolved R2 access key id via Cloudflare token verification.'
+              elif [ -z "$access" ]; then
+                echo '::error::Failed to resolve R2 access key id from R2_API_TOKEN via Cloudflare verification endpoint.' >&2
+                exit 1
+              else
+                echo '::warning::Unable to verify R2 access key id; continuing with the provided value.' >&2
               fi
-              access="$access_candidate"
-              echo 'Resolved R2 access key id via Cloudflare token verification.'
-            elif [ -z "$access" ]; then
-              echo '::error::Failed to resolve R2 access key id from R2_API_TOKEN via Cloudflare verification endpoint.' >&2
-              exit 1
             else
-              echo '::warning::Unable to verify R2 access key id; continuing with the provided value.' >&2
+              curl_status=$?
+              verify_tmp="$(mktemp)"
+              verify_code="$(
+                curl --silent --show-error \
+                  --retry 3 --retry-delay 2 --retry-all-errors \
+                  -w '%{http_code}' \
+                  -o "$verify_tmp" \
+                  -H "Authorization: Bearer $token" \
+                  https://api.cloudflare.com/client/v4/user/tokens/verify || true
+              )"
+              verify_code="$(printf '%s' "$verify_code" | tr -dc '0-9')"
+              if [ -s "$verify_tmp" ]; then
+                verify_snippet="$(tr '\n' ' ' < "$verify_tmp" | head -c 400)"
+              else
+                verify_snippet=''
+              fi
+              rm -f "$verify_tmp"
+              if [ -z "$access" ]; then
+                echo "::error::Failed to verify R2_API_TOKEN with Cloudflare (HTTP ${verify_code:-unknown}, exit ${curl_status}). Provide R2_ACCESS_KEY_ID or grant the token permission to call user/tokens/verify." >&2
+                exit 1
+              fi
+              if [ "${verify_code}" = "401" ] || [ "${verify_code}" = "403" ]; then
+                echo "::warning::Cloudflare token verification returned HTTP ${verify_code}. Continuing with provided R2 access key id. Ensure the token includes a permission that allows token verification (for example, User -> User Details: Read)." >&2
+              else
+                echo "::warning::Unable to verify R2 access key id via Cloudflare (HTTP ${verify_code:-unknown}, exit ${curl_status}). Continuing with the provided value." >&2
+              fi
+              if [ -n "$verify_snippet" ]; then
+                echo "::notice::Cloudflare verification response snippet: ${verify_snippet}" >&2
+              fi
             fi
 
             if [ -z "$secret" ] || [ "$secret" = "$token" ] || ! echo "$secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
@@ -230,24 +261,55 @@ jobs:
           fi
 
           if [ -n "$token" ]; then
-            verify_response="$(
+            if verify_response="$(
               curl --fail --silent --show-error \
                 --retry 3 --retry-delay 2 --retry-all-errors \
                 -H "Authorization: Bearer $token" \
                 https://api.cloudflare.com/client/v4/user/tokens/verify
-            )"
-            access_candidate="$(printf '%s' "$verify_response" | jq -er '.result.id // empty' || true)"
-            if [ -n "$access_candidate" ]; then
-              if [ -n "$access" ] && [ "$access" != "$access_candidate" ]; then
-                echo "::warning::Provided R2 access key id ('$access') does not match the token id; replacing it with the verified value." >&2
+            )"; then
+              access_candidate="$(printf '%s' "$verify_response" | jq -er '.result.id // empty' || true)"
+              if [ -n "$access_candidate" ]; then
+                if [ -n "$access" ] && [ "$access" != "$access_candidate" ]; then
+                  echo "::warning::Provided R2 access key id ('$access') does not match the token id; replacing it with the verified value." >&2
+                fi
+                access="$access_candidate"
+                echo 'Resolved R2 access key id via Cloudflare token verification.'
+              elif [ -z "$access" ]; then
+                echo '::error::Failed to resolve R2 access key id from R2_API_TOKEN via Cloudflare verification endpoint.' >&2
+                exit 1
+              else
+                echo '::warning::Unable to verify R2 access key id; continuing with the provided value.' >&2
               fi
-              access="$access_candidate"
-              echo 'Resolved R2 access key id via Cloudflare token verification.'
-            elif [ -z "$access" ]; then
-              echo '::error::Failed to resolve R2 access key id from R2_API_TOKEN via Cloudflare verification endpoint.' >&2
-              exit 1
             else
-              echo '::warning::Unable to verify R2 access key id; continuing with the provided value.' >&2
+              curl_status=$?
+              verify_tmp="$(mktemp)"
+              verify_code="$(
+                curl --silent --show-error \
+                  --retry 3 --retry-delay 2 --retry-all-errors \
+                  -w '%{http_code}' \
+                  -o "$verify_tmp" \
+                  -H "Authorization: Bearer $token" \
+                  https://api.cloudflare.com/client/v4/user/tokens/verify || true
+              )"
+              verify_code="$(printf '%s' "$verify_code" | tr -dc '0-9')"
+              if [ -s "$verify_tmp" ]; then
+                verify_snippet="$(tr '\n' ' ' < "$verify_tmp" | head -c 400)"
+              else
+                verify_snippet=''
+              fi
+              rm -f "$verify_tmp"
+              if [ -z "$access" ]; then
+                echo "::error::Failed to verify R2_API_TOKEN with Cloudflare (HTTP ${verify_code:-unknown}, exit ${curl_status}). Provide R2_ACCESS_KEY_ID or grant the token permission to call user/tokens/verify." >&2
+                exit 1
+              fi
+              if [ "${verify_code}" = "401" ] || [ "${verify_code}" = "403" ]; then
+                echo "::warning::Cloudflare token verification returned HTTP ${verify_code}. Continuing with provided R2 access key id. Ensure the token includes a permission that allows token verification (for example, User -> User Details: Read)." >&2
+              else
+                echo "::warning::Unable to verify R2 access key id via Cloudflare (HTTP ${verify_code:-unknown}, exit ${curl_status}). Continuing with the provided value." >&2
+              fi
+              if [ -n "$verify_snippet" ]; then
+                echo "::notice::Cloudflare verification response snippet: ${verify_snippet}" >&2
+              fi
             fi
           fi
 
@@ -351,24 +413,55 @@ jobs:
           fi
 
           if [ -n "$token" ]; then
-            verify_response="$(
+            if verify_response="$(
               curl --fail --silent --show-error \
                 --retry 3 --retry-delay 2 --retry-all-errors \
                 -H "Authorization: Bearer $token" \
                 https://api.cloudflare.com/client/v4/user/tokens/verify
-            )"
-            access_candidate="$(printf '%s' "$verify_response" | jq -er '.result.id // empty' || true)"
-            if [ -n "$access_candidate" ]; then
-              if [ -n "$access" ] && [ "$access" != "$access_candidate" ]; then
-                echo "::warning::Provided R2 access key id ('$access') does not match the token id; replacing it with the verified value." >&2
+            )"; then
+              access_candidate="$(printf '%s' "$verify_response" | jq -er '.result.id // empty' || true)"
+              if [ -n "$access_candidate" ]; then
+                if [ -n "$access" ] && [ "$access" != "$access_candidate" ]; then
+                  echo "::warning::Provided R2 access key id ('$access') does not match the token id; replacing it with the verified value." >&2
+                fi
+                access="$access_candidate"
+                echo 'Resolved R2 access key id via Cloudflare token verification.'
+              elif [ -z "$access" ]; then
+                echo '::error::Failed to resolve R2 access key id from R2_API_TOKEN via Cloudflare verification endpoint.' >&2
+                exit 1
+              else
+                echo '::warning::Unable to verify R2 access key id; continuing with the provided value.' >&2
               fi
-              access="$access_candidate"
-              echo 'Resolved R2 access key id via Cloudflare token verification.'
-            elif [ -z "$access" ]; then
-              echo '::error::Failed to resolve R2 access key id from R2_API_TOKEN via Cloudflare verification endpoint.' >&2
-              exit 1
             else
-              echo '::warning::Unable to verify R2 access key id; continuing with the provided value.' >&2
+              curl_status=$?
+              verify_tmp="$(mktemp)"
+              verify_code="$(
+                curl --silent --show-error \
+                  --retry 3 --retry-delay 2 --retry-all-errors \
+                  -w '%{http_code}' \
+                  -o "$verify_tmp" \
+                  -H "Authorization: Bearer $token" \
+                  https://api.cloudflare.com/client/v4/user/tokens/verify || true
+              )"
+              verify_code="$(printf '%s' "$verify_code" | tr -dc '0-9')"
+              if [ -s "$verify_tmp" ]; then
+                verify_snippet="$(tr '\n' ' ' < "$verify_tmp" | head -c 400)"
+              else
+                verify_snippet=''
+              fi
+              rm -f "$verify_tmp"
+              if [ -z "$access" ]; then
+                echo "::error::Failed to verify R2_API_TOKEN with Cloudflare (HTTP ${verify_code:-unknown}, exit ${curl_status}). Provide R2_ACCESS_KEY_ID or grant the token permission to call user/tokens/verify." >&2
+                exit 1
+              fi
+              if [ "${verify_code}" = "401" ] || [ "${verify_code}" = "403" ]; then
+                echo "::warning::Cloudflare token verification returned HTTP ${verify_code}. Continuing with provided R2 access key id. Ensure the token includes a permission that allows token verification (for example, User -> User Details: Read)." >&2
+              else
+                echo "::warning::Unable to verify R2 access key id via Cloudflare (HTTP ${verify_code:-unknown}, exit ${curl_status}). Continuing with the provided value." >&2
+              fi
+              if [ -n "$verify_snippet" ]; then
+                echo "::notice::Cloudflare verification response snippet: ${verify_snippet}" >&2
+              fi
             fi
           fi
 
@@ -528,24 +621,55 @@ jobs:
           fi
 
           if [ -n "$token" ]; then
-            verify_response="$(
+            if verify_response="$(
               curl --fail --silent --show-error \
                 --retry 3 --retry-delay 2 --retry-all-errors \
                 -H "Authorization: Bearer $token" \
                 https://api.cloudflare.com/client/v4/user/tokens/verify
-            )"
-            access_candidate="$(printf '%s' "$verify_response" | jq -er '.result.id // empty' || true)"
-            if [ -n "$access_candidate" ]; then
-              if [ -n "$access" ] && [ "$access" != "$access_candidate" ]; then
-                echo "::warning::Provided R2 access key id ('$access') does not match the token id; replacing it with the verified value." >&2
+            )"; then
+              access_candidate="$(printf '%s' "$verify_response" | jq -er '.result.id // empty' || true)"
+              if [ -n "$access_candidate" ]; then
+                if [ -n "$access" ] && [ "$access" != "$access_candidate" ]; then
+                  echo "::warning::Provided R2 access key id ('$access') does not match the token id; replacing it with the verified value." >&2
+                fi
+                access="$access_candidate"
+                echo 'Resolved R2 access key id via Cloudflare token verification.'
+              elif [ -z "$access" ]; then
+                echo '::error::Failed to resolve R2 access key id from R2_API_TOKEN via Cloudflare verification endpoint.' >&2
+                exit 1
+              else
+                echo '::warning::Unable to verify R2 access key id; continuing with the provided value.' >&2
               fi
-              access="$access_candidate"
-              echo 'Resolved R2 access key id via Cloudflare token verification.'
-            elif [ -z "$access" ]; then
-              echo '::error::Failed to resolve R2 access key id from R2_API_TOKEN via Cloudflare verification endpoint.' >&2
-              exit 1
             else
-              echo '::warning::Unable to verify R2 access key id; continuing with the provided value.' >&2
+              curl_status=$?
+              verify_tmp="$(mktemp)"
+              verify_code="$(
+                curl --silent --show-error \
+                  --retry 3 --retry-delay 2 --retry-all-errors \
+                  -w '%{http_code}' \
+                  -o "$verify_tmp" \
+                  -H "Authorization: Bearer $token" \
+                  https://api.cloudflare.com/client/v4/user/tokens/verify || true
+              )"
+              verify_code="$(printf '%s' "$verify_code" | tr -dc '0-9')"
+              if [ -s "$verify_tmp" ]; then
+                verify_snippet="$(tr '\n' ' ' < "$verify_tmp" | head -c 400)"
+              else
+                verify_snippet=''
+              fi
+              rm -f "$verify_tmp"
+              if [ -z "$access" ]; then
+                echo "::error::Failed to verify R2_API_TOKEN with Cloudflare (HTTP ${verify_code:-unknown}, exit ${curl_status}). Provide R2_ACCESS_KEY_ID or grant the token permission to call user/tokens/verify." >&2
+                exit 1
+              fi
+              if [ "${verify_code}" = "401" ] || [ "${verify_code}" = "403" ]; then
+                echo "::warning::Cloudflare token verification returned HTTP ${verify_code}. Continuing with provided R2 access key id. Ensure the token includes a permission that allows token verification (for example, User -> User Details: Read)." >&2
+              else
+                echo "::warning::Unable to verify R2 access key id via Cloudflare (HTTP ${verify_code:-unknown}, exit ${curl_status}). Continuing with the provided value." >&2
+              fi
+              if [ -n "$verify_snippet" ]; then
+                echo "::notice::Cloudflare verification response snippet: ${verify_snippet}" >&2
+              fi
             fi
           fi
 
@@ -649,24 +773,55 @@ jobs:
           fi
 
           if [ -n "$token" ]; then
-            verify_response="$(
+            if verify_response="$(
               curl --fail --silent --show-error \
                 --retry 3 --retry-delay 2 --retry-all-errors \
                 -H "Authorization: Bearer $token" \
                 https://api.cloudflare.com/client/v4/user/tokens/verify
-            )"
-            access_candidate="$(printf '%s' "$verify_response" | jq -er '.result.id // empty' || true)"
-            if [ -n "$access_candidate" ]; then
-              if [ -n "$access" ] && [ "$access" != "$access_candidate" ]; then
-                echo "::warning::Provided R2 access key id ('$access') does not match the token id; replacing it with the verified value." >&2
+            )"; then
+              access_candidate="$(printf '%s' "$verify_response" | jq -er '.result.id // empty' || true)"
+              if [ -n "$access_candidate" ]; then
+                if [ -n "$access" ] && [ "$access" != "$access_candidate" ]; then
+                  echo "::warning::Provided R2 access key id ('$access') does not match the token id; replacing it with the verified value." >&2
+                fi
+                access="$access_candidate"
+                echo 'Resolved R2 access key id via Cloudflare token verification.'
+              elif [ -z "$access" ]; then
+                echo '::error::Failed to resolve R2 access key id from R2_API_TOKEN via Cloudflare verification endpoint.' >&2
+                exit 1
+              else
+                echo '::warning::Unable to verify R2 access key id; continuing with the provided value.' >&2
               fi
-              access="$access_candidate"
-              echo 'Resolved R2 access key id via Cloudflare token verification.'
-            elif [ -z "$access" ]; then
-              echo '::error::Failed to resolve R2 access key id from R2_API_TOKEN via Cloudflare verification endpoint.' >&2
-              exit 1
             else
-              echo '::warning::Unable to verify R2 access key id; continuing with the provided value.' >&2
+              curl_status=$?
+              verify_tmp="$(mktemp)"
+              verify_code="$(
+                curl --silent --show-error \
+                  --retry 3 --retry-delay 2 --retry-all-errors \
+                  -w '%{http_code}' \
+                  -o "$verify_tmp" \
+                  -H "Authorization: Bearer $token" \
+                  https://api.cloudflare.com/client/v4/user/tokens/verify || true
+              )"
+              verify_code="$(printf '%s' "$verify_code" | tr -dc '0-9')"
+              if [ -s "$verify_tmp" ]; then
+                verify_snippet="$(tr '\n' ' ' < "$verify_tmp" | head -c 400)"
+              else
+                verify_snippet=''
+              fi
+              rm -f "$verify_tmp"
+              if [ -z "$access" ]; then
+                echo "::error::Failed to verify R2_API_TOKEN with Cloudflare (HTTP ${verify_code:-unknown}, exit ${curl_status}). Provide R2_ACCESS_KEY_ID or grant the token permission to call user/tokens/verify." >&2
+                exit 1
+              fi
+              if [ "${verify_code}" = "401" ] || [ "${verify_code}" = "403" ]; then
+                echo "::warning::Cloudflare token verification returned HTTP ${verify_code}. Continuing with provided R2 access key id. Ensure the token includes a permission that allows token verification (for example, User -> User Details: Read)." >&2
+              else
+                echo "::warning::Unable to verify R2 access key id via Cloudflare (HTTP ${verify_code:-unknown}, exit ${curl_status}). Continuing with the provided value." >&2
+              fi
+              if [ -n "$verify_snippet" ]; then
+                echo "::notice::Cloudflare verification response snippet: ${verify_snippet}" >&2
+              fi
             fi
           fi
 
