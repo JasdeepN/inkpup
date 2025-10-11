@@ -479,38 +479,18 @@ jobs:
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_ZONE_ID: ${{ env.CLOUDFLARE_ZONE_ID }}
-          R2_ACCESS_KEY_ID: ${{ env.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ env.R2_SECRET_ACCESS_KEY }}
           R2_API_TOKEN: ${{ env.R2_API_TOKEN }}
-          R2_SECRET_SOURCE: ${{ env.R2_SECRET_SOURCE }}
           R2_BUCKET: ${{ env.R2_BUCKET }}
           R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
         run: |
           set -euo pipefail
-          resolved_secret="${R2_SECRET_ACCESS_KEY:-}"
 
-          if [ -z "$resolved_secret" ] && [ -n "${R2_API_TOKEN:-}" ]; then
-            resolved_secret="$(printf '%s' "$R2_API_TOKEN" | sha256sum | awk '{print $1}')"
-            echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum.'
-          elif [ -n "${R2_API_TOKEN:-}" ] && [ "$resolved_secret" = "$R2_API_TOKEN" ]; then
-            resolved_secret="$(printf '%s' "$R2_API_TOKEN" | sha256sum | awk '{print $1}')"
-            echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum (matched raw token).'
-          elif [ -n "$resolved_secret" ] && ! echo "$resolved_secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
-            echo '::warning::R2 secret access key is not a 64-character hex string; ensure it is the SHA-256 hash of your API token.'
-          fi
-
-          if [ -z "$resolved_secret" ]; then
-            echo '::error::Unable to resolve an R2 secret for templating wrangler.toml. Provide R2_SECRET_ACCESS_KEY or R2_API_TOKEN.' >&2
+          if [ -z "${R2_API_TOKEN:-}" ]; then
+            echo '::error::R2_API_TOKEN must be set before templating wrangler.toml.' >&2
             exit 1
           fi
 
-          if [ -z "${R2_ACCESS_KEY_ID:-}" ]; then
-            echo '::error::R2_ACCESS_KEY_ID must be set before templating wrangler.toml.' >&2
-            exit 1
-          fi
-
-          export R2_SECRET_ACCESS_KEY="$resolved_secret"
-          envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID} ${R2_PUBLIC_HOSTNAME} ${R2_ACCESS_KEY_ID} ${R2_SECRET_ACCESS_KEY} ${R2_BUCKET}' < wrangler.toml > wrangler.resolved.toml
+          envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID} ${R2_PUBLIC_HOSTNAME} ${R2_API_TOKEN} ${R2_BUCKET}' < wrangler.toml > wrangler.resolved.toml
 
       - name: Deploy to dev environment
         run: |
@@ -836,38 +816,18 @@ jobs:
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_ZONE_ID: ${{ env.CLOUDFLARE_ZONE_ID }}
-          R2_ACCESS_KEY_ID: ${{ env.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ env.R2_SECRET_ACCESS_KEY }}
           R2_API_TOKEN: ${{ env.R2_API_TOKEN }}
-          R2_SECRET_SOURCE: ${{ env.R2_SECRET_SOURCE }}
           R2_BUCKET: ${{ env.R2_BUCKET }}
           R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
         run: |
           set -euo pipefail
-          resolved_secret="${R2_SECRET_ACCESS_KEY:-}"
 
-          if [ -z "$resolved_secret" ] && [ -n "${R2_API_TOKEN:-}" ]; then
-            resolved_secret="$(printf '%s' "$R2_API_TOKEN" | sha256sum | awk '{print $1}')"
-            echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum.'
-          elif [ -n "${R2_API_TOKEN:-}" ] && [ "$resolved_secret" = "$R2_API_TOKEN" ]; then
-            resolved_secret="$(printf '%s' "$R2_API_TOKEN" | sha256sum | awk '{print $1}')"
-            echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum (matched raw token).'
-          elif [ -n "$resolved_secret" ] && ! echo "$resolved_secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
-            echo '::warning::R2 secret access key is not a 64-character hex string; ensure it is the SHA-256 hash of your API token.'
-          fi
-
-          if [ -z "$resolved_secret" ]; then
-            echo '::error::Unable to resolve an R2 secret for templating wrangler.toml. Provide R2_SECRET_ACCESS_KEY or R2_API_TOKEN.' >&2
+          if [ -z "${R2_API_TOKEN:-}" ]; then
+            echo '::error::R2_API_TOKEN must be set before templating wrangler.toml.' >&2
             exit 1
           fi
 
-          if [ -z "${R2_ACCESS_KEY_ID:-}" ]; then
-            echo '::error::R2_ACCESS_KEY_ID must be set before templating wrangler.toml.' >&2
-            exit 1
-          fi
-
-          export R2_SECRET_ACCESS_KEY="$resolved_secret"
-          envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID} ${R2_PUBLIC_HOSTNAME} ${R2_ACCESS_KEY_ID} ${R2_SECRET_ACCESS_KEY} ${R2_BUCKET}' < wrangler.toml > wrangler.resolved.toml
+          envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID} ${R2_PUBLIC_HOSTNAME} ${R2_API_TOKEN} ${R2_BUCKET}' < wrangler.toml > wrangler.resolved.toml
 
       - name: Deploy to production environment
         run: |
