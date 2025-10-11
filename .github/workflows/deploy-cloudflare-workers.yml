@@ -143,7 +143,7 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ steps.derive-r2-secret.outputs.secret != '' && steps.derive-r2-secret.outputs.secret || secrets.R2_SECRET_ACCESS_KEY || secrets.R2_API_TOKEN }}
           R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
           R2_SECRET_SOURCE: "${{ secrets.R2_SECRET_ACCESS_KEY != '' && 'secret-key' || secrets.R2_API_TOKEN != '' && 'api-token' || '' }}"
-              R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
           R2_PUBLIC_HOSTNAME: https://r2.inkpup.ca
         run: npm run opennext:build
 
