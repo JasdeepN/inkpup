@@ -11,9 +11,6 @@ import type { GalleryItem, GalleryCategory } from './gallery-types';
 import { GALLERY_CATEGORIES, getCategoryLabel, isGalleryCategory } from './gallery-types';
 import { createHash } from 'crypto';
 
-// R2 Bucket binding (injected by Cloudflare Workers)
-declare const R2_BUCKET: R2Bucket;
-
 const DEFAULT_MAX_IMAGE_WIDTH = 1800;
 const MAX_IMAGE_WIDTH = (() => {
   const raw = process.env.R2_MAX_IMAGE_WIDTH;
@@ -42,24 +39,6 @@ const hashToken = (token: string) => createHash('sha256').update(token).digest('
 let cachedSecretKey: string | null | undefined;
 let verifyAccessKeyPromise: Promise<string | null> | null = null;
 let clientPromise: Promise<S3Client> | null = null;
-
-// Check if R2 binding is available
-function hasR2Binding(): boolean {
-  try {
-    // @ts-expect-error - R2_BUCKET is injected by Cloudflare Workers runtime
-    return typeof R2_BUCKET !== 'undefined';
-  } catch {
-    return false;
-  }
-}
-
-function getR2Binding(): any {
-  if (!hasR2Binding()) {
-    throw new Error('R2_BUCKET binding is not available');
-  }
-  // @ts-expect-error - R2_BUCKET is injected by Cloudflare Workers runtime
-  return R2_BUCKET;
-}
 
 const ensureApiToken = (token: string) => {
   if (!rawApiToken) {
@@ -193,11 +172,6 @@ async function resolveCredentials(): Promise<{ accessKeyId: string; secretAccess
 }
 
 export function hasR2Credentials(): boolean {
-  // If R2 binding is available, we don't need credentials
-  if (hasR2Binding()) {
-    return true;
-  }
-  // Otherwise check for S3-compatible credentials
   const secret = normalizeSecretAccessKey();
   const hasAccessKey = Boolean(rawAccessKey || rawApiToken);
   return Boolean(accountId && bucket && hasAccessKey && secret);
@@ -360,36 +334,25 @@ export async function uploadGalleryImage({
     throw new Error('R2 credentials are required to upload images.');
   }
 
+  const clientInstance = await getClient();
   const key = generateGalleryObjectKey(category, originalFilename);
+
   const optimized = await createOptimizedImage(buffer);
 
   const metadata: Record<string, string> = {};
   if (alt) metadata.alt = alt.slice(0, 256);
   if (caption) metadata.caption = caption.slice(0, 256);
 
-  // Use R2 binding if available
-  if (hasR2Binding()) {
-    const bucket = getR2Binding();
-    await bucket.put(key, optimized.buffer, {
-      httpMetadata: {
-        contentType: OPTIMIZED_CONTENT_TYPE,
-        cacheControl: CACHE_CONTROL_IMMUTABLE,
-      },
-      customMetadata: metadata,
-    });
-  } else {
-    // Fall back to S3-compatible API
-    const clientInstance = await getClient();
-    const putParams: PutObjectCommandInput = {
-      Bucket: bucket,
-      Key: key,
-      Body: optimized.buffer,
-      ContentType: OPTIMIZED_CONTENT_TYPE,
-      CacheControl: CACHE_CONTROL_IMMUTABLE,
-      Metadata: Object.keys(metadata).length ? metadata : undefined,
-    };
-    await clientInstance.send(new PutObjectCommand(putParams));
-  }
+  const putParams: PutObjectCommandInput = {
+    Bucket: bucket,
+    Key: key,
+    Body: optimized.buffer,
+    ContentType: OPTIMIZED_CONTENT_TYPE,
+    CacheControl: CACHE_CONTROL_IMMUTABLE,
+    Metadata: Object.keys(metadata).length ? metadata : undefined,
+  };
+
+  await clientInstance.send(new PutObjectCommand(putParams));
 
   const item: GalleryItem = {
     id: key,
@@ -414,22 +377,13 @@ export async function deleteGalleryImage(key: string, category: GalleryCategory)
     throw new Error('The provided key does not belong to the specified category.');
   }
 
-  // Use R2 binding if available
-  if (hasR2Binding()) {
-    const bucket = getR2Binding();
-    await bucket.delete(key);
-    console.info(`Deleted R2 object via binding: ${key}`);
-  } else {
-    // Fall back to S3-compatible API
-    const clientInstance = await getClient();
-    await clientInstance.send(
-      new DeleteObjectCommand({
-        Bucket: bucket,
-        Key: key,
-      })
-    );
-    console.info(`Deleted R2 object via S3 API: ${key}`);
-  }
+  const clientInstance = await getClient();
+  await clientInstance.send(
+    new DeleteObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    })
+  );
 }
 
 function buildFallbackItems(category: GalleryCategory): GalleryItem[] {
@@ -457,52 +411,6 @@ export function getFallbackGalleryItems(category: GalleryCategory): GalleryItem[
   return buildFallbackItems(category);
 }
 
-// Fetch images using R2 binding (native Cloudflare Workers API)
-async function fetchGalleryImagesFromR2Binding(
-  bucket: any,
-  prefix: string,
-  category: GalleryCategory
-): Promise<GalleryItem[]> {
-  const images: GalleryItem[] = [];
-  let cursor: string | undefined;
-
-  do {
-    const listed = await bucket.list({
-      prefix: `${prefix}/`,
-      cursor,
-      limit: 1000,
-    });
-
-    for (const obj of listed.objects) {
-      if (!obj.key || obj.key.endsWith('/')) continue;
-      const url = toPublicR2Url(`/${obj.key}`);
-      const customMetadata = obj.customMetadata || {};
-      
-      images.push({
-        id: obj.etag || obj.key,
-        src: url,
-        alt: customMetadata.alt || formatLabelFromKey(obj.key, prefix),
-        caption: customMetadata.caption || formatLabelFromKey(obj.key, prefix),
-        category,
-        size: obj.size,
-        lastModified: obj.uploaded ? obj.uploaded.toISOString() : undefined,
-        key: obj.key,
-      });
-    }
-
-    cursor = listed.truncated ? listed.cursor : undefined;
-  } while (cursor);
-
-  images.sort((a, b) => {
-    const aTime = a.lastModified ? Date.parse(a.lastModified) : 0;
-    const bTime = b.lastModified ? Date.parse(b.lastModified) : 0;
-    return bTime - aTime;
-  });
-
-  return images;
-}
-
-// Fetch images using S3-compatible API
 async function fetchGalleryImagesFromR2(
   clientInstance: S3Client,
   prefix: string,
@@ -590,30 +498,6 @@ export async function listGalleryImages(
     return fallbackResult('missing_credentials');
   }
 
-  const prefix = `${category}`.replace(/\/+$/, '');
-
-  // Use R2 binding if available (faster, no auth needed)
-  if (hasR2Binding()) {
-    try {
-      const bucket = getR2Binding();
-      const images = await fetchGalleryImagesFromR2Binding(bucket, prefix, category);
-      console.info('Fetched gallery listing from R2 binding.', { prefix, count: images.length });
-      return {
-        items: images,
-        isFallback: false,
-        usedBundledFallback: false,
-        credentialStatus,
-      };
-    } catch (error) {
-      console.error(
-        `Failed to list gallery images from R2 binding for category "${category}". Falling back to bundled data.`,
-        error
-      );
-      return fallbackResult('r2_fetch_failed');
-    }
-  }
-
-  // Fall back to S3-compatible API
   let clientInstance: S3Client;
   try {
     clientInstance = await getClient();
@@ -624,6 +508,7 @@ export async function listGalleryImages(
     );
     return fallbackResult('client_initialization_failed');
   }
+  const prefix = `${category}`.replace(/\/+$/, '');
 
   try {
     const images = await fetchGalleryImagesFromR2(clientInstance, prefix, category);

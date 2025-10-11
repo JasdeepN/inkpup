@@ -26,17 +26,18 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.653.0",
     "@tsparticles/react": "^3.0.0",
+    "minimist": "^1.2.8",
     "next": "^15.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sharp": "^0.33.5",
-    "tsparticles": "^3.9.1",
-    "minimist": "^1.2.8"
+    "tsparticles": "^3.9.1"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.28.3",
     "@babel/preset-react": "^7.27.1",
     "@babel/preset-typescript": "^7.27.1",
+    "@cloudflare/workers-types": "^4.20251011.0",
     "@playwright/test": "^1.55.1",
     "@storybook/addon-vitest": "^9.1.9",
     "@storybook/nextjs-vite": "^9.1.9",
