@@ -275,6 +275,21 @@ jobs:
           name: open-next-bundle
           path: .
 
+      - name: Download R2 credentials artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: r2-credentials
+          path: ./r2-creds
+
+      - name: Load R2 credentials
+        id: load-r2-creds
+        run: |
+          set -euo pipefail
+          source ./r2-creds/r2-credentials.env
+          echo "R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID}" >> $GITHUB_OUTPUT
+          echo "R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY}" >> $GITHUB_OUTPUT
+          echo "R2_ACCOUNT_ID=${R2_ACCOUNT_ID}" >> $GITHUB_OUTPUT
+
       - name: Render Wrangler config with environment secrets (dev)
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
@@ -282,6 +297,9 @@ jobs:
           R2_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           R2_BUCKET: ${{ env.R2_BUCKET }}
           R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
+          R2_ACCESS_KEY_ID: ${{ steps.load-r2-creds.outputs.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ steps.load-r2-creds.outputs.R2_SECRET_ACCESS_KEY }}
+          R2_ACCOUNT_ID: ${{ steps.load-r2-creds.outputs.R2_ACCOUNT_ID }}
         run: |
           set -euo pipefail
 
@@ -290,7 +308,7 @@ jobs:
             exit 1
           fi
 
-          envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID} ${R2_PUBLIC_HOSTNAME} ${R2_API_TOKEN} ${R2_BUCKET}' < wrangler.toml > wrangler.resolved.toml
+          envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID} ${R2_PUBLIC_HOSTNAME} ${R2_API_TOKEN} ${R2_BUCKET} ${R2_ACCESS_KEY_ID} ${R2_SECRET_ACCESS_KEY} ${R2_ACCOUNT_ID}' < wrangler.toml > wrangler.resolved.toml
 
       - name: Deploy to dev environment
         run: |
@@ -404,6 +422,21 @@ jobs:
           name: open-next-bundle
           path: .
 
+      - name: Download R2 credentials artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: r2-credentials
+          path: ./r2-creds
+
+      - name: Load R2 credentials
+        id: load-r2-creds
+        run: |
+          set -euo pipefail
+          source ./r2-creds/r2-credentials.env
+          echo "R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID}" >> $GITHUB_OUTPUT
+          echo "R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY}" >> $GITHUB_OUTPUT
+          echo "R2_ACCOUNT_ID=${R2_ACCOUNT_ID}" >> $GITHUB_OUTPUT
+
       - name: Render Wrangler config with environment secrets (production)
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
@@ -411,6 +444,9 @@ jobs:
           R2_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           R2_BUCKET: ${{ env.R2_BUCKET }}
           R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
+          R2_ACCESS_KEY_ID: ${{ steps.load-r2-creds.outputs.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ steps.load-r2-creds.outputs.R2_SECRET_ACCESS_KEY }}
+          R2_ACCOUNT_ID: ${{ steps.load-r2-creds.outputs.R2_ACCOUNT_ID }}
         run: |
           set -euo pipefail
 
@@ -419,7 +455,7 @@ jobs:
             exit 1
           fi
 
-          envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID} ${R2_PUBLIC_HOSTNAME} ${R2_API_TOKEN} ${R2_BUCKET}' < wrangler.toml > wrangler.resolved.toml
+          envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID} ${R2_PUBLIC_HOSTNAME} ${R2_API_TOKEN} ${R2_BUCKET} ${R2_ACCESS_KEY_ID} ${R2_SECRET_ACCESS_KEY} ${R2_ACCOUNT_ID}' < wrangler.toml > wrangler.resolved.toml
 
       - name: Deploy to production environment
         run: |
