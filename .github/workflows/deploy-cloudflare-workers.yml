@@ -78,7 +78,6 @@ jobs:
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       R2_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       R2_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       R2_PUBLIC_HOSTNAME: https://r2.inkpup.ca
       R2_CUSTOM_DOMAIN: r2.inkpup.ca
@@ -187,7 +186,6 @@ jobs:
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       R2_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       R2_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       R2_PUBLIC_HOSTNAME: https://r2.inkpup.ca
       R2_CUSTOM_DOMAIN: r2.inkpup.ca
