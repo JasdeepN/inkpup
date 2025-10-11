@@ -12,7 +12,8 @@ import { GALLERY_CATEGORIES, getCategoryLabel, isGalleryCategory } from './galle
 import { createHash } from 'crypto';
 
 // R2 Bucket binding (injected by Cloudflare Workers)
-declare const R2_BUCKET: R2Bucket;
+// Note: With OpenNext, bindings may be accessed via globalThis
+declare const R2_BUCKET: R2Bucket | undefined;
 
 const DEFAULT_MAX_IMAGE_WIDTH = 1800;
 const MAX_IMAGE_WIDTH = (() => {
@@ -46,7 +47,8 @@ let clientPromise: Promise<S3Client> | null = null;
 // Check if R2 binding is available
 function hasR2Binding(): boolean {
   try {
-    return typeof R2_BUCKET !== 'undefined';
+    // In Cloudflare Workers, bindings are available on globalThis
+    return typeof R2_BUCKET !== 'undefined' && R2_BUCKET !== null;
   } catch {
     return false;
   }
@@ -56,7 +58,7 @@ function getR2Binding(): R2Bucket {
   if (!hasR2Binding()) {
     throw new Error('R2_BUCKET binding is not available');
   }
-  return R2_BUCKET;
+  return R2_BUCKET!;
 }
 
 const ensureApiToken = (token: string) => {
@@ -583,15 +585,17 @@ export async function listGalleryImages(
     };
   };
 
-  if (!hasR2Credentials()) {
-    console.error('R2 credentials are incomplete; skipping remote gallery fetch.', credentialStatus);
-    return fallbackResult('missing_credentials');
-  }
-
   const prefix = `${category}`.replace(/\/+$/, '');
 
   // Use R2 binding if available (faster, no auth needed)
-  if (hasR2Binding()) {
+  const bindingAvailable = hasR2Binding();
+  console.info(`R2 binding check: ${bindingAvailable ? 'available' : 'not available'}`, {
+    typeofBinding: typeof R2_BUCKET,
+    isUndefined: R2_BUCKET === undefined,
+    isNull: R2_BUCKET === null,
+  });
+
+  if (bindingAvailable) {
     try {
       const bucket = getR2Binding();
       const images = await fetchGalleryImagesFromR2Binding(bucket, prefix, category);
@@ -609,6 +613,12 @@ export async function listGalleryImages(
       );
       return fallbackResult('r2_fetch_failed');
     }
+  }
+
+  // Check if S3-compatible credentials are available
+  if (!hasR2Credentials()) {
+    console.error('R2 credentials are incomplete; skipping remote gallery fetch.', credentialStatus);
+    return fallbackResult('missing_credentials');
   }
 
   // Fall back to S3-compatible API
