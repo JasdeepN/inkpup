@@ -62,4 +62,19 @@ describe('r2-server fallback behaviour', () => {
     expect(process.env.R2_SECRET_ACCESS_KEY).not.toBe(token);
     expect(process.env.R2_SECRET_ACCESS_KEY).toMatch(/^[0-9a-f]{64}$/i);
   });
+
+  test('normalizes secret access key when only a token-like value is provided', async () => {
+    const token = 'v1.0-example-token';
+    process.env.R2_ACCOUNT_ID = 'account';
+    process.env.R2_BUCKET = 'bucket';
+    process.env.R2_ACCESS_KEY_ID = '0123456789abcdef0123456789abcdef';
+    process.env.R2_SECRET_ACCESS_KEY = token;
+    delete process.env.R2_API_TOKEN;
+
+    const { hasR2Credentials } = await import(modulePath);
+
+    expect(hasR2Credentials()).toBe(true);
+    expect(process.env.R2_SECRET_ACCESS_KEY).toMatch(/^[0-9a-f]{64}$/i);
+    expect(process.env.R2_API_TOKEN).toBe(token);
+  });
 });

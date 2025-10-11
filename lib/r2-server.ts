@@ -28,10 +28,11 @@ const accountId = process.env.R2_ACCOUNT_ID?.trim();
 const bucket = process.env.R2_BUCKET?.trim();
 let rawAccessKey = process.env.R2_ACCESS_KEY_ID?.trim();
 let rawSecretKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
-const rawApiToken = process.env.R2_API_TOKEN?.trim();
+let rawApiToken = process.env.R2_API_TOKEN?.trim();
 
 const HEX_64 = /^[0-9a-f]{64}$/i;
 const TOKEN_ID_PATTERN = /^[0-9a-f]{32}$/i;
+const API_TOKEN_VALUE_PATTERN = /^v\d+\.\d+-/i;
 
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 
@@ -39,31 +40,48 @@ let cachedSecretKey: string | null | undefined;
 let verifyAccessKeyPromise: Promise<string | null> | null = null;
 let clientPromise: Promise<S3Client> | null = null;
 
+const ensureApiToken = (token: string) => {
+  if (!rawApiToken) {
+    rawApiToken = token;
+    process.env.R2_API_TOKEN = token;
+  }
+};
+
+const deriveSecretKey = (value: string): string => {
+  if (HEX_64.test(value)) {
+    return value;
+  }
+
+  if (API_TOKEN_VALUE_PATTERN.test(value)) {
+    ensureApiToken(value);
+    return hashToken(value);
+  }
+
+  if (rawApiToken && value === rawApiToken) {
+    return hashToken(rawApiToken);
+  }
+
+  return value;
+};
+
 function normalizeSecretAccessKey(): string | undefined {
   if (cachedSecretKey !== undefined) {
     return cachedSecretKey ?? undefined;
   }
 
-  if (rawSecretKey) {
-    if (HEX_64.test(rawSecretKey)) {
-      cachedSecretKey = rawSecretKey;
-    } else if (rawApiToken && rawSecretKey === rawApiToken) {
-      cachedSecretKey = hashToken(rawApiToken);
-    } else {
-      cachedSecretKey = rawSecretKey;
-    }
-  } else if (rawApiToken) {
-    cachedSecretKey = HEX_64.test(rawApiToken) ? rawApiToken : hashToken(rawApiToken);
-  } else {
+  const source = rawSecretKey ?? rawApiToken;
+
+  if (!source) {
     cachedSecretKey = null;
+    return undefined;
   }
 
-  if (cachedSecretKey && (!rawSecretKey || rawSecretKey === rawApiToken)) {
-    process.env.R2_SECRET_ACCESS_KEY = cachedSecretKey;
-    rawSecretKey = cachedSecretKey;
-  }
+  const normalized = deriveSecretKey(source);
+  cachedSecretKey = normalized;
+  process.env.R2_SECRET_ACCESS_KEY = normalized;
+  rawSecretKey = normalized;
 
-  return cachedSecretKey ?? undefined;
+  return normalized;
 }
 
 async function verifyAccessKeyIdFromToken(): Promise<string | null> {
@@ -71,33 +89,31 @@ async function verifyAccessKeyIdFromToken(): Promise<string | null> {
     return null;
   }
 
-  if (!verifyAccessKeyPromise) {
-    verifyAccessKeyPromise = (async () => {
-      try {
-        const response = await fetch('https://api.cloudflare.com/client/v4/user/tokens/verify', {
-          headers: {
-            Authorization: `Bearer ${rawApiToken}`,
-          },
-        });
+  verifyAccessKeyPromise ??= (async () => {
+    try {
+      const response = await fetch('https://api.cloudflare.com/client/v4/user/tokens/verify', {
+        headers: {
+          Authorization: `Bearer ${rawApiToken}`,
+        },
+      });
 
-        if (!response.ok) {
-          const bodyText = await response.text();
-          console.warn(
-            `Failed to verify R2 API token when deriving access key id (HTTP ${response.status}). Response snippet: ${bodyText.slice(0, 300)}`
-          );
-          return null;
-        }
-
-        const data = (await response.json()) as {
-          result?: { id?: string | null };
-        };
-        return data.result?.id ?? null;
-      } catch (error) {
-        console.warn('Unexpected error while verifying R2 API token for access key id.', error);
+      if (!response.ok) {
+        const bodyText = await response.text();
+        console.warn(
+          `Failed to verify R2 API token when deriving access key id (HTTP ${response.status}). Response snippet: ${bodyText.slice(0, 300)}`
+        );
         return null;
       }
-    })();
-  }
+
+      const data = (await response.json()) as {
+        result?: { id?: string | null };
+      };
+      return data.result?.id ?? null;
+    } catch (error) {
+      console.warn('Unexpected error while verifying R2 API token for access key id.', error);
+      return null;
+    }
+  })();
 
   return verifyAccessKeyPromise;
 }
