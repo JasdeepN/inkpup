@@ -26,68 +26,166 @@ const OPTIMIZED_CONTENT_TYPE = 'image/webp';
 
 const accountId = process.env.R2_ACCOUNT_ID?.trim();
 const bucket = process.env.R2_BUCKET?.trim();
-const accessKey = process.env.R2_ACCESS_KEY_ID?.trim();
-const rawSecretKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
+let rawAccessKey = process.env.R2_ACCESS_KEY_ID?.trim();
+let rawSecretKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
 const rawApiToken = process.env.R2_API_TOKEN?.trim();
 
-if (rawApiToken && accessKey && accessKey === rawApiToken) {
-  console.warn(
-    'R2 access key id matches the API token value. Ensure your deployment pipeline resolves the token ID via the Cloudflare verification endpoint before deploying.'
-  );
-}
-
 const HEX_64 = /^[0-9a-f]{64}$/i;
+const TOKEN_ID_PATTERN = /^[0-9a-f]{32}$/i;
 
-const secretKey = (() => {
+const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
+
+let cachedSecretKey: string | null | undefined;
+let verifyAccessKeyPromise: Promise<string | null> | null = null;
+let clientPromise: Promise<S3Client> | null = null;
+
+function normalizeSecretAccessKey(): string | undefined {
+  if (cachedSecretKey !== undefined) {
+    return cachedSecretKey ?? undefined;
+  }
+
   if (rawSecretKey) {
     if (HEX_64.test(rawSecretKey)) {
-      return rawSecretKey;
+      cachedSecretKey = rawSecretKey;
+    } else if (rawApiToken && rawSecretKey === rawApiToken) {
+      cachedSecretKey = hashToken(rawApiToken);
+    } else {
+      cachedSecretKey = rawSecretKey;
     }
-
-    if (rawApiToken && rawSecretKey === rawApiToken) {
-      return createHash('sha256').update(rawApiToken).digest('hex');
-    }
-
-    return rawSecretKey;
+  } else if (rawApiToken) {
+    cachedSecretKey = HEX_64.test(rawApiToken) ? rawApiToken : hashToken(rawApiToken);
+  } else {
+    cachedSecretKey = null;
   }
 
-  if (!rawApiToken) {
-    return undefined;
+  if (cachedSecretKey && (!rawSecretKey || rawSecretKey === rawApiToken)) {
+    process.env.R2_SECRET_ACCESS_KEY = cachedSecretKey;
+    rawSecretKey = cachedSecretKey;
   }
 
-  if (HEX_64.test(rawApiToken)) {
-    return rawApiToken;
-  }
-
-  return createHash('sha256').update(rawApiToken).digest('hex');
-})();
-
-if (secretKey && (!rawSecretKey || rawSecretKey === rawApiToken)) {
-  process.env.R2_SECRET_ACCESS_KEY = secretKey;
+  return cachedSecretKey ?? undefined;
 }
 
-let client: S3Client | null = null;
+async function verifyAccessKeyIdFromToken(): Promise<string | null> {
+  if (!rawApiToken) {
+    return null;
+  }
+
+  if (!verifyAccessKeyPromise) {
+    verifyAccessKeyPromise = (async () => {
+      try {
+        const response = await fetch('https://api.cloudflare.com/client/v4/user/tokens/verify', {
+          headers: {
+            Authorization: `Bearer ${rawApiToken}`,
+          },
+        });
+
+        if (!response.ok) {
+          const bodyText = await response.text();
+          console.warn(
+            `Failed to verify R2 API token when deriving access key id (HTTP ${response.status}). Response snippet: ${bodyText.slice(0, 300)}`
+          );
+          return null;
+        }
+
+        const data = (await response.json()) as {
+          result?: { id?: string | null };
+        };
+        return data.result?.id ?? null;
+      } catch (error) {
+        console.warn('Unexpected error while verifying R2 API token for access key id.', error);
+        return null;
+      }
+    })();
+  }
+
+  return verifyAccessKeyPromise;
+}
+
+async function resolveCredentials(): Promise<{ accessKeyId: string; secretAccessKey: string }> {
+  if (!accountId || !bucket) {
+    throw new Error('R2 account id or bucket is not configured. Please set R2_ACCOUNT_ID and R2_BUCKET.');
+  }
+
+  const secret = normalizeSecretAccessKey();
+
+  if (!secret) {
+    throw new Error(
+      'R2 secret access key is not available. Provide R2_SECRET_ACCESS_KEY or R2_API_TOKEN so the Worker can sign requests.'
+    );
+  }
+
+  let access = rawAccessKey;
+  const needsVerification = !access || access === rawApiToken || !TOKEN_ID_PATTERN.test(access);
+
+  if (needsVerification) {
+    const verified = await verifyAccessKeyIdFromToken();
+    if (!verified) {
+      throw new Error(
+        'Unable to derive an R2 access key id. Grant your API token the "User Details: Read" permission or set R2_ACCESS_KEY_ID to the token id.'
+      );
+    }
+    if (access && access !== verified) {
+      console.warn(
+        `Provided R2 access key id '${access}' does not match the Cloudflare token id '${verified}'. Using the verified value.`
+      );
+    }
+    access = verified;
+    rawAccessKey = verified;
+    process.env.R2_ACCESS_KEY_ID = verified;
+  } else if (rawApiToken) {
+    const verified = await verifyAccessKeyIdFromToken();
+    if (verified && verified !== access) {
+      console.warn(
+        `Provided R2 access key id '${access}' differs from the token id '${verified}'. Updating to the verified value to avoid signature mismatches.`
+      );
+      access = verified;
+      rawAccessKey = verified;
+      process.env.R2_ACCESS_KEY_ID = verified;
+    }
+  }
+
+  if (!access) {
+    throw new Error('Unable to resolve an R2 access key id. Verify your token permissions or set R2_ACCESS_KEY_ID explicitly.');
+  }
+
+  return {
+    accessKeyId: access,
+    secretAccessKey: secret,
+  };
+}
 
 export function hasR2Credentials(): boolean {
-  return Boolean(accountId && bucket && accessKey && secretKey);
+  const secret = normalizeSecretAccessKey();
+  const hasAccessKey = Boolean(rawAccessKey || rawApiToken);
+  return Boolean(accountId && bucket && hasAccessKey && secret);
 }
 
-function getClient(): S3Client {
+async function getClient(): Promise<S3Client> {
   if (!hasR2Credentials()) {
-    throw new Error('R2 credentials are not fully configured. Please set R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, and either R2_SECRET_ACCESS_KEY or R2_API_TOKEN.');
+    throw new Error(
+      'R2 credentials are not fully configured. Please set R2_ACCOUNT_ID, R2_BUCKET, and either (R2_ACCESS_KEY_ID with R2_SECRET_ACCESS_KEY) or an R2_API_TOKEN.'
+    );
   }
 
-  client ??= new S3Client({
-    forcePathStyle: true,
-    region: 'auto',
-    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: accessKey!,
-      secretAccessKey: secretKey!,
-    },
-  });
+  clientPromise ??= resolveCredentials()
+    .then(({ accessKeyId, secretAccessKey }) =>
+      new S3Client({
+        forcePathStyle: true,
+        region: 'auto',
+        endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+        credentials: {
+          accessKeyId,
+          secretAccessKey,
+        },
+      })
+    )
+    .catch((error) => {
+      clientPromise = null;
+      throw error;
+    });
 
-  return client;
+  return clientPromise;
 }
 
 function formatLabelFromKey(key: string, prefix: string): string {
@@ -111,8 +209,8 @@ function getCredentialStatus(): CredentialStatus {
   return {
     accountId: Boolean(accountId),
     bucket: Boolean(bucket),
-    accessKey: Boolean(accessKey),
-    secretAccessKey: Boolean(secretKey),
+    accessKey: Boolean(rawAccessKey || rawApiToken),
+    secretAccessKey: Boolean(normalizeSecretAccessKey()),
   };
 }
 
@@ -220,7 +318,7 @@ export async function uploadGalleryImage({
     throw new Error('R2 credentials are required to upload images.');
   }
 
-  const clientInstance = getClient();
+  const clientInstance = await getClient();
   const key = generateGalleryObjectKey(category, originalFilename);
 
   const optimized = await createOptimizedImage(buffer);
@@ -263,7 +361,7 @@ export async function deleteGalleryImage(key: string, category: GalleryCategory)
     throw new Error('The provided key does not belong to the specified category.');
   }
 
-  const clientInstance = getClient();
+  const clientInstance = await getClient();
   await clientInstance.send(
     new DeleteObjectCommand({
       Bucket: bucket,
@@ -386,7 +484,7 @@ export async function listGalleryImages(
 
   let clientInstance: S3Client;
   try {
-    clientInstance = getClient();
+    clientInstance = await getClient();
   } catch (error) {
     console.error(
       `Failed to initialize R2 client for category "${category}". Falling back to bundled data.`,
