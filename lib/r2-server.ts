@@ -30,6 +30,12 @@ const accessKey = process.env.R2_ACCESS_KEY_ID?.trim();
 const rawSecretKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
 const rawApiToken = process.env.R2_API_TOKEN?.trim();
 
+if (rawApiToken && accessKey && accessKey === rawApiToken) {
+  console.warn(
+    'R2 access key id matches the API token value. Ensure your deployment pipeline resolves the token ID via the Cloudflare verification endpoint before deploying.'
+  );
+}
+
 const HEX_64 = /^[0-9a-f]{64}$/i;
 
 const secretKey = (() => {
