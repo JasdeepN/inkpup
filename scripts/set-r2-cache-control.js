@@ -4,10 +4,10 @@
 //   node scripts/set-r2-cache-control.js --prefix social/ --cache "public, max-age=31536000" --dry
 // Set --dry to true to run a dry run.
 
-const { S3Client, ListObjectsV2Command, CopyObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
-const argv = require('minimist')(process.argv.slice(2));
+import { S3Client, ListObjectsV2Command, CopyObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import minimist from 'minimist';
 
-const { createHash } = require('crypto');
+const argv = minimist(process.argv.slice(2));
 
 const account = process.env.R2_ACCOUNT_ID;
 const bucket = process.env.R2_BUCKET;

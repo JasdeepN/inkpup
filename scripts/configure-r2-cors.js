@@ -6,16 +6,16 @@
 //   node scripts/configure-r2-cors.js --config configs/r2-cors.default.json
 //   node scripts/configure-r2-cors.js --config custom.json --dry
 
-const fs = require('fs');
-const path = require('path');
-const minimist = require('minimist');
-const {
+import fs from 'fs';
+import path from 'path';
+import minimist from 'minimist';
+import {
   S3Client,
   GetBucketCorsCommand,
   PutBucketCorsCommand,
   DeleteBucketCorsCommand,
-} = require('@aws-sdk/client-s3');
-const { createHash } = require('crypto');
+} from '@aws-sdk/client-s3';
+import { createHash } from 'crypto';
 
 const argv = minimist(process.argv.slice(2), {
   boolean: ['dry', 'show', 'clear'],

@@ -13,7 +13,7 @@
 //   R2_MIN_TLS (fallback for --min-tls)
 //   DRY_RUN (treat any non-empty value as true)
 
-const minimist = require('minimist');
+import minimist from 'minimist';
 
 const argv = minimist(process.argv.slice(2), {
   string: ['domain', 'min-tls'],
