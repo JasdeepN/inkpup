@@ -49,41 +49,7 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps --silent
 
-      - name: Download R2 credentials
-        uses: actions/download-artifact@v4
-        with:
-          name: r2-credentials
-          path: .r2-credentials
-
-      - name: Load R2 credentials
-        id: load-creds
-        run: |
-          set -euo pipefail
-          if [ -f .r2-credentials/credentials.env ]; then
-            # Load into current environment for this step
-            source .r2-credentials/credentials.env
-            
-            # Export as step outputs for next step
-            echo "r2_account_id=$R2_ACCOUNT_ID" >> "$GITHUB_OUTPUT"
-            echo "r2_access_key_id=$R2_ACCESS_KEY_ID" >> "$GITHUB_OUTPUT"
-            echo "r2_secret_access_key=$R2_SECRET_ACCESS_KEY" >> "$GITHUB_OUTPUT"
-            
-            echo "✅ Loaded R2 credentials from artifact"
-            echo "   Account ID: $R2_ACCOUNT_ID"
-            echo "   Access Key ID: $R2_ACCESS_KEY_ID"
-          else
-            echo "::error::R2 credentials file not found" >&2
-            exit 1
-          fi
-
       - name: Build with OpenNext
-        env:
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          R2_ACCOUNT_ID: ${{ steps.load-creds.outputs.r2_account_id }}
-          R2_ACCESS_KEY_ID: ${{ steps.load-creds.outputs.r2_access_key_id }}
-          R2_SECRET_ACCESS_KEY: ${{ steps.load-creds.outputs.r2_secret_access_key }}
-          R2_BUCKET: ${{ secrets.R2_BUCKET }}
-          R2_PUBLIC_HOSTNAME: https://r2.inkpup.ca
         run: npm run opennext:build
 
       - name: Upload OpenNext artifact
@@ -125,23 +91,6 @@ jobs:
 
       - name: Install runtime dependencies
         run: npm install --legacy-peer-deps --silent --omit=dev
-
-      - name: Download R2 credentials
-        uses: actions/download-artifact@v4
-        with:
-          name: r2-credentials
-          path: .r2-credentials
-
-      - name: Load R2 credentials
-        run: |
-          set -euo pipefail
-          if [ -f .r2-credentials/credentials.env ]; then
-            cat .r2-credentials/credentials.env >> "$GITHUB_ENV"
-            echo "✅ Loaded R2 credentials from artifact"
-          else
-            echo "::error::R2 credentials file not found" >&2
-            exit 1
-          fi
 
       - name: Debug Cloudflare environment values (dev)
         run: |
@@ -248,23 +197,6 @@ jobs:
 
       - name: Install runtime dependencies
         run: npm install --legacy-peer-deps --silent --omit=dev
-
-      - name: Download R2 credentials
-        uses: actions/download-artifact@v4
-        with:
-          name: r2-credentials
-          path: .r2-credentials
-
-      - name: Load R2 credentials
-        run: |
-          set -euo pipefail
-          if [ -f .r2-credentials/credentials.env ]; then
-            cat .r2-credentials/credentials.env >> "$GITHUB_ENV"
-            echo "✅ Loaded R2 credentials from artifact"
-          else
-            echo "::error::R2 credentials file not found" >&2
-            exit 1
-          fi
 
       - name: Debug Cloudflare environment values (production)
         run: |
