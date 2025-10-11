@@ -31,10 +31,90 @@ jobs:
           CI: true
         run: npm test
 
+  derive-r2-credentials:
+    name: Derive R2 credentials from CF API token
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - name: Resolve R2 credentials
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+
+          token="${CF_API_TOKEN:-}"
+          account_id="${CF_ACCOUNT_ID:-}"
+          secret=""
+          access=""
+
+          if [ -z "$token" ]; then
+            echo '::error::CF_API_TOKEN is required to derive R2 credentials.' >&2
+            exit 1
+          fi
+
+          # Derive secret access key from token via SHA-256
+          secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
+          echo 'Derived R2 secret access key from CF_API_TOKEN via sha256sum.'
+
+          # Get access key ID from Cloudflare token verification API
+          if verify_response="$(
+            curl --fail --silent --show-error \
+              --retry 3 --retry-delay 2 --retry-all-errors \
+              -H "Authorization: Bearer $token" \
+              https://api.cloudflare.com/client/v4/user/tokens/verify
+          )"; then
+            access="$(printf '%s' "$verify_response" | jq -er '.result.id // empty' || true)"
+            if [ -n "$access" ]; then
+              echo 'Resolved R2 access key ID via Cloudflare token verification.'
+            else
+              echo '::error::Failed to extract token ID from Cloudflare verification response.' >&2
+              exit 1
+            fi
+          else
+            curl_status=$?
+            verify_tmp="$(mktemp)"
+            verify_code="$(
+              curl --silent --show-error \
+                --retry 3 --retry-delay 2 --retry-all-errors \
+                -w '%{http_code}' \
+                -o "$verify_tmp" \
+                -H "Authorization: Bearer $token" \
+                https://api.cloudflare.com/client/v4/user/tokens/verify || true
+            )"
+            verify_code="$(printf '%s' "$verify_code" | tr -dc '0-9')"
+            if [ -s "$verify_tmp" ]; then
+              verify_snippet="$(tr '\n' ' ' < "$verify_tmp" | head -c 400)"
+              echo "::notice::Cloudflare verification response: ${verify_snippet}" >&2
+            fi
+            rm -f "$verify_tmp"
+            echo "::error::Failed to verify CF_API_TOKEN with Cloudflare (HTTP ${verify_code:-unknown}, exit ${curl_status})." >&2
+            exit 1
+          fi
+
+          # Save credentials to file for artifact upload
+          mkdir -p .r2-credentials
+          echo "R2_ACCOUNT_ID=$account_id" > .r2-credentials/credentials.env
+          echo "R2_ACCESS_KEY_ID=$access" >> .r2-credentials/credentials.env
+          echo "R2_SECRET_ACCESS_KEY=$secret" >> .r2-credentials/credentials.env
+          
+          echo "✅ R2 credentials derived successfully"
+          echo "   Account ID: $account_id"
+          echo "   Access Key ID: $access"
+          echo "   Secret Key: ${secret:0:16}..." # Only show first 16 chars for security
+
+      - name: Upload R2 credentials artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2-credentials
+          path: .r2-credentials/credentials.env
+          retention-days: 1
+          if-no-files-found: error
+
   build:
     name: Build OpenNext bundle
     runs-on: ubuntu-latest
-    needs: validate
+    needs: derive-r2-credentials
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,6 +128,23 @@ jobs:
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps --silent
+
+      - name: Download R2 credentials
+        uses: actions/download-artifact@v4
+        with:
+          name: r2-credentials
+          path: .r2-credentials
+
+      - name: Load R2 credentials
+        run: |
+          set -euo pipefail
+          if [ -f .r2-credentials/credentials.env ]; then
+            cat .r2-credentials/credentials.env >> "$GITHUB_ENV"
+            echo "✅ Loaded R2 credentials from artifact"
+          else
+            echo "::error::R2 credentials file not found" >&2
+            exit 1
+          fi
 
       - name: Build with OpenNext
         env:
@@ -69,7 +166,7 @@ jobs:
   prepare-dev:
     name: Configure Cloudflare resources (dev)
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, derive-r2-credentials]
     if: github.ref == 'refs/heads/dev'
     environment:
       name: dev
@@ -80,8 +177,6 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
-      R2_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-      R2_SECRET_SOURCE: 'api-token'
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       R2_PUBLIC_HOSTNAME: https://r2.inkpup.ca
       R2_CUSTOM_DOMAIN: r2.inkpup.ca
@@ -98,114 +193,22 @@ jobs:
       - name: Install runtime dependencies
         run: npm install --legacy-peer-deps --silent --omit=dev
 
-      - name: Verify required secrets (dev)
+      - name: Download R2 credentials
+        uses: actions/download-artifact@v4
+        with:
+          name: r2-credentials
+          path: .r2-credentials
+
+      - name: Load R2 credentials
         run: |
           set -euo pipefail
-
-          required=(CF_API_TOKEN CF_ACCOUNT_ID CF_ZONE_ID R2_BUCKET)
-
-          for name in "${required[@]}"; do
-            value="${!name:-}"
-            if [ -z "$value" ]; then
-              echo "::error::Missing GitHub secret ${name}. Please create it in Settings > Secrets and variables > Actions." >&2
-              exit 1
-            fi
-          done
-
-          echo '::notice::Using CF_API_TOKEN for R2 authentication. The workflow will derive R2 credentials automatically.' >&2
-
-      - name: Resolve R2 credentials (dev)
-        env:
-          R2_API_TOKEN: ${{ env.R2_API_TOKEN }}
-          R2_SECRET_SOURCE: ${{ env.R2_SECRET_SOURCE }}
-        run: |
-          set -euo pipefail
-
-          secret="${R2_SECRET_ACCESS_KEY:-}"
-          access="${R2_ACCESS_KEY_ID:-}"
-          token="${R2_API_TOKEN:-}"
-          source="${R2_SECRET_SOURCE:-}"
-
-          if [ -z "$secret" ] && [ -n "$token" ]; then
-            secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
-            echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum.'
-          elif [ -n "$secret" ] && [ -n "$token" ] && [ "$secret" = "$token" ]; then
-            secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
-            echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum (matched raw token).'
-          elif [ "$source" = 'api-token' ] && [ -n "$secret" ] && ! echo "$secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
-            secret="$(printf '%s' "$secret" | sha256sum | awk '{print $1}')"
-            echo 'Normalized R2 secret access key sourced from API token via sha256sum to enforce 64-character hex format.'
-          elif [ "$source" = 'secret-key' ] && [ -n "$secret" ]; then
-            echo 'Using provided R2 secret access key from Workers R2 Access Key credentials as-is.'
-          elif [ -n "$secret" ] && ! echo "$secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
-            echo '::notice::R2 secret access key is not a 64-character hex string; assuming a pre-existing S3 credential.'
-          fi
-
-          if [ -n "$token" ]; then
-            if verify_response="$(
-              curl --fail --silent --show-error \
-                --retry 3 --retry-delay 2 --retry-all-errors \
-                -H "Authorization: Bearer $token" \
-                https://api.cloudflare.com/client/v4/user/tokens/verify
-            )"; then
-              access_candidate="$(printf '%s' "$verify_response" | jq -er '.result.id // empty' || true)"
-              if [ -n "$access_candidate" ]; then
-                if [ -n "$access" ] && [ "$access" != "$access_candidate" ]; then
-                  echo "::warning::Provided R2 access key id ('$access') does not match the token id; replacing it with the verified value." >&2
-                fi
-                access="$access_candidate"
-                echo 'Resolved R2 access key id via Cloudflare token verification.'
-              elif [ -z "$access" ]; then
-                echo '::error::Failed to resolve R2 access key id from R2_API_TOKEN via Cloudflare verification endpoint.' >&2
-                exit 1
-              else
-                echo '::warning::Unable to verify R2 access key id; continuing with the provided value.' >&2
-              fi
-            else
-              curl_status=$?
-              verify_tmp="$(mktemp)"
-              verify_code="$(
-                curl --silent --show-error \
-                  --retry 3 --retry-delay 2 --retry-all-errors \
-                  -w '%{http_code}' \
-                  -o "$verify_tmp" \
-                  -H "Authorization: Bearer $token" \
-                  https://api.cloudflare.com/client/v4/user/tokens/verify || true
-              )"
-              verify_code="$(printf '%s' "$verify_code" | tr -dc '0-9')"
-              if [ -s "$verify_tmp" ]; then
-                verify_snippet="$(tr '\n' ' ' < "$verify_tmp" | head -c 400)"
-              else
-                verify_snippet=''
-              fi
-              rm -f "$verify_tmp"
-              if [ -z "$access" ]; then
-                echo "::error::Failed to verify R2_API_TOKEN with Cloudflare (HTTP ${verify_code:-unknown}, exit ${curl_status}). Provide R2_ACCESS_KEY_ID or grant the token permission to call user/tokens/verify." >&2
-                exit 1
-              fi
-              if [ "${verify_code}" = "401" ] || [ "${verify_code}" = "403" ]; then
-                echo "::warning::Cloudflare token verification returned HTTP ${verify_code}. Continuing with provided R2 access key id. Ensure the token includes a permission that allows token verification (for example, User -> User Details: Read)." >&2
-              else
-                echo "::warning::Unable to verify R2 access key id via Cloudflare (HTTP ${verify_code:-unknown}, exit ${curl_status}). Continuing with the provided value." >&2
-              fi
-              if [ -n "$verify_snippet" ]; then
-                echo "::notice::Cloudflare verification response snippet: ${verify_snippet}" >&2
-              fi
-            fi
-          fi
-
-          if [ -z "$secret" ]; then
-            echo '::error::Unable to resolve an R2 secret access key for downstream scripts. Provide R2_SECRET_ACCESS_KEY or R2_API_TOKEN.' >&2
+          if [ -f .r2-credentials/credentials.env ]; then
+            cat .r2-credentials/credentials.env >> "$GITHUB_ENV"
+            echo "✅ Loaded R2 credentials from artifact"
+          else
+            echo "::error::R2 credentials file not found" >&2
             exit 1
           fi
-
-          if [ -z "$access" ]; then
-            echo '::error::Unable to resolve an R2 access key id for downstream scripts. Provide R2_ACCESS_KEY_ID or R2_API_TOKEN.' >&2
-            exit 1
-          fi
-
-          echo "R2_ACCESS_KEY_ID=$access" >> "$GITHUB_ENV"
-          echo "R2_SECRET_ACCESS_KEY=$secret" >> "$GITHUB_ENV"
 
       - name: Debug Cloudflare environment values (dev)
         run: |
@@ -240,8 +243,6 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
-      R2_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-      R2_SECRET_SOURCE: 'api-token'
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       R2_PUBLIC_HOSTNAME: https://r2.inkpup.ca
       R2_CUSTOM_DOMAIN: r2.inkpup.ca
@@ -265,7 +266,7 @@ jobs:
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_ZONE_ID: ${{ env.CLOUDFLARE_ZONE_ID }}
-          R2_API_TOKEN: ${{ env.R2_API_TOKEN }}
+          R2_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           R2_BUCKET: ${{ env.R2_BUCKET }}
           R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
         run: |
@@ -294,7 +295,7 @@ jobs:
   prepare-production:
     name: Configure Cloudflare resources (production)
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, derive-r2-credentials]
     if: github.ref == 'refs/heads/master'
     environment:
       name: production
@@ -305,8 +306,6 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
-      R2_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-      R2_SECRET_SOURCE: 'api-token'
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       R2_PUBLIC_HOSTNAME: https://r2.inkpup.ca
       R2_CUSTOM_DOMAIN: r2.inkpup.ca
@@ -323,113 +322,22 @@ jobs:
       - name: Install runtime dependencies
         run: npm install --legacy-peer-deps --silent --omit=dev
 
-      - name: Verify required secrets (production)
+      - name: Download R2 credentials
+        uses: actions/download-artifact@v4
+        with:
+          name: r2-credentials
+          path: .r2-credentials
+
+      - name: Load R2 credentials
         run: |
           set -euo pipefail
-
-          required=(CF_API_TOKEN CF_ACCOUNT_ID CF_ZONE_ID R2_BUCKET)
-          for name in "${required[@]}"; do
-            value="${!name:-}"
-            if [ -z "$value" ]; then
-              echo "::error::Missing GitHub secret ${name}. Please create it in Settings > Secrets and variables > Actions." >&2
-              exit 1
-            fi
-          done
-
-          echo '::notice::Using CF_API_TOKEN for R2 authentication. The workflow will derive R2 credentials automatically.' >&2
-
-      - name: Resolve R2 credentials (production)
-        env:
-          R2_API_TOKEN: ${{ env.R2_API_TOKEN }}
-          R2_SECRET_SOURCE: ${{ env.R2_SECRET_SOURCE }}
-        run: |
-          set -euo pipefail
-
-          secret="${R2_SECRET_ACCESS_KEY:-}"
-          access="${R2_ACCESS_KEY_ID:-}"
-          token="${R2_API_TOKEN:-}"
-          source="${R2_SECRET_SOURCE:-}"
-
-          if [ -z "$secret" ] && [ -n "$token" ]; then
-            secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
-            echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum.'
-          elif [ -n "$secret" ] && [ -n "$token" ] && [ "$secret" = "$token" ]; then
-            secret="$(printf '%s' "$token" | sha256sum | awk '{print $1}')"
-            echo 'Derived R2 secret access key from R2_API_TOKEN via sha256sum (matched raw token).'
-          elif [ "$source" = 'api-token' ] && [ -n "$secret" ] && ! echo "$secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
-            secret="$(printf '%s' "$secret" | sha256sum | awk '{print $1}')"
-            echo 'Normalized R2 secret access key sourced from API token via sha256sum to enforce 64-character hex format.'
-          elif [ "$source" = 'secret-key' ] && [ -n "$secret" ]; then
-            echo 'Using provided R2 secret access key from Workers R2 Access Key credentials as-is.'
-          elif [ -n "$secret" ] && ! echo "$secret" | grep -Eq '^[0-9a-fA-F]{64}$'; then
-            echo '::notice::R2 secret access key is not a 64-character hex string; assuming a pre-existing S3 credential.'
-          fi
-
-          if [ -n "$token" ]; then
-            if verify_response="$(
-              curl --fail --silent --show-error \
-                --retry 3 --retry-delay 2 --retry-all-errors \
-                -H "Authorization: Bearer $token" \
-                https://api.cloudflare.com/client/v4/user/tokens/verify
-            )"; then
-              access_candidate="$(printf '%s' "$verify_response" | jq -er '.result.id // empty' || true)"
-              if [ -n "$access_candidate" ]; then
-                if [ -n "$access" ] && [ "$access" != "$access_candidate" ]; then
-                  echo "::warning::Provided R2 access key id ('$access') does not match the token id; replacing it with the verified value." >&2
-                fi
-                access="$access_candidate"
-                echo 'Resolved R2 access key id via Cloudflare token verification.'
-              elif [ -z "$access" ]; then
-                echo '::error::Failed to resolve R2 access key id from R2_API_TOKEN via Cloudflare verification endpoint.' >&2
-                exit 1
-              else
-                echo '::warning::Unable to verify R2 access key id; continuing with the provided value.' >&2
-              fi
-            else
-              curl_status=$?
-              verify_tmp="$(mktemp)"
-              verify_code="$(
-                curl --silent --show-error \
-                  --retry 3 --retry-delay 2 --retry-all-errors \
-                  -w '%{http_code}' \
-                  -o "$verify_tmp" \
-                  -H "Authorization: Bearer $token" \
-                  https://api.cloudflare.com/client/v4/user/tokens/verify || true
-              )"
-              verify_code="$(printf '%s' "$verify_code" | tr -dc '0-9')"
-              if [ -s "$verify_tmp" ]; then
-                verify_snippet="$(tr '\n' ' ' < "$verify_tmp" | head -c 400)"
-              else
-                verify_snippet=''
-              fi
-              rm -f "$verify_tmp"
-              if [ -z "$access" ]; then
-                echo "::error::Failed to verify R2_API_TOKEN with Cloudflare (HTTP ${verify_code:-unknown}, exit ${curl_status}). Provide R2_ACCESS_KEY_ID or grant the token permission to call user/tokens/verify." >&2
-                exit 1
-              fi
-              if [ "${verify_code}" = "401" ] || [ "${verify_code}" = "403" ]; then
-                echo "::warning::Cloudflare token verification returned HTTP ${verify_code}. Continuing with provided R2 access key id. Ensure the token includes a permission that allows token verification (for example, User -> User Details: Read)." >&2
-              else
-                echo "::warning::Unable to verify R2 access key id via Cloudflare (HTTP ${verify_code:-unknown}, exit ${curl_status}). Continuing with the provided value." >&2
-              fi
-              if [ -n "$verify_snippet" ]; then
-                echo "::notice::Cloudflare verification response snippet: ${verify_snippet}" >&2
-              fi
-            fi
-          fi
-
-          if [ -z "$secret" ]; then
-            echo '::error::Unable to resolve an R2 secret access key for downstream scripts. Provide R2_SECRET_ACCESS_KEY or R2_API_TOKEN.' >&2
+          if [ -f .r2-credentials/credentials.env ]; then
+            cat .r2-credentials/credentials.env >> "$GITHUB_ENV"
+            echo "✅ Loaded R2 credentials from artifact"
+          else
+            echo "::error::R2 credentials file not found" >&2
             exit 1
           fi
-
-          if [ -z "$access" ]; then
-            echo '::error::Unable to resolve an R2 access key id for downstream scripts. Provide R2_ACCESS_KEY_ID or R2_API_TOKEN.' >&2
-            exit 1
-          fi
-
-          echo "R2_ACCESS_KEY_ID=$access" >> "$GITHUB_ENV"
-          echo "R2_SECRET_ACCESS_KEY=$secret" >> "$GITHUB_ENV"
 
       - name: Debug Cloudflare environment values (production)
         run: |
@@ -464,8 +372,6 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
-      R2_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-      R2_SECRET_SOURCE: 'api-token'
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       R2_PUBLIC_HOSTNAME: https://r2.inkpup.ca
       R2_CUSTOM_DOMAIN: r2.inkpup.ca
@@ -489,7 +395,7 @@ jobs:
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_ZONE_ID: ${{ env.CLOUDFLARE_ZONE_ID }}
-          R2_API_TOKEN: ${{ env.R2_API_TOKEN }}
+          R2_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           R2_BUCKET: ${{ env.R2_BUCKET }}
           R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
         run: |
