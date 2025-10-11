@@ -1,8 +1,20 @@
-import { beforeEach, describe, expect, jest, test } from '@jest/globals';
+import { beforeEach, describe, expect, jest, test, afterEach } from '@jest/globals';
 import { createHash } from 'crypto';
 
 const sendMock = jest.fn();
 const S3ClientMock = jest.fn(() => ({ send: sendMock }));
+
+const VERIFIED_ACCESS_KEY_ID = '0123456789abcdef0123456789abcdef';
+const DEFAULT_API_TOKEN = 'test-api-token-value';
+const DEFAULT_SECRET_HASH = createHash('sha256').update(DEFAULT_API_TOKEN).digest('hex');
+
+const buildFetchMock = () =>
+  jest.fn(async () => ({
+    ok: true,
+    json: async () => ({ result: { id: VERIFIED_ACCESS_KEY_ID } }),
+  }));
+
+let fetchMock: jest.Mock;
 
 jest.mock('@aws-sdk/client-s3', () => {
   class PutObjectCommand {
@@ -71,6 +83,12 @@ describe('upload and delete gallery images', () => {
     S3ClientMock.mockImplementation(() => ({ send: sendMock }));
     sharpMock.mockClear();
     process.env = { ...originalEnv };
+    fetchMock = buildFetchMock();
+    (globalThis as Record<string, unknown>).fetch = fetchMock;
+  });
+
+  afterEach(() => {
+    delete (globalThis as Record<string, unknown>).fetch;
   });
 
   test('uploadGalleryImage throws when credentials missing', async () => {
@@ -92,8 +110,9 @@ describe('upload and delete gallery images', () => {
   test('uploadGalleryImage optimizes asset and calls S3', async () => {
     process.env.R2_ACCOUNT_ID = 'account';
     process.env.R2_BUCKET = 'bucket';
-    process.env.R2_ACCESS_KEY_ID = 'access';
-    process.env.R2_SECRET_ACCESS_KEY = 'secret';
+    process.env.R2_ACCESS_KEY_ID = VERIFIED_ACCESS_KEY_ID;
+    process.env.R2_SECRET_ACCESS_KEY = DEFAULT_SECRET_HASH;
+    process.env.R2_API_TOKEN = DEFAULT_API_TOKEN;
     process.env.R2_PUBLIC_HOSTNAME = 'https://cdn.example.com';
     process.env.R2_MAX_IMAGE_WIDTH = '1200';
 
@@ -125,7 +144,7 @@ describe('upload and delete gallery images', () => {
   test('derives secret access key from API token when no secret is provided', async () => {
     process.env.R2_ACCOUNT_ID = 'account';
     process.env.R2_BUCKET = 'bucket';
-    process.env.R2_ACCESS_KEY_ID = 'token-id';
+    process.env.R2_ACCESS_KEY_ID = VERIFIED_ACCESS_KEY_ID;
     delete process.env.R2_SECRET_ACCESS_KEY;
     const apiToken = 'v1.0-test-api-token';
     process.env.R2_API_TOKEN = apiToken;
@@ -141,7 +160,7 @@ describe('upload and delete gallery images', () => {
     const clientConfig = ((S3ClientMock as jest.Mock).mock.calls[0][0] ?? {}) as any;
     expect(clientConfig).toBeDefined();
     expect(clientConfig.credentials).toMatchObject({
-      accessKeyId: 'token-id',
+      accessKeyId: VERIFIED_ACCESS_KEY_ID,
       secretAccessKey: expectedHash,
     });
   });
@@ -149,8 +168,9 @@ describe('upload and delete gallery images', () => {
   test('deleteGalleryImage validates category prefix and issues delete', async () => {
     process.env.R2_ACCOUNT_ID = 'account';
     process.env.R2_BUCKET = 'bucket';
-    process.env.R2_ACCESS_KEY_ID = 'access';
-    process.env.R2_SECRET_ACCESS_KEY = 'secret';
+    process.env.R2_ACCESS_KEY_ID = VERIFIED_ACCESS_KEY_ID;
+    process.env.R2_SECRET_ACCESS_KEY = DEFAULT_SECRET_HASH;
+    process.env.R2_API_TOKEN = DEFAULT_API_TOKEN;
 
     const server = await import('./r2-server');
 
@@ -169,8 +189,9 @@ describe('upload and delete gallery images', () => {
   test('listGalleryImages paginates, skips folders, and sorts by last modified', async () => {
     process.env.R2_ACCOUNT_ID = 'account';
     process.env.R2_BUCKET = 'bucket';
-    process.env.R2_ACCESS_KEY_ID = 'access';
-    process.env.R2_SECRET_ACCESS_KEY = 'secret';
+    process.env.R2_ACCESS_KEY_ID = VERIFIED_ACCESS_KEY_ID;
+    process.env.R2_SECRET_ACCESS_KEY = DEFAULT_SECRET_HASH;
+    process.env.R2_API_TOKEN = DEFAULT_API_TOKEN;
     process.env.R2_PUBLIC_HOSTNAME = 'https://cdn.example.com';
 
     const server = await import('./r2-server');
@@ -235,8 +256,9 @@ describe('upload and delete gallery images', () => {
   test('listGalleryImages falls back when R2 client initialization fails', async () => {
     process.env.R2_ACCOUNT_ID = 'account';
     process.env.R2_BUCKET = 'bucket';
-    process.env.R2_ACCESS_KEY_ID = 'access';
-    process.env.R2_SECRET_ACCESS_KEY = 'secret';
+    process.env.R2_ACCESS_KEY_ID = VERIFIED_ACCESS_KEY_ID;
+    process.env.R2_SECRET_ACCESS_KEY = DEFAULT_SECRET_HASH;
+    process.env.R2_API_TOKEN = DEFAULT_API_TOKEN;
 
     const server = await import('./r2-server');
 
@@ -271,8 +293,9 @@ describe('upload and delete gallery images', () => {
   test('listGalleryImages falls back to bundled data when R2 lookup fails', async () => {
     process.env.R2_ACCOUNT_ID = 'account';
     process.env.R2_BUCKET = 'bucket';
-    process.env.R2_ACCESS_KEY_ID = 'access';
-    process.env.R2_SECRET_ACCESS_KEY = 'secret';
+    process.env.R2_ACCESS_KEY_ID = VERIFIED_ACCESS_KEY_ID;
+    process.env.R2_SECRET_ACCESS_KEY = DEFAULT_SECRET_HASH;
+    process.env.R2_API_TOKEN = DEFAULT_API_TOKEN;
 
     const server = await import('./r2-server');
 
