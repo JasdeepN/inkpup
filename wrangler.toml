@@ -14,6 +14,14 @@ binding = "ASSETS"
 binding = "R2_BUCKET"
 bucket_name = "${R2_BUCKET}"
 
+[[env.dev.r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "${R2_BUCKET}"
+
+[[env.production.r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "${R2_BUCKET}"
+
 [vars]
 R2_PUBLIC_HOSTNAME = "${R2_PUBLIC_HOSTNAME}"
 CF_WEB_ANALYTICS_TOKEN = "${CF_WEB_ANALYTICS_TOKEN}"
