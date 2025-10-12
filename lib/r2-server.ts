@@ -5,6 +5,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import type { ListObjectsV2CommandOutput, PutObjectCommandInput } from '@aws-sdk/client-s3';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { toPublicR2Url } from './r2';
 import fallbackDataRaw from '../data/gallery.json';
 import type { GalleryItem, GalleryCategory } from './gallery-types';
@@ -31,7 +32,108 @@ type R2BindingProbe = {
   contextBindingNull: boolean;
   directPropertyPresent: boolean;
   directBindingNull: boolean;
+  contextAccessAttempted: boolean;
+  contextAccessError?: string;
 };
+
+type ContextAccessProbe = {
+  binding: R2Bucket | undefined;
+  envHasBucket: boolean;
+  bindingNull: boolean;
+  attempted: boolean;
+  error?: string;
+};
+
+type SymbolAccessProbe = {
+  binding: R2Bucket | undefined;
+  envHasBucket: boolean;
+  bindingNull: boolean;
+  symbolPresent: boolean;
+};
+
+type GlobalPropertyProbe = {
+  binding: R2Bucket | undefined;
+  propertyPresent: boolean;
+  bindingNull: boolean;
+};
+
+function probeBindingViaContext(): ContextAccessProbe {
+  let binding: R2Bucket | undefined;
+  let envHasBucket = false;
+  let bindingNull = false;
+  let attempted = false;
+  let errorMessage: string | undefined;
+
+  try {
+    const { env } = getCloudflareContext();
+    attempted = true;
+    const lookup = env as CloudflareContextLookup['env'];
+    if (lookup && 'R2_BUCKET' in lookup) {
+      envHasBucket = true;
+      const candidate = lookup.R2_BUCKET;
+      bindingNull = candidate === null;
+      if (typeof candidate !== 'undefined' && candidate !== null) {
+        binding = candidate;
+      }
+    }
+  } catch (error) {
+    attempted = true;
+    errorMessage = error instanceof Error ? error.message : 'Unknown context error';
+  }
+
+  return {
+    binding,
+    envHasBucket,
+    bindingNull,
+    attempted,
+    error: errorMessage,
+  };
+}
+
+function probeBindingViaSymbol(
+  globalWithContext: typeof globalThis &
+    R2BindingLookup &
+    Partial<Record<typeof CLOUDFLARE_CONTEXT_SYMBOL, CloudflareContextLookup>>
+): SymbolAccessProbe {
+  const symbolPresent = CLOUDFLARE_CONTEXT_SYMBOL in globalWithContext;
+  let binding: R2Bucket | undefined;
+  let envHasBucket = false;
+  let bindingNull = false;
+
+  if (symbolPresent) {
+    const contextEnv = globalWithContext[CLOUDFLARE_CONTEXT_SYMBOL]?.env;
+    if (contextEnv && 'R2_BUCKET' in contextEnv) {
+      envHasBucket = true;
+      const candidate = contextEnv.R2_BUCKET;
+      bindingNull = candidate === null;
+      if (typeof candidate !== 'undefined' && candidate !== null) {
+        binding = candidate;
+      }
+    }
+  }
+
+  return {
+    binding,
+    envHasBucket,
+    bindingNull,
+    symbolPresent,
+  };
+}
+
+function probeBindingViaGlobalProperty(
+  globalWithContext: typeof globalThis & R2BindingLookup
+): GlobalPropertyProbe {
+  const propertyPresent = 'R2_BUCKET' in globalWithContext;
+  const candidate = propertyPresent ? globalWithContext.R2_BUCKET : undefined;
+  const bindingNull = candidate === null;
+  const binding = typeof candidate !== 'undefined' && candidate !== null ? candidate : undefined;
+
+  return {
+    binding,
+    propertyPresent,
+    bindingNull,
+  };
+}
 
 function probeR2Binding(): R2BindingProbe {
   try {
@@ -39,36 +141,28 @@ function probeR2Binding(): R2BindingProbe {
       R2BindingLookup &
       Partial<Record<typeof CLOUDFLARE_CONTEXT_SYMBOL, CloudflareContextLookup>>;
 
-    const contextSymbolPresent = Object.hasOwn(globalWithContext, CLOUDFLARE_CONTEXT_SYMBOL);
-    const contextEnv = globalWithContext[CLOUDFLARE_CONTEXT_SYMBOL]?.env;
-    const contextEnvHasBucket = Boolean(contextEnv && Object.hasOwn(contextEnv, 'R2_BUCKET'));
-    const contextBindingValue = contextEnv?.R2_BUCKET;
-    const contextBindingDefined = typeof contextBindingValue !== 'undefined' && contextBindingValue !== null;
+    const contextProbe = probeBindingViaContext();
+    const symbolProbe = probeBindingViaSymbol(globalWithContext);
+    const directProbe = probeBindingViaGlobalProperty(globalWithContext);
 
-    const directPropertyPresent = Object.hasOwn(globalWithContext, 'R2_BUCKET');
-    const directBindingValue = globalWithContext.R2_BUCKET;
-    const directBindingDefined = typeof directBindingValue !== 'undefined' && directBindingValue !== null;
-
-    let binding: R2Bucket | undefined;
-    if (contextBindingDefined) {
-      binding = contextBindingValue!;
-    } else if (directBindingDefined) {
-      binding = directBindingValue!;
-    }
+    const contextDerivedBinding = contextProbe.binding ?? symbolProbe.binding;
+    const binding = typeof contextDerivedBinding !== 'undefined' ? contextDerivedBinding : directProbe.binding;
 
     let source: R2BindingProbeSource = 'none';
     if (binding) {
-      source = contextBindingDefined ? 'cloudflare-context' : 'global-property';
+      source = typeof contextDerivedBinding !== 'undefined' ? 'cloudflare-context' : 'global-property';
     }
 
     return {
       binding,
       source,
-      contextSymbolPresent,
-      contextEnvHasBucket,
-      contextBindingNull: contextBindingValue === null,
-      directPropertyPresent,
-      directBindingNull: directBindingValue === null,
+      contextSymbolPresent: symbolProbe.symbolPresent,
+      contextEnvHasBucket: contextProbe.envHasBucket || symbolProbe.envHasBucket,
+      contextBindingNull: contextProbe.bindingNull || symbolProbe.bindingNull,
+      directPropertyPresent: directProbe.propertyPresent,
+      directBindingNull: directProbe.bindingNull,
+      contextAccessAttempted: contextProbe.attempted,
+      contextAccessError: contextProbe.error,
     };
   } catch {
     return {
@@ -79,6 +173,7 @@ function probeR2Binding(): R2BindingProbe {
       contextBindingNull: false,
       directPropertyPresent: false,
       directBindingNull: false,
+      contextAccessAttempted: false,
     };
   }
 }
@@ -664,6 +759,8 @@ export async function listGalleryImages(
     contextBindingNull: bindingProbe.contextBindingNull,
     globalPropertyPresent: bindingProbe.directPropertyPresent,
     globalBindingNull: bindingProbe.directBindingNull,
+    contextAccessAttempted: bindingProbe.contextAccessAttempted,
+    contextAccessError: bindingProbe.contextAccessError,
   });
 
   if (binding) {
