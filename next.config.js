@@ -39,6 +39,13 @@ const addCspSource = (directive, value) => {
   }
 };
 
+const DEFAULT_R2_IMG_SOURCES = [
+  'https://*.r2.dev',
+  'https://*.r2.cloudflarestorage.com',
+];
+
+DEFAULT_R2_IMG_SOURCES.forEach((source) => addCspSource('img-src', source));
+
 let parsedPublicUrl = null;
 
 if (publicHostname) {
@@ -66,6 +73,32 @@ const SECURITY_HEADERS = [
 ];
 
 /** @type {import('next').NextConfig} */
+const baseRemotePatterns = [
+  {
+    protocol: 'https',
+    hostname: 'scontent.cdninstagram.com',
+    pathname: '/**',
+  },
+  {
+    protocol: 'https',
+    hostname: 'via.placeholder.com',
+    pathname: '/**',
+  },
+];
+
+const DEFAULT_R2_REMOTE_PATTERNS = [
+  {
+    protocol: 'https',
+    hostname: '*.r2.dev',
+    pathname: '/**',
+  },
+  {
+    protocol: 'https',
+    hostname: '*.r2.cloudflarestorage.com',
+    pathname: '/**',
+  },
+];
+
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
@@ -76,18 +109,7 @@ const nextConfig = {
     // https://nextjs.org/docs/app/api-reference/components/image#unoptimized
     // https://opennext.js.org/cloudflare/howtos/image
     unoptimized: true,
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'scontent.cdninstagram.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'via.placeholder.com',
-        pathname: '/**',
-      },
-    ],
+    remotePatterns: [...baseRemotePatterns, ...DEFAULT_R2_REMOTE_PATTERNS],
   },
   async headers() {
     return [
