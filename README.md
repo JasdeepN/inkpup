@@ -144,7 +144,7 @@ By default the archives are written to `~/.cache/act-images`. You can override t
 
 A password-protected gallery portal is available for managing Cloudflare R2 assets. Configure the following environment variables (see `.env.example`):
 
-- `ADMIN_PORTAL_SLUG`: Single path segment for the hidden URL (e.g. `studio-console` -> `/studio-console`).
+- `ADMIN_PORTAL_HOSTS`: Comma-separated hostnames that should serve the portal. Defaults to `admin.inkpup.com`, `dev.admin.inkpup.com`, and local hostnames outside production.
 - `ADMIN_PORTAL_PASSWORD`: Portal password required to sign in.
 - `ADMIN_SESSION_SECRET`: Secret used to sign session cookies (rotate on compromise).
 - Optional overrides: `ADMIN_SESSION_COOKIE_NAME`, `ADMIN_SESSION_TTL_HOURS`, and `R2_MAX_IMAGE_WIDTH` (defaults to 1800px).

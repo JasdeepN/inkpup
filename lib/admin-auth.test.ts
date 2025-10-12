@@ -3,11 +3,11 @@ import { beforeEach, describe, expect, test } from '@jest/globals';
 const MODULE_PATH = './admin-auth';
 
 function clearAdminEnv() {
-  delete process.env.ADMIN_PORTAL_SLUG;
   delete process.env.ADMIN_PORTAL_PASSWORD;
   delete process.env.ADMIN_SESSION_SECRET;
   delete process.env.ADMIN_SESSION_COOKIE_NAME;
   delete process.env.ADMIN_SESSION_TTL_HOURS;
+  delete process.env.ADMIN_PORTAL_HOSTS;
 }
 
 describe('admin auth utilities', () => {
@@ -27,20 +27,17 @@ describe('admin auth utilities', () => {
   });
 
   test('create and verify session token lifecycle', async () => {
-    process.env.ADMIN_PORTAL_SLUG = 'super-secret';
     process.env.ADMIN_PORTAL_PASSWORD = 'pass123';
     process.env.ADMIN_SESSION_SECRET = 'session-secret';
     process.env.ADMIN_SESSION_COOKIE_NAME = 'custom-cookie';
     process.env.ADMIN_SESSION_TTL_HOURS = '2';
 
-    const { createSessionToken, verifySessionToken, getSessionCookieOptions, isValidAdminSlug } = await import(MODULE_PATH);
+    const { createSessionToken, verifySessionToken, getSessionCookieOptions } = await import(MODULE_PATH);
 
     const issuedAt = 1_700_000_000_000;
     const token = createSessionToken(issuedAt);
 
     expect(verifySessionToken(token, issuedAt)).toBe(true);
-    expect(isValidAdminSlug('super-secret')).toBe(true);
-    expect(isValidAdminSlug('wrong')).toBe(false);
 
     const cookie = getSessionCookieOptions();
     expect(cookie.name).toBe('custom-cookie');
@@ -49,7 +46,6 @@ describe('admin auth utilities', () => {
   });
 
   test('verifySessionToken respects configured TTL', async () => {
-    process.env.ADMIN_PORTAL_SLUG = 'hidden';
     process.env.ADMIN_PORTAL_PASSWORD = 'password';
     process.env.ADMIN_SESSION_SECRET = 'another-secret';
     process.env.ADMIN_SESSION_TTL_HOURS = '1';
@@ -65,7 +61,6 @@ describe('admin auth utilities', () => {
   });
 
   test('verifySessionToken handles malformed tokens and cookie clearing', async () => {
-    process.env.ADMIN_PORTAL_SLUG = 'slug';
     process.env.ADMIN_PORTAL_PASSWORD = 'pass';
     process.env.ADMIN_SESSION_SECRET = 'secret';
     process.env.ADMIN_SESSION_COOKIE_NAME = 'session-cookie';

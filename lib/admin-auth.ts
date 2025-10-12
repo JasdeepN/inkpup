@@ -4,7 +4,6 @@ const DEFAULT_COOKIE_NAME = 'ink-admin-session';
 const DEFAULT_SESSION_TTL_HOURS = 8;
 
 export interface AdminPortalConfig {
-  slug: string;
   password: string;
   sessionSecret: string;
   sessionCookieName: string;
@@ -30,14 +29,12 @@ function readEnv(name: string): string | undefined {
 }
 
 export function getAdminConfig(): AdminPortalConfig {
-  const slug = readEnv('ADMIN_PORTAL_SLUG') ?? '';
   const password = readEnv('ADMIN_PORTAL_PASSWORD') ?? '';
   const sessionSecret = readEnv('ADMIN_SESSION_SECRET') ?? '';
   const sessionCookieName = readEnv('ADMIN_SESSION_COOKIE_NAME') ?? DEFAULT_COOKIE_NAME;
   const sessionTtlMs = parseTtlMs(readEnv('ADMIN_SESSION_TTL_HOURS'));
 
   return {
-    slug,
     password,
     sessionSecret,
     sessionCookieName,
@@ -47,7 +44,7 @@ export function getAdminConfig(): AdminPortalConfig {
 
 export function isAdminEnabled(): boolean {
   const config = getAdminConfig();
-  return Boolean(config.slug && config.password && config.sessionSecret);
+  return Boolean(config.password && config.sessionSecret);
 }
 
 function buildSignaturePayload(issuedAt: number, password: string): string {
@@ -74,7 +71,7 @@ export function verifySessionToken(token: string | null | undefined, now: number
   if (parts.length !== 2) return false;
 
   const [issuedAtRaw, providedSignature] = parts;
-  if (!/^[0-9]+$/u.test(issuedAtRaw)) return false;
+  if (!/^\d+$/u.test(issuedAtRaw)) return false;
   const issuedAt = Number(issuedAtRaw);
   if (!Number.isSafeInteger(issuedAt)) return false;
 
@@ -124,11 +121,4 @@ export function getSessionCookieClearOptions() {
       path: '/',
     },
   };
-}
-
-export function isValidAdminSlug(candidate: string | undefined | null): boolean {
-  const config = getAdminConfig();
-  if (!config.slug) return false;
-  if (!candidate) return false;
-  return candidate === config.slug;
 }
