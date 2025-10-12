@@ -15,12 +15,76 @@ type R2BindingLookup = {
   R2_BUCKET?: R2Bucket | null;
 };
 
-function readR2Binding(): R2Bucket | undefined {
+type CloudflareContextLookup = {
+  env?: R2BindingLookup;
+};
+
+const CLOUDFLARE_CONTEXT_SYMBOL = Symbol.for('__cloudflare-context__');
+
+type R2BindingProbeSource = 'cloudflare-context' | 'global-property' | 'none';
+
+type R2BindingProbe = {
+  binding: R2Bucket | undefined;
+  source: R2BindingProbeSource;
+  contextSymbolPresent: boolean;
+  contextEnvHasBucket: boolean;
+  contextBindingNull: boolean;
+  directPropertyPresent: boolean;
+  directBindingNull: boolean;
+};
+
+function probeR2Binding(): R2BindingProbe {
   try {
-    return (globalThis as unknown as R2BindingLookup).R2_BUCKET ?? undefined;
+    const globalWithContext = globalThis as typeof globalThis &
+      R2BindingLookup &
+      Partial<Record<typeof CLOUDFLARE_CONTEXT_SYMBOL, CloudflareContextLookup>>;
+
+    const contextSymbolPresent = Object.hasOwn(globalWithContext, CLOUDFLARE_CONTEXT_SYMBOL);
+    const contextEnv = globalWithContext[CLOUDFLARE_CONTEXT_SYMBOL]?.env;
+    const contextEnvHasBucket = Boolean(contextEnv && Object.hasOwn(contextEnv, 'R2_BUCKET'));
+    const contextBindingValue = contextEnv?.R2_BUCKET;
+    const contextBindingDefined = typeof contextBindingValue !== 'undefined' && contextBindingValue !== null;
+
+    const directPropertyPresent = Object.hasOwn(globalWithContext, 'R2_BUCKET');
+    const directBindingValue = globalWithContext.R2_BUCKET;
+    const directBindingDefined = typeof directBindingValue !== 'undefined' && directBindingValue !== null;
+
+    let binding: R2Bucket | undefined;
+    if (contextBindingDefined) {
+      binding = contextBindingValue!;
+    } else if (directBindingDefined) {
+      binding = directBindingValue!;
+    }
+
+    let source: R2BindingProbeSource = 'none';
+    if (binding) {
+      source = contextBindingDefined ? 'cloudflare-context' : 'global-property';
+    }
+
+    return {
+      binding,
+      source,
+      contextSymbolPresent,
+      contextEnvHasBucket,
+      contextBindingNull: contextBindingValue === null,
+      directPropertyPresent,
+      directBindingNull: directBindingValue === null,
+    };
   } catch {
-    return undefined;
+    return {
+      binding: undefined,
+      source: 'none',
+      contextSymbolPresent: false,
+      contextEnvHasBucket: false,
+      contextBindingNull: false,
+      directPropertyPresent: false,
+      directBindingNull: false,
+    };
   }
+}
+
+function readR2Binding(): R2Bucket | undefined {
+  return probeR2Binding().binding;
 }
 
 const DEFAULT_MAX_IMAGE_WIDTH = 1800;
@@ -54,12 +118,11 @@ let clientPromise: Promise<S3Client> | null = null;
 
 // Check if R2 binding is available
 function hasR2Binding(): boolean {
-  const binding = readR2Binding();
-  return typeof binding !== 'undefined' && binding !== null;
+  return typeof probeR2Binding().binding !== 'undefined';
 }
 
 function getR2Binding(): R2Bucket {
-  const binding = readR2Binding();
+  const { binding } = probeR2Binding();
   if (!binding) {
     throw new Error('R2_BUCKET binding is not available');
   }
@@ -199,7 +262,7 @@ async function resolveCredentials(): Promise<{ accessKeyId: string; secretAccess
 
 export function hasR2Credentials(): boolean {
   // If R2 binding is available, we don't need credentials
-  if (hasR2Binding()) {
+  if (typeof probeR2Binding().binding !== 'undefined') {
     return true;
   }
   // Otherwise check for S3-compatible credentials
@@ -593,15 +656,17 @@ export async function listGalleryImages(
   const prefix = `${category}`.replace(/\/+$/, '');
 
   // Use R2 binding if available (faster, no auth needed)
-  const binding = readR2Binding();
-  const bindingAvailable = typeof binding !== 'undefined' && binding !== null;
-  console.info(`R2 binding check: ${bindingAvailable ? 'available' : 'not available'}`, {
-    hasBindingProperty: Object.hasOwn(globalThis as R2BindingLookup, 'R2_BUCKET'),
-    bindingType: typeof binding,
-    isNull: binding === null,
+  const bindingProbe = probeR2Binding();
+  const binding = bindingProbe.binding;
+  console.info(`R2 binding probe result: ${bindingProbe.source}`, {
+    contextSymbolPresent: bindingProbe.contextSymbolPresent,
+    contextEnvHasBucket: bindingProbe.contextEnvHasBucket,
+    contextBindingNull: bindingProbe.contextBindingNull,
+    globalPropertyPresent: bindingProbe.directPropertyPresent,
+    globalBindingNull: bindingProbe.directBindingNull,
   });
 
-  if (bindingAvailable && binding) {
+  if (binding) {
     try {
       const images = await fetchGalleryImagesFromR2Binding(binding, prefix, category);
       console.info('Fetched gallery listing from R2 binding.', { prefix, count: images.length });
