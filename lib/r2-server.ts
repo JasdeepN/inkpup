@@ -11,9 +11,17 @@ import type { GalleryItem, GalleryCategory } from './gallery-types';
 import { GALLERY_CATEGORIES, getCategoryLabel, isGalleryCategory } from './gallery-types';
 import { createHash } from 'crypto';
 
-// R2 Bucket binding (injected by Cloudflare Workers)
-// Note: With OpenNext, bindings may be accessed via globalThis
-declare const R2_BUCKET: R2Bucket | undefined;
+type R2BindingLookup = {
+  R2_BUCKET?: R2Bucket | null;
+};
+
+function readR2Binding(): R2Bucket | undefined {
+  try {
+    return (globalThis as unknown as R2BindingLookup).R2_BUCKET ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 const DEFAULT_MAX_IMAGE_WIDTH = 1800;
 const MAX_IMAGE_WIDTH = (() => {
@@ -46,19 +54,16 @@ let clientPromise: Promise<S3Client> | null = null;
 
 // Check if R2 binding is available
 function hasR2Binding(): boolean {
-  try {
-    // In Cloudflare Workers, bindings are available on globalThis
-    return typeof R2_BUCKET !== 'undefined' && R2_BUCKET !== null;
-  } catch {
-    return false;
-  }
+  const binding = readR2Binding();
+  return typeof binding !== 'undefined' && binding !== null;
 }
 
 function getR2Binding(): R2Bucket {
-  if (!hasR2Binding()) {
+  const binding = readR2Binding();
+  if (!binding) {
     throw new Error('R2_BUCKET binding is not available');
   }
-  return R2_BUCKET!;
+  return binding;
 }
 
 const ensureApiToken = (token: string) => {
@@ -588,17 +593,17 @@ export async function listGalleryImages(
   const prefix = `${category}`.replace(/\/+$/, '');
 
   // Use R2 binding if available (faster, no auth needed)
-  const bindingAvailable = hasR2Binding();
+  const binding = readR2Binding();
+  const bindingAvailable = typeof binding !== 'undefined' && binding !== null;
   console.info(`R2 binding check: ${bindingAvailable ? 'available' : 'not available'}`, {
-    typeofBinding: typeof R2_BUCKET,
-    isUndefined: R2_BUCKET === undefined,
-    isNull: R2_BUCKET === null,
+    hasBindingProperty: Object.hasOwn(globalThis as R2BindingLookup, 'R2_BUCKET'),
+    bindingType: typeof binding,
+    isNull: binding === null,
   });
 
-  if (bindingAvailable) {
+  if (bindingAvailable && binding) {
     try {
-      const bucket = getR2Binding();
-      const images = await fetchGalleryImagesFromR2Binding(bucket, prefix, category);
+      const images = await fetchGalleryImagesFromR2Binding(binding, prefix, category);
       console.info('Fetched gallery listing from R2 binding.', { prefix, count: images.length });
       return {
         items: images,
