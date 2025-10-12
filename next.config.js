@@ -42,6 +42,8 @@ const addCspSource = (directive, value) => {
 const DEFAULT_R2_IMG_SOURCES = [
   'https://*.r2.dev',
   'https://*.r2.cloudflarestorage.com',
+  'https://r2.inkpup.ca',
+  'https://*.inkpup.ca',
 ];
 
 DEFAULT_R2_IMG_SOURCES.forEach((source) => addCspSource('img-src', source));
@@ -95,6 +97,16 @@ const DEFAULT_R2_REMOTE_PATTERNS = [
   {
     protocol: 'https',
     hostname: '*.r2.cloudflarestorage.com',
+    pathname: '/**',
+  },
+  {
+    protocol: 'https',
+    hostname: 'r2.inkpup.ca',
+    pathname: '/**',
+  },
+  {
+    protocol: 'https',
+    hostname: '*.inkpup.ca',
     pathname: '/**',
   },
 ];
