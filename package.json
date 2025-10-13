@@ -20,8 +20,8 @@
     "act:cache:prune": "bash scripts/act-cache-images.sh prune",
     "r2:cors:show": "node scripts/configure-r2-cors.js --show",
     "r2:cors:apply": "node scripts/configure-r2-cors.js",
-  "r2:content-type:fix": "node scripts/fix-r2-content-type.js",
-  "postinstall": "patch-package"
+    "r2:content-type:fix": "node scripts/fix-r2-content-type.js",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.653.0",
@@ -33,7 +33,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sharp": "^0.33.5",
-    "tsparticles": "^3.9.1"
+    "tsparticles": "^3.9.1",
+    "patch-package": "^8.0.1"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.28.3",
@@ -59,7 +60,6 @@
     "eslint-config-next": "15.5.4",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
-    "patch-package": "^8.0.1",
     "playwright": "^1.56.0",
     "postcss": "^8.5.6",
     "postinstall-postinstall": "^2.1.0",
