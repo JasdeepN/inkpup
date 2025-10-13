@@ -38,3 +38,6 @@ jobs:
       environment: ${{ github.ref == 'refs/heads/master' && 'production' || 'dev' }}
       branch: ${{ github.ref_name }}
       custom_domain_config: ${{ github.ref == 'refs/heads/master' }}
+    secrets:
+      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
