@@ -5,10 +5,7 @@ on:
     branches: [ master, dev ]
   workflow_dispatch:
 
-env:
-  R2_PUBLIC_HOSTNAME: ${{ vars.R2_PUBLIC_HOSTNAME || 'https://r2.inkpup.ca' }}
-  R2_CUSTOM_DOMAIN: ${{ vars.R2_CUSTOM_DOMAIN || 'r2.inkpup.ca' }}
-  R2_MIN_TLS: ${{ vars.R2_MIN_TLS || '1.3' }}
+
 
 jobs:
   validate:
@@ -364,6 +361,9 @@ jobs:
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       R2_BUCKET: ${{ vars.R2_BUCKET }}
       R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
+      R2_PUBLIC_HOSTNAME: ${{ vars.R2_PUBLIC_HOSTNAME }}
+      R2_CUSTOM_DOMAIN: ${{ vars.R2_CUSTOM_DOMAIN }}
+      R2_MIN_TLS: ${{ vars.R2_MIN_TLS }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -430,6 +430,9 @@ jobs:
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       R2_BUCKET: ${{ vars.R2_BUCKET }}
       R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
+      R2_PUBLIC_HOSTNAME: ${{ vars.R2_PUBLIC_HOSTNAME }}
+      R2_CUSTOM_DOMAIN: ${{ vars.R2_CUSTOM_DOMAIN }}
+      R2_MIN_TLS: ${{ vars.R2_MIN_TLS }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -481,9 +484,9 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       R2_BUCKET: ${{ vars.R2_BUCKET }}
-      R2_PUBLIC_HOSTNAME: ${{ secrets.R2_PUBLIC_HOSTNAME }}
-      R2_CUSTOM_DOMAIN: ${{ secrets.R2_CUSTOM_DOMAIN }}
-      R2_MIN_TLS: ${{ secrets.R2_MIN_TLS }}
+      R2_PUBLIC_HOSTNAME: ${{ vars.R2_PUBLIC_HOSTNAME }}
+      R2_CUSTOM_DOMAIN: ${{ vars.R2_CUSTOM_DOMAIN }}
+      R2_MIN_TLS: ${{ vars.R2_MIN_TLS }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -550,9 +553,9 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       R2_BUCKET: ${{ vars.R2_BUCKET }}
-      R2_PUBLIC_HOSTNAME: ${{ secrets.R2_PUBLIC_HOSTNAME }}
-      R2_CUSTOM_DOMAIN: ${{ secrets.R2_CUSTOM_DOMAIN }}
-      R2_MIN_TLS: ${{ secrets.R2_MIN_TLS }}
+      R2_PUBLIC_HOSTNAME: ${{ vars.R2_PUBLIC_HOSTNAME }}
+      R2_CUSTOM_DOMAIN: ${{ vars.R2_CUSTOM_DOMAIN }}
+      R2_MIN_TLS: ${{ vars.R2_MIN_TLS }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
