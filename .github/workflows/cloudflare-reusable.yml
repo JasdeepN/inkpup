@@ -48,6 +48,10 @@ jobs:
         run: npm install --legacy-peer-deps --silent
       - name: Debug environment values
         shell: bash
+        env:
+          R2_BUCKET: ${{ vars.R2_BUCKET }}
+          R2_PUBLIC_HOSTNAME: ${{ vars.R2_PUBLIC_HOSTNAME }}
+          R2_FORCE_S3: ${{ vars.R2_FORCE_S3 }}
         run: |
           echo "Environment: ${{ inputs.environment }}"
           echo "Branch: ${{ inputs.branch }}"
@@ -88,6 +92,10 @@ jobs:
               f.write(f"R2_SECRET_ACCESS_KEY={keys['secret_access_key']}\n")
           PY
       - name: Append all environment variables to credentials file
+        env:
+          R2_BUCKET: ${{ vars.R2_BUCKET }}
+          R2_PUBLIC_HOSTNAME: ${{ vars.R2_PUBLIC_HOSTNAME }}
+          R2_FORCE_S3: ${{ vars.R2_FORCE_S3 }}
         run: |
           {
             echo "R2_API_TOKEN=$R2_API_TOKEN"
@@ -181,6 +189,10 @@ jobs:
             echo "$line" >> "$GITHUB_ENV"
           done < .r2-credentials/credentials.env
       - name: Debug Cloudflare environment values
+        env:
+          R2_BUCKET: ${{ vars.R2_BUCKET }}
+          R2_PUBLIC_HOSTNAME: ${{ vars.R2_PUBLIC_HOSTNAME }}
+          R2_FORCE_S3: ${{ vars.R2_FORCE_S3 }}
         run: |
           set -euo pipefail
           for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_ZONE_ID R2_BUCKET R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY; do
