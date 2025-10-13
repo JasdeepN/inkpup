@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: validate
     env:
-      CF_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
+      R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
       CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
     steps:
       - name: Derive R2 credentials from Cloudflare API token
