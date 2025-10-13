@@ -47,7 +47,6 @@ Commands & QA (for devs/automation)
 - Tests: run unit tests (Jest/Playwright) if added
 
 Cloudflare specifics
-- Prefer deploying static pages with SSG/ISR to Cloudflare Pages.
 - For edge SSR, use Cloudflare Workers/Pages Functions or the official Next.js adapter.
 - Use Cloudflare Images or a remote loader for optimized image delivery; allowlist domains in `next.config.js`.
 
@@ -92,16 +91,5 @@ Linting & consistency
 - Document component styling patterns in this instructions file when you introduce a new pattern.
 
 
-Todo (copyable, use when working on the project)
-```
-- [ ] Create Next.js app skeleton (App Router) under `app/` with `layout.tsx` and `head.tsx`.
-- [ ] Implement `components/Meta.tsx` to manage title, description, canonical, OG, and twitter meta.
-- [ ] Implement `components/LocalBusinessJsonLd.tsx` and include it in the homepage layout.
-- [ ] Add `robots.txt` and `next-sitemap.config.js` and script to generate sitemap.
-- [ ] Add sample portfolio page with OG image and share buttons.
-- [ ] Add Cloudflare Pages deployment notes to `README.md` and `next.config.js` settings.
-- [ ] Run `npm run build` and verify production start works; fix any build issues.
-- [ ] Submit sitemap to Google Search Console and verify indexing (manual step).
-```
 
 File created by Copilot instructions generator. Keep this file updated as the project evolves.

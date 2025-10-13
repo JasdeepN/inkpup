@@ -17,6 +17,7 @@ const customConfig = {
     '^next/image$': '<rootDir>/__mocks__/next-image.js',
     '^sb-original/(.*)$': '<rootDir>/node_modules/vite-plugin-storybook-nextjs/dist/plugins/next-image/alias/$1.cjs',
   },
+  transformIgnorePatterns: ['/node_modules/(?!(why-is-node-running)/)'],
   collectCoverage: true,
   coverageDirectory: '<rootDir>/coverage',
   coverageProvider: 'v8',

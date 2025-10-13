@@ -851,7 +851,9 @@ export async function listGalleryImages(
   // Use R2 binding if available (faster, no auth needed)
   const bindingProbe = probeR2Binding();
   const bindingForList = FORCE_S3 ? undefined : getR2BindingFor('list');
-  console.info(`R2 binding probe result: ${bindingProbe.source}`, {
+  // Debug: log which binding is used and if it's a mock
+  console.info('[DEBUG] R2 binding probe result:', {
+    source: bindingProbe.source,
     contextSymbolPresent: bindingProbe.contextSymbolPresent,
     contextEnvHasBucket: bindingProbe.contextEnvHasBucket,
     contextBindingNull: bindingProbe.contextBindingNull,
@@ -859,9 +861,14 @@ export async function listGalleryImages(
     globalBindingNull: bindingProbe.directBindingNull,
     contextAccessAttempted: bindingProbe.contextAccessAttempted,
     contextAccessError: bindingProbe.contextAccessError,
+    bindingForListType: typeof bindingForList,
+  bindingForListIsMock: (bindingForList?.list as any)?._isMockFunction ?? false,
+    bindingForListKeys: bindingForList ? Object.keys(bindingForList) : undefined,
   });
 
   if (bindingForList) {
+    // Debug: log when using R2 binding
+  console.info('[DEBUG] Using R2 binding for listGalleryImages. Is mock:', (bindingForList.list as any)?._isMockFunction ?? false);
     try {
       const images = await fetchGalleryImagesFromR2Binding(bindingForList, prefix, category);
       console.info('Fetched gallery listing from R2 binding.', { prefix, count: images.length });
