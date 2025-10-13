@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: validate
     env:
-      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      CF_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
       CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
     steps:
       - name: Derive R2 credentials from Cloudflare API token
@@ -56,11 +56,11 @@ jobs:
           import sys
           import urllib.request
 
-          token = os.environ.get("CF_API_TOKEN", "").strip()
+          token = os.environ.get("R2_API_TOKEN", "").strip()
           account_id = os.environ.get("CF_ACCOUNT_ID", "").strip()
 
           if not token:
-              print("::error::CF_API_TOKEN secret is not configured.")
+              print("::error::R2_API_TOKEN secret is not configured.")
               sys.exit(1)
 
           if not account_id:
