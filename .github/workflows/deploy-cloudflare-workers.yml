@@ -308,9 +308,9 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
-      R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
-      R2_CUSTOM_DOMAIN: ${{ env.R2_CUSTOM_DOMAIN }}
-      R2_MIN_TLS: ${{ env.R2_MIN_TLS }}
+      R2_PUBLIC_HOSTNAME: ${{ secrets.R2_PUBLIC_HOSTNAME }}
+      R2_CUSTOM_DOMAIN: ${{ secrets.R2_CUSTOM_DOMAIN }}
+      R2_MIN_TLS: ${{ secrets.R2_MIN_TLS }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -376,9 +376,9 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
-      R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
-      R2_CUSTOM_DOMAIN: ${{ env.R2_CUSTOM_DOMAIN }}
-      R2_MIN_TLS: ${{ env.R2_MIN_TLS }}
+      R2_PUBLIC_HOSTNAME: ${{ secrets.R2_PUBLIC_HOSTNAME }}
+      R2_CUSTOM_DOMAIN: ${{ secrets.R2_CUSTOM_DOMAIN }}
+      R2_MIN_TLS: ${{ secrets.R2_MIN_TLS }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
