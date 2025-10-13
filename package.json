@@ -21,7 +21,7 @@
     "r2:cors:show": "node scripts/configure-r2-cors.js --show",
     "r2:cors:apply": "node scripts/configure-r2-cors.js",
     "r2:content-type:fix": "node scripts/fix-r2-content-type.js",
-    "preopennext:build": "node scripts/create-missing-ssr-chunk.js"
+    "preopennext:build": "node scripts/create-missing-ssr-chunk.cjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.653.0",
