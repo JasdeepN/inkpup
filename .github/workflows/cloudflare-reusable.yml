@@ -61,7 +61,7 @@ jobs:
           echo "CF_ACCOUNT_ID: $CF_ACCOUNT_ID"
           echo "CF_ZONE_ID: $CF_ZONE_ID"
     
-      - name: Derive R2 credentials from Cloudflare API token
+      - name: Derive R2 S3 credentials from API token
         if: ${{ env.R2_ACCESS_KEY_ID == '' || env.R2_SECRET_ACCESS_KEY == '' || env.R2_FORCE_S3 == 'true' }}
         shell: bash
         env:
@@ -70,30 +70,14 @@ jobs:
           R2_FORCE_S3: true
         run: |
           set -euo pipefail
-          python <<EOF
-          import os
-          import requests
-  
-          api_token = os.environ['R2_API_TOKEN']
-          account_id = os.environ['CF_ACCOUNT_ID']
-          headers = {
-              'Authorization': f'Bearer {api_token}',
-              'Content-Type': 'application/json'
-          }
-          resp = requests.post(
-              f'https://api.cloudflare.com/client/v4/accounts/{account_id}/r2/temp-access-credentials',
-              headers=headers,
-              json={}
-          )
-          resp.raise_for_status()
-          result = resp.json()
-          creds = result['result']
-          os.makedirs('.r2-credentials', exist_ok=True)
-          with open('.r2-credentials/credentials.env', 'w') as f:
-              f.write(f'R2_ACCOUNT_ID={account_id}\\n')
-              f.write(f'R2_ACCESS_KEY_ID={creds["accessKeyId"]}\\n')
-              f.write(f'R2_SECRET_ACCESS_KEY={creds["secretAccessKey"]}\\n')
-          EOF
+          export R2_ACCESS_KEY_ID=$(curl -s https://api.cloudflare.com/client/v4/user/tokens/verify -H "Authorization: Bearer $R2_API_TOKEN" | jq -r '.result.id')
+          export R2_SECRET_ACCESS_KEY=$(echo -n "$R2_API_TOKEN" | sha256sum | awk '{print $1}')
+          mkdir -p .r2-credentials
+          {
+            echo "R2_ACCOUNT_ID=$CF_ACCOUNT_ID"
+            echo "R2_ACCESS_KEY_ID=$R2_ACCESS_KEY_ID"
+            echo "R2_SECRET_ACCESS_KEY=$R2_SECRET_ACCESS_KEY"
+          } > .r2-credentials/credentials.env
   
       - name: Use provided R2 credentials from secrets
         if: ${{ env.R2_ACCESS_KEY_ID != '' && env.R2_SECRET_ACCESS_KEY != '' }}
