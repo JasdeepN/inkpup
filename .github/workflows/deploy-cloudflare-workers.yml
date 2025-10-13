@@ -25,6 +25,11 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps --silent
 
+      - name: Patch missing SSR chunk (workaround ENOENT)
+        run: |
+          mkdir -p .next/standalone/.next/server/chunks/ssr
+          touch .next/standalone/.next/server/chunks/ssr/[root-of-the-server]__19dfcc50._.js
+
       - name: Lint
         run: npm run lint
         working-directory: ./
