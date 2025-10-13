@@ -414,8 +414,7 @@ jobs:
       - name: Sync R2 CORS policy (dev)
         run: node scripts/configure-r2-cors.js
 
-      - name: Ensure R2 custom domain uses TLS 1.3 (dev)
-        run: node scripts/configure-r2-custom-domain.js
+      # Custom domain configuration is only needed for production, not dev
 
 
   deploy-dev:
