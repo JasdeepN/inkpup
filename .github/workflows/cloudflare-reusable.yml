@@ -20,9 +20,9 @@ on:
       R2_API_TOKEN:
         required: true
       R2_ACCESS_KEY_ID:
-        required: true
+        required: false
       R2_SECRET_ACCESS_KEY:
-        required: true
+        required: false
 
 jobs:
   derive-r2-credentials:
@@ -30,12 +30,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     env:
-      R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
-      R2_BUCKET: ${{ vars.R2_BUCKET }}
-      R2_PUBLIC_HOSTNAME: ${{ vars.R2_PUBLIC_HOSTNAME }}
-      R2_FORCE_S3: ${{ vars.R2_FORCE_S3 }}
-      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-      CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+      R2_API_TOKEN: ${{ inputs.R2_API_TOKEN }}
+      R2_BUCKET: ${{ env.R2_BUCKET }}
+      R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
+      R2_FORCE_S3: ${{ env.R2_FORCE_S3 }}
+      CF_ACCOUNT_ID: ${{ inputs.CF_ACCOUNT_ID }}
+      CF_ZONE_ID: ${{ inputs.CF_ZONE_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -56,28 +56,7 @@ jobs:
           echo "R2_FORCE_S3: $R2_FORCE_S3"
           echo "CF_ACCOUNT_ID: $CF_ACCOUNT_ID"
           echo "CF_ZONE_ID: $CF_ZONE_ID"
-      - name: Fail fast if credentials missing
-        run: |
-          missing=0
-          for var in R2_API_TOKEN CF_ACCOUNT_ID R2_BUCKET R2_PUBLIC_HOSTNAME; do
-            if [ -z "${!var}" ]; then
-              echo "::error::$var is missing or empty at runtime." >&2
-              missing=1
-            else
-              echo "$var is set. Length: ${#var}"
-            fi
-          done
-          if [ "$missing" -eq 1 ]; then
-            exit 1
-          fi
-      - name: Debug R2_API_TOKEN value
-        run: |
-          if [ -z "$R2_API_TOKEN" ]; then
-            echo "::error::R2_API_TOKEN is missing or empty at runtime." >&2
-            exit 1
-          else
-            echo "R2_API_TOKEN is set. Length: ${#R2_API_TOKEN}"
-          fi
+    
       - name: Derive R2 credentials from Cloudflare API token
         run: |
           set -euo pipefail
