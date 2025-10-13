@@ -1,0 +1,20 @@
+diff --git a/node_modules/@opennextjs/aws/dist/build/copyTracedFiles.js b/node_modules/@opennextjs/aws/dist/build/copyTracedFiles.js
+index ddb9888..de4fbfe 100644
+--- a/node_modules/@opennextjs/aws/dist/build/copyTracedFiles.js
++++ b/node_modules/@opennextjs/aws/dist/build/copyTracedFiles.js
+@@ -180,11 +180,13 @@ File ${serverPath} does not exist
+         if (isExcluded(from)) {
+             return;
+         }
++        if (!existsSync(from)) {
++            logger.warn(`Skipping missing SSR chunk: ${from}`);
++            return;
++        }
+         tracedFiles.push(to);
+         mkdirSync(path.dirname(to), { recursive: true });
+         let symlink = null;
+-        // For pnpm symlink we need to do that
+-        // see https://github.com/vercel/next.js/blob/498f342b3552d6fc6f1566a1cc5acea324ce0dec/packages/next/src/build/utils.ts#L1932
+         try {
+             symlink = readlinkSync(from);
+         }

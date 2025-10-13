@@ -8,7 +8,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint app components lib pages",
-  // "postbuild": "node scripts/create-missing-ssr-chunk.cjs",
     "opennext:build": "npx --yes @opennextjs/cloudflare@latest build --config=open-next.config.cjs",
     "opennext:deploy": "npx --yes @opennextjs/cloudflare@latest deploy --config=wrangler.toml",
     "test:e2e": "playwright test",
@@ -21,8 +20,8 @@
     "act:cache:prune": "bash scripts/act-cache-images.sh prune",
     "r2:cors:show": "node scripts/configure-r2-cors.js --show",
     "r2:cors:apply": "node scripts/configure-r2-cors.js",
-    "r2:content-type:fix": "node scripts/fix-r2-content-type.js",
-    // "preopennext:build": "node scripts/create-missing-ssr-chunk.cjs"
+  "r2:content-type:fix": "node scripts/fix-r2-content-type.js",
+  "postinstall": "patch-package"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.653.0",
@@ -60,8 +59,10 @@
     "eslint-config-next": "15.5.4",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
+    "patch-package": "^8.0.1",
     "playwright": "^1.56.0",
     "postcss": "^8.5.6",
+    "postinstall-postinstall": "^2.1.0",
     "sass": "^1.93.2",
     "tailwindcss": "^3.4.17",
     "typescript": "5.9.2",
