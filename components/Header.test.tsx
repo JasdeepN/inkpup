@@ -17,4 +17,15 @@ describe('Header UI flow', () => {
     await userEvent.keyboard('{Escape}');
     expect(nav).toHaveAttribute('aria-hidden', 'true');
   });
+  test('toggles dark mode', async () => {
+    document.documentElement.classList.remove('dark');
+    render(<Header />);
+    const btn = screen.getByRole('button', { name: /toggle dark mode/i });
+    // Initial state: dark mode enabled
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    await userEvent.click(btn);
+    expect(document.documentElement.classList.contains('dark')).toBe(false);
+    await userEvent.click(btn);
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+  });
 });

@@ -166,7 +166,7 @@ function probeBindingViaGlobalProperty(
   };
 }
 
-async function probeR2Binding(): Promise<R2BindingProbe> {
+export async function probeR2Binding(): Promise<R2BindingProbe> {
   try {
     const globalWithContext = globalThis as typeof globalThis &
       R2BindingLookup &
@@ -283,7 +283,7 @@ async function hasR2Binding(): Promise<boolean> {
   return typeof probe.binding !== 'undefined';
 }
 
-async function getR2Binding(): Promise<R2Bucket> {
+export async function getR2Binding(): Promise<R2Bucket> {
   const probe = await probeR2Binding();
   const binding = probe.binding;
   if (!binding) {

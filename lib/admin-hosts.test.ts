@@ -55,4 +55,17 @@ describe('admin host configuration', () => {
     expect(isAdminHost('localhost:3000')).toBe(true);
     expect(isAdminHost('127.0.0.1')).toBe(true);
   });
+
+  test('getPrimaryAdminHost returns first host or null', async () => {
+    setNodeEnv('production');
+    delete process.env.ADMIN_PORTAL_HOSTS;
+    const { getPrimaryAdminHost } = await import(MODULE_PATH);
+    expect(getPrimaryAdminHost()).toBe('admin.inkpup.ca');
+
+    process.env.ADMIN_PORTAL_HOSTS = '';
+    expect(getPrimaryAdminHost()).toBe('admin.inkpup.ca');
+
+    process.env.ADMIN_PORTAL_HOSTS = 'customhost.com';
+    expect(getPrimaryAdminHost()).toBe('customhost.com');
+  });
 });

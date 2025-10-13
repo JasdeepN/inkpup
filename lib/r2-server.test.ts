@@ -77,4 +77,17 @@ describe('r2-server fallback behaviour', () => {
     expect(process.env.R2_SECRET_ACCESS_KEY).toMatch(/^[0-9a-f]{64}$/i);
     expect(process.env.R2_API_TOKEN).toBe(token);
   });
+  
+    test('probeR2Binding returns expected structure when no binding', async () => {
+      const { probeR2Binding } = await import(modulePath);
+      const result = await probeR2Binding();
+      expect(result).toHaveProperty('binding', undefined);
+      expect(result).toHaveProperty('source', 'none');
+      expect(result).toHaveProperty('contextSymbolPresent', false);
+    });
+  
+    test('getR2Binding throws when no binding', async () => {
+      const { getR2Binding } = await import(modulePath);
+      await expect(getR2Binding()).rejects.toThrow(/R2_BUCKET binding is not available/);
+    });
 });
