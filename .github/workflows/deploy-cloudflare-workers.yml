@@ -36,10 +36,11 @@ jobs:
           CI: true
         run: npm test
 
-  derive-r2-credentials:
-    name: Derive Cloudflare R2 credentials
+  derive-r2-credentials-dev:
+    name: Derive Cloudflare R2 credentials (dev)
     runs-on: ubuntu-latest
     needs: validate
+    if: github.ref == 'refs/heads/dev'
     env:
       R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
       CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
@@ -115,10 +116,98 @@ jobs:
           print(f"Derived R2 access key ID prefix: {prefix}****")
           PY
 
-      - name: Upload derived R2 credentials artifact
+      - name: Upload derived R2 credentials artifact (dev)
         uses: actions/upload-artifact@v4
         with:
-          name: r2-credentials
+          name: r2-credentials-dev
+          path: .r2-credentials
+          if-no-files-found: error
+          retention-days: 1
+
+  derive-r2-credentials-prod:
+    name: Derive Cloudflare R2 credentials (prod)
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/master'
+    env:
+      R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
+      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+    steps:
+      - name: Derive R2 credentials from Cloudflare API token
+        run: |
+          set -euo pipefail
+
+          python <<'PY'
+          import hashlib
+          import json
+          import os
+          import pathlib
+          import sys
+          import urllib.request
+
+          token = os.environ.get("R2_API_TOKEN", "").strip()
+          account_id = os.environ.get("CF_ACCOUNT_ID", "").strip()
+
+          if not token:
+              print("::error::R2_API_TOKEN secret is not configured.")
+              sys.exit(1)
+
+          if not account_id:
+              print("::error::CF_ACCOUNT_ID secret is not configured.")
+              sys.exit(1)
+
+          print(f"::add-mask::{token}")
+          print(f"::add-mask::{account_id}")
+
+          request = urllib.request.Request(
+              "https://api.cloudflare.com/client/v4/user/tokens/verify",
+              method="GET",
+              headers={"Authorization": f"Bearer {token}"},
+          )
+
+          try:
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  payload = response.read().decode("utf-8")
+          except Exception as exc:
+              print(f"::error::Failed to call Cloudflare API: {exc}")
+              sys.exit(1)
+
+          try:
+              data = json.loads(payload)
+          except json.JSONDecodeError as exc:
+              print(f"::error::Unable to parse Cloudflare verification response: {exc}")
+              sys.exit(1)
+
+          if not data.get("success"):
+              errors = data.get("errors") or []
+              message = errors[0].get("message") if errors else "Unable to verify token"
+              print(f"::error::Failed to verify CF_API_TOKEN: {message}")
+              sys.exit(1)
+
+          token_id = data.get("result", {}).get("id")
+          if not token_id:
+              print("::error::Could not extract token id from verification response.")
+              sys.exit(1)
+
+          secret = hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+          print(f"::add-mask::{token_id}")
+          print(f"::add-mask::{secret}")
+
+          pathlib.Path('.r2-credentials').mkdir(parents=True, exist_ok=True)
+          with open('.r2-credentials/credentials.env', 'w', encoding='utf-8') as fh:
+              fh.write(f"R2_ACCOUNT_ID={account_id}\n")
+              fh.write(f"R2_ACCESS_KEY_ID={token_id}\n")
+              fh.write(f"R2_SECRET_ACCESS_KEY={secret}\n")
+
+          prefix = token_id[:8]
+          print(f"Derived R2 access key ID prefix: {prefix}****")
+          PY
+
+      - name: Upload derived R2 credentials artifact (prod)
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2-credentials-prod
           path: .r2-credentials
           if-no-files-found: error
           retention-days: 1
@@ -126,7 +215,7 @@ jobs:
   build:
     name: Build OpenNext bundle
     runs-on: ubuntu-latest
-    needs: [validate, derive-r2-credentials]
+    needs: [validate, derive-r2-credentials-dev, derive-r2-credentials-prod]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -144,7 +233,7 @@ jobs:
       - name: Download derived R2 credentials
         uses: actions/download-artifact@v4
         with:
-          name: r2-credentials
+          name: ${{ github.ref == 'refs/heads/dev' && 'r2-credentials-dev' || 'r2-credentials-prod' }}
           path: .r2-credentials
 
       - name: Export R2 credentials to environment
@@ -183,7 +272,7 @@ jobs:
   prepare-dev:
     name: Configure Cloudflare resources (dev)
     runs-on: ubuntu-latest
-    needs: [validate, derive-r2-credentials]
+    needs: [validate, derive-r2-credentials-dev]
     if: github.ref == 'refs/heads/dev'
     environment:
       name: dev
@@ -192,6 +281,7 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -207,7 +297,7 @@ jobs:
       - name: Download derived R2 credentials
         uses: actions/download-artifact@v4
         with:
-          name: r2-credentials
+          name: r2-credentials-dev
           path: .r2-credentials
 
       - name: Export R2 credentials to environment (dev)
@@ -257,6 +347,7 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -299,7 +390,7 @@ jobs:
   prepare-production:
     name: Configure Cloudflare resources (production)
     runs-on: ubuntu-latest
-    needs: [validate, derive-r2-credentials]
+    needs: [validate, derive-r2-credentials-prod]
     if: github.ref == 'refs/heads/master'
     environment:
       name: production
@@ -326,7 +417,7 @@ jobs:
       - name: Download derived R2 credentials
         uses: actions/download-artifact@v4
         with:
-          name: r2-credentials
+          name: r2-credentials-prod
           path: .r2-credentials
 
       - name: Export R2 credentials to environment (production)
