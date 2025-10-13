@@ -9,6 +9,9 @@ on:
       branch:
         required: true
         type: string
+      custom_domain_config:
+        required: false
+        type: boolean
   # No required secrets; all secrets are picked up internally
 
 jobs:
@@ -181,6 +184,7 @@ jobs:
       - name: Sync R2 CORS policy
         run: node scripts/configure-r2-cors.js
       - name: Ensure R2 custom domain uses TLS 1.3
+        if: ${{ inputs.custom_domain_config }}
         run: node scripts/configure-r2-custom-domain.js
 
   deploy:
