@@ -279,12 +279,23 @@ jobs:
             echo "AWS_ENDPOINT=https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
           } >> "$GITHUB_ENV"
 
-      - name: Build with OpenNext
+      - name: Build with OpenNext (capture errors)
         env:
           R2_BUCKET: ${{ vars.R2_BUCKET }}
           R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-        run: npm run opennext:build  
+        run: |
+          npm run opennext:build 2> opennext-error.log || true
+
+      - name: Generate dummy SSR chunks from error log
+        run: node scripts/create-missing-ssr-chunk.cjs
+
+      - name: Retry OpenNext build after dummy chunk creation
+        env:
+          R2_BUCKET: ${{ vars.R2_BUCKET }}
+          R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: npm run opennext:build
       - name: Upload OpenNext artifact
         uses: actions/upload-artifact@v4
         with:

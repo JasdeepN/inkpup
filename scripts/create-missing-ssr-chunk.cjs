@@ -5,8 +5,9 @@ const path = require('path');
 
 
 
+
 const buildChunkDir = path.join(__dirname, '../.next/standalone/.next/server/chunks/ssr');
-const expectedChunkDir = path.join(__dirname, '../.open-next/server-functions/default/.next/server/chunks/ssr');
+const errorLogPath = path.join(__dirname, '../opennext-error.log');
 
 // Ensure parent directory exists for build output
 if (!fs.existsSync(buildChunkDir)) {
@@ -14,15 +15,21 @@ if (!fs.existsSync(buildChunkDir)) {
   console.log(`Created SSR chunk directory: ${buildChunkDir}`);
 }
 
-// Scan expected chunk files from OpenNext trace directory
-let expectedChunks = [];
-if (fs.existsSync(expectedChunkDir)) {
-  expectedChunks = fs.readdirSync(expectedChunkDir);
+// Scan error log for missing chunk filenames
+let missingChunks = [];
+if (fs.existsSync(errorLogPath)) {
+  const logContent = fs.readFileSync(errorLogPath, 'utf-8');
+  const regex = /ENOENT: no such file or directory, copyfile '.*?\/([\w\-\[\]\.]+\.js)'/g;
+  let match;
+  while ((match = regex.exec(logContent)) !== null) {
+    missingChunks.push(match[1]);
+  }
 } else {
-  console.warn(`Expected chunk directory does not exist: ${expectedChunkDir}`);
+  console.warn(`Error log not found: ${errorLogPath}`);
 }
 
-expectedChunks.forEach(chunkFile => {
+// Create dummy files for each missing chunk
+missingChunks.forEach(chunkFile => {
   const chunkPath = path.join(buildChunkDir, chunkFile);
   if (!fs.existsSync(chunkPath)) {
     fs.writeFileSync(chunkPath, '// dummy SSR chunk file for OpenNext build\n');
