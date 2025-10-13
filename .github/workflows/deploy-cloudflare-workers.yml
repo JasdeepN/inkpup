@@ -41,6 +41,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: validate
     if: github.ref == 'refs/heads/dev'
+    environment:
+      name: dev
     env:
       R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
       CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
@@ -129,6 +131,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: validate
     if: github.ref == 'refs/heads/master'
+    environment:
+      name: production
     env:
       R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
       CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
