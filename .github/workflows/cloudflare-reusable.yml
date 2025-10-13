@@ -31,9 +31,9 @@ jobs:
     environment: ${{ inputs.environment }}
     env:
       R2_API_TOKEN: ${{ inputs.R2_API_TOKEN }}
-      R2_BUCKET: ${{ env.R2_BUCKET }}
-      R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
-      R2_FORCE_S3: ${{ env.R2_FORCE_S3 }}
+      R2_BUCKET: ${{ vars.R2_BUCKET }}
+      R2_PUBLIC_HOSTNAME: ${{ vars.R2_PUBLIC_HOSTNAME }}
+      R2_FORCE_S3: ${{ vars.R2_FORCE_S3 }}
       CF_ACCOUNT_ID: ${{ inputs.CF_ACCOUNT_ID }}
       CF_ZONE_ID: ${{ inputs.CF_ZONE_ID }}
     steps:
