@@ -14,6 +14,7 @@ derive-r2-credentials:
   - Extracts token ID as R2_ACCESS_KEY_ID
   - Derives R2_SECRET_ACCESS_KEY via SHA-256 hash
   - Sets R2_ACCOUNT_ID from CF_ACCOUNT_ID
+  - Exchanges the token for temporary access credentials and captures the session token
   - Saves all credentials to artifact file
 ```
 
@@ -28,6 +29,8 @@ All jobs that need R2 credentials download the artifact:
 | `prepare-production` | Downloads artifact | Node scripts (S3 SDK) |
 | `deploy-dev` | Uses CF_API_TOKEN directly | Wrangler (native API) |
 | `deploy-production` | Uses CF_API_TOKEN directly | Wrangler (native API) |
+
+When a job sources the artifact it exports both the R2 variables and the AWS aliases (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN`) so any AWS SDK client automatically receives the session token alongside the key pair.
 
 ## Required GitHub Secrets (Final)
 ```
@@ -53,14 +56,16 @@ All jobs that need R2 credentials download the artifact:
 1. **Verify Token**: `curl` to `https://api.cloudflare.com/client/v4/user/tokens/verify`
 2. **Extract ID**: Parse `result.id` from JSON response → `R2_ACCESS_KEY_ID`
 3. **Hash Token**: `echo "$CF_API_TOKEN" | sha256sum` → `R2_SECRET_ACCESS_KEY`
-4. **Set Account**: Copy `CF_ACCOUNT_ID` → `R2_ACCOUNT_ID`
-5. **Save Artifact**: Write to `.r2-credentials/credentials.env`
+4. **Request Temporary Credentials**: `POST https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/r2/temp-access-credentials` with the token to receive a scoped, time-limited session token for the bucket
+5. **Set Account**: Copy `CF_ACCOUNT_ID` → `R2_ACCOUNT_ID`
+6. **Save Artifact**: Write to `.r2-credentials/credentials.env`
 
 ### Artifact Format
 ```env
 R2_ACCOUNT_ID=<cloudflare-account-id>
 R2_ACCESS_KEY_ID=<token-id-from-api>
 R2_SECRET_ACCESS_KEY=<sha256-hash-of-token>
+R2_SESSION_TOKEN=<temporary-session-token>
 ```
 
 ## Benefits
@@ -136,7 +141,7 @@ deploy-dev  deploy-production
 # Now available to OpenNext
 - run: npm run opennext:build
   env:
-    # R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY all set
+    # R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_SESSION_TOKEN all set
 ```
 
 ### In Prepare Jobs (Node Scripts)
@@ -151,7 +156,7 @@ deploy-dev  deploy-production
 
 # Now available to scripts
 - run: node scripts/configure-r2-cors.js
-  # Script reads R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY from env
+  # Script reads R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_SESSION_TOKEN from env
 ```
 
 ## Files Modified
