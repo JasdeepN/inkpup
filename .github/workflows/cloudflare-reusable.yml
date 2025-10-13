@@ -31,11 +31,10 @@ jobs:
     environment: ${{ inputs.environment }}
     env:
       R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
-      R2_BUCKET: ${{ vars.R2_BUCKET }}
-      R2_PUBLIC_HOSTNAME: ${{ vars.R2_PUBLIC_HOSTNAME }}
-      R2_FORCE_S3: ${{ vars.R2_FORCE_S3 }}
       CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID || '' }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY || '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,6 +47,7 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps --silent
       - name: Debug environment values
+        shell: bash
         run: |
           echo "Environment: ${{ inputs.environment }}"
           echo "Branch: ${{ inputs.branch }}"
