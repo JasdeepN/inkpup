@@ -31,8 +31,8 @@ jobs:
         run: npm install --legacy-peer-deps --silent
       - name: Derive R2 credentials from Cloudflare API token
         env:
-          R2_API_TOKEN: ${{ secrets.r2_api_token }}
-          CF_ACCOUNT_ID: ${{ secrets.cf_account_id }}
+          R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
           set -euo pipefail
           python <<'PY'
