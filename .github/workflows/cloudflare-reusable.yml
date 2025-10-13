@@ -17,6 +17,12 @@ on:
         required: true
       CF_ZONE_ID:
         required: true
+      R2_API_TOKEN:
+        required: true
+      R2_ACCESS_KEY_ID:
+        required: true
+      R2_SECRET_ACCESS_KEY:
+        required: true
 
 jobs:
   derive-r2-credentials:
@@ -28,8 +34,8 @@ jobs:
       R2_BUCKET: ${{ vars.R2_BUCKET }}
       R2_PUBLIC_HOSTNAME: ${{ vars.R2_PUBLIC_HOSTNAME }}
       R2_FORCE_S3: ${{ vars.R2_FORCE_S3 }}
-      CF_ACCOUNT_ID: ${{ inputs.CF_ACCOUNT_ID }}
-      CF_ZONE_ID: ${{ inputs.CF_ZONE_ID }}
+      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
