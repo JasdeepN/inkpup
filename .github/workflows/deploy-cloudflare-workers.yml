@@ -278,6 +278,13 @@ jobs:
             echo "AWS_ENDPOINT=https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
           } >> "$GITHUB_ENV"
 
+      - name: Build with OpenNext (dev)
+        run: npm run opennext:build
+        env:
+          R2_BUCKET: ${{ vars.R2_BUCKET }}
+          R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+
       - name: Ensure all SSR chunks are present in OpenNext bundle (dev)
         run: |
           mkdir -p .open-next/server/chunks/ssr
@@ -335,6 +342,13 @@ jobs:
             echo "AWS_S3_FORCE_PATH_STYLE=true"
             echo "AWS_ENDPOINT=https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
           } >> "$GITHUB_ENV"
+
+      - name: Build with OpenNext (production)
+        run: npm run opennext:build
+        env:
+          R2_BUCKET: ${{ vars.R2_BUCKET }}
+          R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
       - name: Build with OpenNext
         env:
