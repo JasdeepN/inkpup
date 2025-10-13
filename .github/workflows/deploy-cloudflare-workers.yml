@@ -25,8 +25,7 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps --silent
 
-      - name: Generate dummy SSR chunks for OpenNext
-        run: node scripts/create-missing-ssr-chunk.cjs
+      # Dummy SSR chunk generation step removed
 
       - name: Lint
         run: npm run lint
@@ -279,23 +278,30 @@ jobs:
             echo "AWS_ENDPOINT=https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
           } >> "$GITHUB_ENV"
 
-      - name: Build with OpenNext (capture errors)
+      - name: Loop OpenNext build and patch until success
         env:
           R2_BUCKET: ${{ vars.R2_BUCKET }}
           R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
-          npm run opennext:build 2> opennext-error.log || true
-
-      - name: Generate dummy SSR chunks from error log
-        run: node scripts/create-missing-ssr-chunk.cjs
-
-      - name: Retry OpenNext build after dummy chunk creation
-        env:
-          R2_BUCKET: ${{ vars.R2_BUCKET }}
-          R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-        run: npm run opennext:build
+          set -e
+          max_attempts=10
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            echo "OpenNext build attempt $attempt"
+            npm run opennext:build 2> opennext-error.log || true
+            if ! grep -q "ENOENT: no such file or directory, copyfile" opennext-error.log; then
+              echo "No ENOENT errors found. Build succeeded or failed for another reason."
+              break
+            fi
+            echo "Detected ENOENT errors. Running dummy chunk patch."
+            node scripts/create-missing-ssr-chunk.cjs
+            attempt=$((attempt+1))
+          done
+          if grep -q "ENOENT: no such file or directory, copyfile" opennext-error.log; then
+            echo "Build failed after $max_attempts attempts due to persistent ENOENT errors."
+            exit 1
+          fi
       - name: Upload OpenNext artifact
         uses: actions/upload-artifact@v4
         with:
