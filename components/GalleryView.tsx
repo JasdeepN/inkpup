@@ -9,7 +9,7 @@ import SmartImage from './SmartImage';
 import { isGalleryCaptionsEnabled } from '../lib/featureFlags';
 import type { GalleryFallbackReason } from '../lib/r2-server';
 
-type GalleryFallbackCode = GalleryFallbackReason | 'unexpected_error';
+export type GalleryFallbackCode = GalleryFallbackReason | 'unexpected_error';
 
 type GalleryViewProps = {
   readonly initialCategory: GalleryCategory;

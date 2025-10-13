@@ -8,7 +8,7 @@ jest.mock('../lib/featureFlags', () => ({
 }));
 
 import { isGalleryCaptionsEnabled } from '../lib/featureFlags';
-import GalleryView from './GalleryView';
+import GalleryView, { GalleryFallbackCode } from './GalleryView';
 import type { GalleryItem } from '../lib/gallery-types';
 
 describe('GalleryView', () => {
@@ -139,4 +139,68 @@ describe('GalleryView', () => {
     expect(screen.getByText(/Cloudflare R2 storage container/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Backup/i).length).toBeGreaterThan(0);
   });
+
+    test('shows fallback warning for all fallback reasons', () => {
+      (isGalleryCaptionsEnabled as jest.Mock).mockReturnValue(false);
+      const fallbackReasons = [
+        'client_initialization_failed',
+        'r2_fetch_failed',
+        'unexpected_error',
+      ];
+      fallbackReasons.forEach((reason) => {
+        const items: GalleryItem[] = [
+          { id: '1', src: '/img1.webp', category: 'flash', alt: 'One' },
+        ];
+        const { unmount } = render(
+          <GalleryView
+            initialCategory="flash"
+            initialData={{ items, fallback: true, fallbackReason: reason as GalleryFallbackCode, usedBundledFallback: false }}
+          />
+        );
+        expect(screen.getByText(/Cloudflare R2 storage container/i)).toBeInTheDocument();
+        // Check fallback detail text
+        if (reason === 'client_initialization_failed') {
+          expect(screen.getByText(/could not initialize/i)).toBeInTheDocument();
+        } else if (reason === 'r2_fetch_failed') {
+          expect(screen.getByText(/R2 is currently unreachable/i)).toBeInTheDocument();
+        } else if (reason === 'unexpected_error') {
+          expect(screen.getByText(/unexpected error occurred/i)).toBeInTheDocument();
+        }
+        unmount();
+      });
+    });
+
+    test('closes modal via dialog onCancel event', async () => {
+      (isGalleryCaptionsEnabled as jest.Mock).mockReturnValue(false);
+      const items: GalleryItem[] = [
+        { id: '1', src: '/img1.webp', category: 'flash', alt: 'One' },
+      ];
+      render(<GalleryView initialCategory="flash" initialData={{ items, fallback: false, usedBundledFallback: false }} />);
+      const button = screen.getByRole('button', { name: /View .* in full size/i });
+      await userEvent.click(button);
+      const dialog = await screen.findByRole('dialog');
+      // Simulate onCancel event
+      const event = new Event('cancel', { bubbles: true, cancelable: true });
+      dialog.dispatchEvent(event);
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    });
+
+    test('handles modal size update with undefined window', async () => {
+      (isGalleryCaptionsEnabled as jest.Mock).mockReturnValue(false);
+      const items: GalleryItem[] = [
+        { id: '1', src: '/img1.webp', category: 'flash', alt: 'One' },
+      ];
+      // Temporarily override window to undefined
+      const originalWindow = global.window;
+      // @ts-ignore
+      global.window = undefined;
+      render(<GalleryView initialCategory="flash" initialData={{ items, fallback: false, usedBundledFallback: false }} />);
+      // Click to open modal
+      const button = screen.getByRole('button', { name: /View .* in full size/i });
+      await userEvent.click(button);
+      // Restore window
+      global.window = originalWindow;
+      // Modal should still render
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
 });
