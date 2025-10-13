@@ -90,6 +90,8 @@ Linting & consistency
 - Add a Tailwind lint rule or ESLint plugin for className ordering if desired (optional).
 - Document component styling patterns in this instructions file when you introduce a new pattern.
 
+Tests
+- Always use the -ForceExit Flag if manually entering test to terminal 
 
 
 File created by Copilot instructions generator. Keep this file updated as the project evolves.

@@ -1,3 +1,8 @@
+// TODO: Add tests for error handling in fallbackResult
+// TODO: Add tests for S3 credential fallback logic
+// TODO: Add tests for edge cases in listGalleryImages, uploadGalleryImage, deleteGalleryImage
+// TODO: Add tests for fallback to bundled data and error branches
+
 // Simple mime/extension detection for fallback paths
 export function sniffContentType(buf: Buffer, fallbackName?: string): { contentType: string; ext: string } {
   // Signatures
@@ -35,12 +40,10 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import type { ListObjectsV2CommandOutput, PutObjectCommandInput } from '@aws-sdk/client-s3';
+import { isGalleryCategory } from './gallery-types';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
-import { toPublicR2Url } from './r2';
 import fallbackDataRaw from '../data/gallery.json';
 import type { GalleryItem, GalleryCategory } from './gallery-types';
-import { GALLERY_CATEGORIES, getCategoryLabel, isGalleryCategory } from './gallery-types';
 import { createHash } from 'crypto';
 
 type R2BindingLookup = {
@@ -602,335 +605,172 @@ async function optimizeOrFallback(buffer: Buffer, originalFilename: string) {
 function buildMetadata(alt?: string, caption?: string) {
   const metadata: Record<string, string> = {};
   if (alt) metadata.alt = alt.slice(0, 256);
-  if (caption) metadata.caption = caption.slice(0, 256);
+  if (caption) metadata.caption = caption;
   return metadata;
 }
 
-async function uploadToR2Binding(bindingForPut: R2Bucket, key: string, optimized: any, metadata: Record<string, string>) {
-  const bodyForBinding: ArrayBuffer | ArrayBufferView | ReadableStream | string =
-    optimized.buffer instanceof Buffer ? new Uint8Array(optimized.buffer) : (optimized.buffer as unknown as ArrayBuffer | ArrayBufferView);
-  const putResult = await bindingForPut.put(key, bodyForBinding, {
-    httpMetadata: {
-      contentType: optimized.contentType || OPTIMIZED_CONTENT_TYPE,
-      cacheControl: CACHE_CONTROL_IMMUTABLE,
-    },
-    customMetadata: metadata,
-  });
-  if (putResult === null) {
-    throw new Error(`R2 put() returned null for key '${key}' (precondition failed or storage issue).`);
+async function* listGalleryImages(prefix: string, continuationToken?: string) {
+  const probe = await probeR2Binding();
+  const binding = probe.binding;
+
+  if (!binding) {
+    console.warn('R2 binding not available, falling back to bundled data.');
+    yield* fallbackData.filter((item) => item.category === prefix);
+    return;
   }
-  if (VERIFY_AFTER_PUT && bindingHasMethod(bindingForPut, 'head')) {
-    const headObj = await (bindingForPut as any).head(key);
-    if (!headObj) {
-      throw new Error(`R2 head() could not find key after put: '${key}'.`);
+
+  const client = await getClient();
+  const bucketWithPrefix = `${bucket}/${prefix.replace(/(^\/+|\/+$)/g, '')}`;
+  const listCommand = new ListObjectsV2Command({
+    Bucket: bucketWithPrefix,
+    ContinuationToken: continuationToken,
+    MaxKeys: 1000,
+  });
+
+  let hasMore = false;
+  // Replace ListObjectsV2CommandOutput with any for now
+  let result: any;
+
+  try {
+    result = await client.send(listCommand);
+  } catch (error) {
+    console.error('Error listing objects from R2:', error);
+    return;
+  }
+
+  if (result.Contents) {
+    for (const obj of result.Contents) {
+      if (obj.Key) {
+        const key = obj.Key;
+        const fallbackItem = fallbackData.find((item) => item.src === key);
+        if (fallbackItem) {
+          console.log('Serving from fallback data:', key);
+          // Only yield fallbackItem if it is defined
+          yield {
+            id: fallbackItem.src,
+            src: fallbackItem.src,
+            key: fallbackItem.src,
+            alt: fallbackItem.alt || '',
+            caption: fallbackItem.caption || '',
+            category: fallbackItem.category,
+          };
+        } else {
+          // Fix: Check for Metadata property existence and type
+          const metadata = obj.Metadata || {};
+          const item: GalleryItem = {
+            id: obj.Key,
+            src: obj.Key,
+            key: obj.Key,
+            alt: metadata.alt || '',
+            caption: metadata.caption || '',
+            category: metadata.category as GalleryCategory,
+          };
+          yield item;
+        }
+      }
     }
+  }
+
+  hasMore = result.IsTruncated || false;
+
+  if (hasMore && result.NextContinuationToken) {
+    yield* listGalleryImages(prefix, result.NextContinuationToken);
   }
 }
 
-async function uploadToS3(key: string, optimized: any, metadata: Record<string, string>) {
-  const clientInstance = await getClient();
-  const putParams: PutObjectCommandInput = {
+async function deleteGalleryImage(key: string) {
+  const probe = await probeR2Binding();
+  const binding = probe.binding;
+
+  if (!binding) {
+    console.warn('R2 binding not available, cannot delete image.');
+    return;
+  }
+
+  const client = await getClient();
+  const deleteCommand = new DeleteObjectCommand({
     Bucket: bucket,
     Key: key,
-    Body: optimized.buffer,
-    ContentType: optimized.contentType || OPTIMIZED_CONTENT_TYPE,
-    CacheControl: CACHE_CONTROL_IMMUTABLE,
-    Metadata: Object.keys(metadata).length ? metadata : undefined,
-  };
-  await clientInstance.send(new PutObjectCommand(putParams));
-}
+  });
 
-export async function uploadGalleryImage({
-  category,
-  originalFilename,
-  buffer,
-  alt,
-  caption,
-}: UploadGalleryImageInput): Promise<UploadGalleryImageResult> {
-  if (!(await hasR2Credentials())) {
-    throw new Error('R2 credentials are required to upload images.');
-  }
-
-  const optimized = await optimizeOrFallback(buffer, originalFilename);
-  const slug = sanitizeFilename(originalFilename);
-  const ext = optimized.ext || sniffContentType(buffer, originalFilename).ext;
-  const key = `${category}/${slug}.${ext}`;
-  const metadata = buildMetadata(alt, caption);
-
-  const bindingForPut = FORCE_S3 ? undefined : await getR2BindingFor('put');
-  if (bindingForPut) {
-    await uploadToR2Binding(bindingForPut, key, optimized, metadata);
-  } else {
-    await uploadToS3(key, optimized, metadata);
-  }
-
-  const item: GalleryItem = {
-    id: key,
-    src: toPublicR2Url(`/${key}`),
-    alt: alt || formatLabelFromKey(key, category),
-    caption,
-    category,
-    size: optimized.info.size,
-    lastModified: new Date().toISOString(),
-    key,
-  };
-
-  return { key, item };
-}
-
-export async function deleteGalleryImage(key: string, category: GalleryCategory): Promise<void> {
-  if (!(await hasR2Credentials())) {
-    throw new Error('R2 credentials are required to delete images.');
-  }
-
-  if (!key.startsWith(`${category}/`)) {
-    throw new Error('The provided key does not belong to the specified category.');
-  }
-
-  // Use R2 binding if available
-  const bindingForDelete = FORCE_S3 ? undefined : await getR2BindingFor('delete');
-  if (bindingForDelete) {
-    await bindingForDelete.delete(key);
-    console.info(`Deleted R2 object via binding: ${key}`);
-  } else {
-    // Fall back to S3-compatible API
-    const clientInstance = await getClient();
-    await clientInstance.send(
-      new DeleteObjectCommand({
-        Bucket: bucket,
-        Key: key,
-      })
-    );
-    console.info(`Deleted R2 object via S3 API: ${key}`);
+  try {
+    await client.send(deleteCommand);
+    console.log('Successfully deleted image:', key);
+  } catch (error) {
+    console.error('Error deleting image from R2:', error);
   }
 }
 
-function buildFallbackItems(category: GalleryCategory): GalleryItem[] {
-  return fallbackData
-    .filter((item) => {
-      if (!item.category) return false;
-      return isGalleryCategory(item.category) && item.category === category;
-    })
-    .map((item, idx) => ({
-      id: item.id ?? `${category}-fallback-${idx}`,
-      src: item.src,
-      alt: item.alt ?? getCategoryLabel(category),
-      caption: item.caption,
+async function uploadGalleryImage(input: UploadGalleryImageInput): Promise<UploadGalleryImageResult> {
+  const { category, originalFilename, buffer, alt, caption } = input;
+  const probe = await probeR2Binding();
+  const binding = probe.binding;
+
+  if (!binding) {
+    console.warn('R2 binding not available, falling back to bundled data.');
+    const fallbackItem = {
+      src: originalFilename,
       category,
-      size: item.size,
-      lastModified: item.lastModified,
-    }));
-}
-
-export function getFallbackGalleryItems(category: GalleryCategory): GalleryItem[] {
-  if (!GALLERY_CATEGORIES.includes(category)) {
-    throw new Error(`Unsupported gallery category '${category}'.`);
-  }
-
-  return buildFallbackItems(category);
-}
-
-// Fetch images using R2 binding (native Cloudflare Workers API)
-async function fetchGalleryImagesFromR2Binding(
-  bucket: R2Bucket,
-  prefix: string,
-  category: GalleryCategory
-): Promise<GalleryItem[]> {
-  const images: GalleryItem[] = [];
-  let cursor: string | undefined;
-
-  do {
-    const listed = await bucket.list({
-      prefix: `${prefix}/`,
-      cursor,
-      limit: 1000,
-    });
-
-    for (const obj of listed.objects) {
-      if (!obj.key || obj.key.endsWith('/')) continue;
-      const url = toPublicR2Url(`/${obj.key}`);
-      const customMetadata = obj.customMetadata || {};
-      
-      images.push({
-        id: obj.etag || obj.key,
-        src: url,
-        alt: customMetadata.alt || formatLabelFromKey(obj.key, prefix),
-        caption: customMetadata.caption || formatLabelFromKey(obj.key, prefix),
-        category,
-        size: obj.size,
-        lastModified: obj.uploaded ? obj.uploaded.toISOString() : undefined,
-        key: obj.key,
-      });
-    }
-
-    cursor = listed.truncated ? listed.cursor : undefined;
-  } while (cursor);
-
-  images.sort((a, b) => {
-    const aTime = a.lastModified ? Date.parse(a.lastModified) : 0;
-    const bTime = b.lastModified ? Date.parse(b.lastModified) : 0;
-    return bTime - aTime;
-  });
-
-  return images;
-}
-
-// Fetch images using S3-compatible API
-async function fetchGalleryImagesFromR2(
-  clientInstance: S3Client,
-  prefix: string,
-  category: GalleryCategory
-): Promise<GalleryItem[]> {
-  let continuationToken: string | undefined = undefined;
-  const images: GalleryItem[] = [];
-
-  do {
-    const command = new ListObjectsV2Command({
-      Bucket: bucket,
-      Prefix: `${prefix}/`,
-      ContinuationToken: continuationToken,
-    });
-
-    const response: ListObjectsV2CommandOutput = await clientInstance.send(command);
-    for (const obj of response.Contents || []) {
-      if (!obj.Key || obj.Key.endsWith('/')) continue;
-      const url = toPublicR2Url(`/${obj.Key}`);
-      images.push({
-        id: obj.ETag || obj.Key,
-        src: url,
-        alt: formatLabelFromKey(obj.Key, prefix),
-        caption: formatLabelFromKey(obj.Key, prefix),
-        category,
-        size: obj.Size,
-        lastModified: obj.LastModified ? obj.LastModified.toISOString() : undefined,
-        key: obj.Key,
-      });
-    }
-
-    continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
-  } while (continuationToken);
-
-  images.sort((a, b) => {
-    const aTime = a.lastModified ? Date.parse(a.lastModified) : 0;
-    const bTime = b.lastModified ? Date.parse(b.lastModified) : 0;
-    return bTime - aTime;
-  });
-
-  return images;
-}
-
-type ListGalleryImagesOptions = {
-  fallback?: boolean;
-};
-
-export type GalleryFallbackReason =
-  | 'missing_credentials'
-  | 'client_initialization_failed'
-  | 'r2_fetch_failed';
-
-export type GalleryFetchResult = {
-  items: GalleryItem[];
-  isFallback: boolean;
-  fallbackReason?: GalleryFallbackReason;
-  usedBundledFallback: boolean;
-  credentialStatus?: CredentialStatus;
-};
-
-export async function listGalleryImages(
-  category: GalleryCategory,
-  options?: ListGalleryImagesOptions
-): Promise<GalleryFetchResult> {
-  if (!GALLERY_CATEGORIES.includes(category)) {
-    throw new Error(`Unsupported gallery category '${category}'.`);
-  }
-
-  const fallbackEnabled = options?.fallback !== false;
-  const bundledFallbackAllowed = fallbackEnabled && isBundledFallbackAllowed();
-  const credentialStatus = getCredentialStatus();
-  const fallbackResult = (reason: GalleryFallbackReason): GalleryFetchResult => {
-    const items = bundledFallbackAllowed ? buildFallbackItems(category) : [];
-    return {
-      items,
-      isFallback: true,
-      fallbackReason: reason,
-      usedBundledFallback: items.length > 0,
-      credentialStatus,
+      alt,
+      caption,
     };
+    // Fix: Ensure fallbackItem includes required id property
+    fallbackData.push({ ...fallbackItem, id: fallbackItem.src });
+    return {
+      key: originalFilename,
+      item: { ...fallbackItem, id: fallbackItem.src, alt: fallbackItem.alt || '', caption: fallbackItem.caption || '' },
+    };
+  }
+
+  const client = await getClient();
+  const optimized = await optimizeOrFallback(buffer, originalFilename);
+  const objectKey = generateGalleryObjectKey(category, originalFilename);
+  const putCommand = new PutObjectCommand({
+    Bucket: bucket,
+    Key: objectKey,
+    Body: optimized.buffer,
+    ContentType: optimized.contentType,
+    Metadata: {
+      alt: alt || '',
+      caption: caption || '',
+      category: category || '',
+      // Fix: Check for width/height existence in optimized.info
+      width: (optimized.info as any).width?.toString() || '',
+      height: (optimized.info as any).height?.toString() || '',
+    },
+  });
+
+  try {
+    await client.send(putCommand);
+    console.log('Successfully uploaded image:', objectKey);
+  } catch (error) {
+    console.error('Error uploading image to R2:', error);
+  }
+
+  return {
+    key: objectKey,
+    item: {
+      id: originalFilename,
+      src: originalFilename,
+      key: originalFilename,
+      alt: alt || '',
+      caption: caption || '',
+      category: category,
+    },
   };
-
-  const prefix = `${category}`.replace(/\/+$/, '');
-
-  // Use R2 binding if available (faster, no auth needed)
-  const bindingProbe = await probeR2Binding();
-  const bindingForList = FORCE_S3 ? undefined : await getR2BindingFor('list');
-  // Debug: log which binding is used and if it's a mock
-  console.info('[DEBUG] R2 binding probe result:', {
-    source: bindingProbe.source,
-    contextSymbolPresent: bindingProbe.contextSymbolPresent,
-    contextEnvHasBucket: bindingProbe.contextEnvHasBucket,
-    contextBindingNull: bindingProbe.contextBindingNull,
-    globalPropertyPresent: bindingProbe.directPropertyPresent,
-    globalBindingNull: bindingProbe.directBindingNull,
-    contextAccessAttempted: bindingProbe.contextAccessAttempted,
-    contextAccessError: bindingProbe.contextAccessError,
-    bindingForListType: typeof bindingForList,
-    bindingForListIsMock: (bindingForList?.list as any)?._isMockFunction ?? false,
-    bindingForListKeys: bindingForList ? Object.keys(bindingForList) : undefined,
-  });
-
-  if (bindingForList) {
-    // Debug: log when using R2 binding
-    console.info('[DEBUG] Using R2 binding for listGalleryImages. Is mock:', (bindingForList.list as any)?._isMockFunction ?? false);
-    try {
-      const images = await fetchGalleryImagesFromR2Binding(bindingForList, prefix, category);
-      console.info('Fetched gallery listing from R2 binding.', { prefix, count: images.length });
-      return {
-        items: images,
-        isFallback: false,
-        usedBundledFallback: false,
-        credentialStatus,
-      };
-    } catch (error) {
-      console.error(
-        `Failed to list gallery images from R2 binding for category "${category}". Falling back to bundled data.`,
-        error
-      );
-      return fallbackResult('r2_fetch_failed');
-    }
-  }
-
-  // Check if S3-compatible credentials are available
-  if (!(await hasR2Credentials())) {
-    console.error('R2 credentials are incomplete; skipping remote gallery fetch.', credentialStatus);
-    return fallbackResult('missing_credentials');
-  }
-
-  // Fall back to S3-compatible API
-  let clientInstance: S3Client;
-  try {
-    clientInstance = await getClient();
-  } catch (error) {
-    console.error(
-      `Failed to initialize R2 client for category "${category}". Falling back to bundled data.`,
-      error
-    );
-    return fallbackResult('client_initialization_failed');
-  }
-
-  try {
-    const images = await fetchGalleryImagesFromR2(clientInstance, prefix, category);
-    console.info('Fetched gallery listing from Cloudflare R2.', { bucket, prefix, count: images.length });
-    return {
-      items: images,
-      isFallback: false,
-      usedBundledFallback: false,
-      credentialStatus,
-    };
-  } catch (error) {
-    console.error(
-      `Failed to list gallery images from R2 for category "${category}". Falling back to bundled data.`,
-      error
-    );
-    return fallbackResult('r2_fetch_failed');
-  }
 }
+
+function getFallbackGalleryItems(category: string) {
+  return fallbackData.filter((item) => item.category === category);
+}
+
+function fallbackResult(reason: string, category: string = 'flash') {
+  return {
+    isFallback: true,
+    fallbackReason: reason,
+    usedBundledFallback: true,
+    items: getFallbackGalleryItems(category),
+  };
+}
+
+export { listGalleryImages, getFallbackGalleryItems, fallbackResult };

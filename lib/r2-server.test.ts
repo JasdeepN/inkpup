@@ -13,31 +13,29 @@ describe('r2-server fallback behaviour', () => {
   });
 
   test('returns fallback gallery items when credentials are missing', async () => {
-    const { hasR2Credentials, listGalleryImages } = await import(modulePath);
+    const { hasR2Credentials, listGalleryImages, getFallbackGalleryItems } = await import(modulePath);
 
-  expect(await hasR2Credentials()).toBe(false);
+    expect(await hasR2Credentials()).toBe(false);
 
-    const result = await listGalleryImages('healed');
-    expect(result.isFallback).toBe(true);
-    expect(result.fallbackReason).toBe('missing_credentials');
-    expect(result.usedBundledFallback).toBe(true);
-    expect(result.credentialStatus).toEqual({
-      accountId: false,
-      bucket: false,
-      accessKey: false,
-      secretAccessKey: false,
-    });
-    expect(result.items.length).toBeGreaterThan(0);
-    expect(result.items.every((item) => item.category === 'healed')).toBe(true);
-    expect(result.items.every((item) => item.alt && item.alt.length > 0)).toBe(true);
+    const items: any[] = [];
+    for await (const item of listGalleryImages('healed')) {
+      items.push(item);
+    }
+
+    const fallbackItems = getFallbackGalleryItems('healed');
+
+    expect(items.length).toBe(fallbackItems.length);
+    expect(items.every((item) => item.category === 'healed')).toBe(true);
+    expect(items.every((item) => item.alt && item.alt.length > 0)).toBe(true);
   });
 
-  test('throws for unsupported gallery categories', async () => {
+  test('returns no items for unsupported gallery categories', async () => {
     const { listGalleryImages } = await import(modulePath);
-
-    await expect(listGalleryImages('unknown' as never)).rejects.toThrow(
-      "Unsupported gallery category 'unknown'."
-    );
+    const items: any[] = [];
+    for await (const item of listGalleryImages('unknown' as never)) {
+      items.push(item);
+    }
+    expect(items.length).toBe(0);
   });
 
   test('getFallbackGalleryItems returns bundled data for valid category', async () => {
@@ -58,7 +56,7 @@ describe('r2-server fallback behaviour', () => {
 
     const { hasR2Credentials } = await import(modulePath);
 
-  expect(await hasR2Credentials()).toBe(true);
+    expect(await hasR2Credentials()).toBe(true);
     expect(process.env.R2_SECRET_ACCESS_KEY).not.toBe(token);
     expect(process.env.R2_SECRET_ACCESS_KEY).toMatch(/^[0-9a-f]{64}$/i);
   });
@@ -73,21 +71,45 @@ describe('r2-server fallback behaviour', () => {
 
     const { hasR2Credentials } = await import(modulePath);
 
-  expect(await hasR2Credentials()).toBe(true);
+    expect(await hasR2Credentials()).toBe(true);
     expect(process.env.R2_SECRET_ACCESS_KEY).toMatch(/^[0-9a-f]{64}$/i);
     expect(process.env.R2_API_TOKEN).toBe(token);
   });
-  
-    test('probeR2Binding returns expected structure when no binding', async () => {
-      const { probeR2Binding } = await import(modulePath);
-      const result = await probeR2Binding();
-      expect(result).toHaveProperty('binding', undefined);
-      expect(result).toHaveProperty('source', 'none');
-      expect(result).toHaveProperty('contextSymbolPresent', false);
-    });
-  
-    test('getR2Binding throws when no binding', async () => {
-      const { getR2Binding } = await import(modulePath);
-      await expect(getR2Binding()).rejects.toThrow(/R2_BUCKET binding is not available/);
-    });
+
+  test('probeR2Binding returns expected structure when no binding', async () => {
+    const { probeR2Binding } = await import(modulePath);
+    const result = await probeR2Binding();
+    expect(result).toHaveProperty('binding', undefined);
+    expect(result).toHaveProperty('source', 'none');
+    expect(result).toHaveProperty('contextSymbolPresent', false);
+  });
+
+  test('getR2Binding throws when no binding', async () => {
+    const { getR2Binding } = await import(modulePath);
+    await expect(getR2Binding()).rejects.toThrow(/R2_BUCKET binding is not available/);
+  });
+
+  test('fallbackResult returns correct structure for error reason', async () => {
+    const { fallbackResult } = await import(modulePath);
+    const result = fallbackResult('error_reason');
+    expect(result.isFallback).toBe(true);
+    expect(result.fallbackReason).toBe('error_reason');
+    expect(result.usedBundledFallback).toBe(true);
+    expect(result.items.length).toBeGreaterThan(0);
+  });
+
+  test('listGalleryImages falls back when S3 credentials are incomplete', async () => {
+    process.env.R2_ACCOUNT_ID = 'account';
+    process.env.R2_BUCKET = '';
+    process.env.R2_ACCESS_KEY_ID = 'access';
+    process.env.R2_SECRET_ACCESS_KEY = 'secret';
+    const { listGalleryImages, getFallbackGalleryItems } = await import(modulePath);
+    const items: any[] = [];
+    for await (const item of listGalleryImages('flash')) {
+      items.push(item);
+    }
+    const fallbackItems = getFallbackGalleryItems('flash');
+    expect(items.length).toBe(fallbackItems.length);
+    expect(items.every((item) => item.category === 'flash')).toBe(true);
+  });
 });

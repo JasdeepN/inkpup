@@ -4,7 +4,7 @@ const DEFAULT_ADMIN_HOSTS = Object.freeze([
   'admin.devapp.lan',
 ]);
 
-function readEnvList(name: string): string[] {
+export function readEnvList(name: string): string[] {
   const raw = process.env[name];
   if (!raw) {
     return [];
@@ -32,7 +32,7 @@ export function getAdminHosts(): readonly string[] {
   return appendLocalFallbacks([...DEFAULT_ADMIN_HOSTS]);
 }
 
-function appendLocalFallbacks(hosts: string[]): readonly string[] {
+export function appendLocalFallbacks(hosts: string[]): readonly string[] {
   if (process.env.NODE_ENV === 'production') {
     return hosts;
   }

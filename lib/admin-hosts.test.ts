@@ -68,4 +68,28 @@ describe('admin host configuration', () => {
     process.env.ADMIN_PORTAL_HOSTS = 'customhost.com';
     expect(getPrimaryAdminHost()).toBe('customhost.com');
   });
+
+  test('readEnvList returns empty array if env var is missing or empty', async () => {
+    setNodeEnv('production');
+    delete process.env.ADMIN_PORTAL_HOSTS;
+    const { readEnvList } = await import(MODULE_PATH);
+    expect(readEnvList('ADMIN_PORTAL_HOSTS')).toEqual([]);
+    process.env.ADMIN_PORTAL_HOSTS = '';
+    expect(readEnvList('ADMIN_PORTAL_HOSTS')).toEqual([]);
+  });
+
+  test('appendLocalFallbacks does not add localhost/127.0.0.1 in production', async () => {
+    setNodeEnv('production');
+    const { appendLocalFallbacks } = await import(MODULE_PATH);
+    const hosts = ['admin.inkpup.ca'];
+    expect(appendLocalFallbacks(hosts)).toEqual(['admin.inkpup.ca']);
+  });
+
+  test('appendLocalFallbacks adds localhost/127.0.0.1 in non-production', async () => {
+    setNodeEnv('development');
+    const { appendLocalFallbacks } = await import(MODULE_PATH);
+    const hosts = ['admin.inkpup.ca'];
+    const result = appendLocalFallbacks(hosts);
+    expect(result).toEqual(expect.arrayContaining(['admin.inkpup.ca', 'localhost', '127.0.0.1']));
+  });
 });

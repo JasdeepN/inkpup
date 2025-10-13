@@ -82,6 +82,8 @@ test-results/
 playwright-report/
 .playwright/
 
+.serena/
+
 # Keep the instructions directory tracked
 !.github/instructions/
 TODO.IGNORE
