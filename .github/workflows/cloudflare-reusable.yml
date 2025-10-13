@@ -1,0 +1,248 @@
+name: Cloudflare Deploy (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      branch:
+        required: true
+        type: string
+      r2_custom_domain:
+        required: false
+        type: string
+      r2_min_tls:
+        required: false
+        type: string
+      cf_web_analytics_token:
+        required: false
+        type: string
+      custom_domain_config:
+        required: false
+        type: boolean
+    secrets:
+      r2_api_token:
+        required: true
+      cf_account_id:
+        required: true
+
+jobs:
+  derive-r2-credentials:
+    name: Derive Cloudflare R2 credentials
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.14'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps --silent
+      - name: Derive R2 credentials from Cloudflare API token
+        env:
+          R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          python <<'PY'
+          import os
+          import requests
+
+          api_token = os.environ["R2_API_TOKEN"]
+          account_id = os.environ["CF_ACCOUNT_ID"]
+
+          headers = {
+              "Authorization": f"Bearer {api_token}",
+              "Content-Type": "application/json",
+          }
+
+          # Fetch R2 access keys from Cloudflare API
+          resp = requests.get(
+              f"https://api.cloudflare.com/client/v4/accounts/{account_id}/r2/access_keys",
+              headers=headers,
+          )
+          resp.raise_for_status()
+          result = resp.json()
+          keys = result["result"]["access_keys"][0]
+
+          os.makedirs(".r2-credentials", exist_ok=True)
+          with open(".r2-credentials/credentials.env", "w") as f:
+              f.write(f"R2_ACCOUNT_ID={account_id}\n")
+              f.write(f"R2_ACCESS_KEY_ID={keys['access_key_id']}\n")
+              f.write(f"R2_SECRET_ACCESS_KEY={keys['secret_access_key']}\n")
+          PY
+      - name: Upload derived R2 credentials artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2-credentials-${{ inputs.environment }}
+          path: .r2-credentials
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
+  build:
+    name: Build OpenNext bundle
+    runs-on: ubuntu-latest
+    needs: derive-r2-credentials
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.14'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps --silent
+      - name: Download derived R2 credentials
+        uses: actions/download-artifact@v4
+        with:
+          name: r2-credentials-${{ inputs.environment }}
+          path: .r2-credentials
+      - name: Set R2 bucket and hostname based on environment
+        id: set_r2_vars
+        run: |
+          if [ "${{ inputs.environment }}" = "production" ]; then
+            echo "R2_BUCKET=inkpup-prod-r2-bucket" >> $GITHUB_ENV
+            echo "R2_PUBLIC_HOSTNAME=prod-r2-hostname.inkpup.com" >> $GITHUB_ENV
+          else
+            echo "R2_BUCKET=inkpup-dev-r2-bucket" >> $GITHUB_ENV
+            echo "R2_PUBLIC_HOSTNAME=dev-r2-hostname.inkpup.com" >> $GITHUB_ENV
+          fi
+      - name: Export R2 credentials to environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          source .r2-credentials/credentials.env
+          {
+            echo "R2_ACCOUNT_ID=${R2_ACCOUNT_ID}"
+            echo "R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID}"
+            echo "R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY}"
+            echo "AWS_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID}"
+            echo "AWS_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY}"
+            echo "AWS_REGION=auto"
+            echo "AWS_S3_FORCE_PATH_STYLE=true"
+            echo "AWS_ENDPOINT=https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          } >> "$GITHUB_ENV"
+      - name: Build with OpenNext
+        run: npm run opennext:build
+        env:
+          R2_BUCKET: ${{ env.R2_BUCKET }}
+          R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      - name: Ensure all SSR chunks are present in OpenNext bundle
+        if: ${{ inputs.environment == 'dev' }}
+        run: |
+          mkdir -p .open-next/server/chunks/ssr
+          cp -r .next/server/chunks/ssr/* .open-next/server/chunks/ssr/
+          ls -lh .open-next/server/chunks/ssr/
+      - name: Upload OpenNext artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-next-bundle
+          path: |
+            .open-next
+            wrangler.toml
+          include-hidden-files: true
+          if-no-files-found: error
+
+  prepare:
+    name: Configure Cloudflare resources
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+      R2_CUSTOM_DOMAIN: ${{ inputs.r2_custom_domain }}
+      R2_MIN_TLS: ${{ inputs.r2_min_tls }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.14'
+      - name: Install runtime dependencies
+        run: npm install --legacy-peer-deps --silent --omit=dev
+      - name: Download derived R2 credentials
+        uses: actions/download-artifact@v4
+        with:
+          name: r2-credentials-${{ inputs.environment }}
+          path: .r2-credentials
+      - name: Export R2 credentials to environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          source .r2-credentials/credentials.env
+          {
+            echo "R2_ACCOUNT_ID=${R2_ACCOUNT_ID}"
+            echo "R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID}"
+            echo "R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY}"
+            echo "AWS_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID}"
+            echo "AWS_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY}"
+            echo "AWS_REGION=auto"
+            echo "AWS_S3_FORCE_PATH_STYLE=true"
+            echo "AWS_ENDPOINT=https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          } >> "$GITHUB_ENV"
+      - name: Debug Cloudflare environment values
+        run: |
+          set -euo pipefail
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_ZONE_ID R2_BUCKET R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY; do
+            if [ -z "${!name}" ]; then
+              echo "::error::${name} is empty at runtime." >&2
+              exit 1
+            else
+              echo "${name} is set"
+            fi
+          done
+      - name: Sync R2 CORS policy
+        run: node scripts/configure-r2-cors.js
+      - name: Ensure R2 custom domain uses TLS 1.3
+        if: ${{ inputs.custom_domain_config }}
+        run: node scripts/configure-r2-custom-domain.js
+
+  deploy:
+    name: Deploy to Cloudflare Workers
+    runs-on: ubuntu-latest
+    needs: prepare
+    env:
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+      R2_CUSTOM_DOMAIN: ${{ inputs.r2_custom_domain }}
+      R2_MIN_TLS: ${{ inputs.r2_min_tls }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.14'
+      - name: Download OpenNext artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: open-next-bundle
+          path: .
+      - name: Render Wrangler config with environment secrets
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ZONE_ID: ${{ env.CLOUDFLARE_ZONE_ID }}
+          R2_BUCKET: ${{ env.R2_BUCKET }}
+          R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
+          CF_WEB_ANALYTICS_TOKEN: ${{ inputs.cf_web_analytics_token }}
+        run: |
+          set -euo pipefail
+          envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID} ${R2_PUBLIC_HOSTNAME} ${R2_BUCKET} ${CF_WEB_ANALYTICS_TOKEN}' < wrangler.toml > wrangler.resolved.toml
+      - name: Deploy to environment
+        run: |
+          set -euo pipefail
+          CLOUDFLARE_ACCOUNT_ID="$CLOUDFLARE_ACCOUNT_ID" \
+          CLOUDFLARE_ZONE_ID="$CLOUDFLARE_ZONE_ID" \
+          npx --yes wrangler@4 deploy --config wrangler.resolved.toml --env ${{ inputs.environment }}
+      - name: Confirm latest deployment
+        run: |
+          set -euo pipefail
+          CLOUDFLARE_ACCOUNT_ID="$CLOUDFLARE_ACCOUNT_ID" \
+          npx --yes wrangler@4 deployments status --config wrangler.resolved.toml --env ${{ inputs.environment }}
