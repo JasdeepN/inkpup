@@ -129,10 +129,11 @@ jobs:
       - name: Upload derived R2 credentials artifact (dev)
         uses: actions/upload-artifact@v4
         with:
-          name: r2-credentials-dev
-          path: .r2-credentials
-          if-no-files-found: error
-          retention-days: 1
+            name: r2-credentials-dev
+            path: .r2-credentials
+            include-hidden-files: true
+            if-no-files-found: error
+            retention-days: 1
 
   derive-r2-credentials-prod:
     name: Derive Cloudflare R2 credentials (prod)
@@ -227,10 +228,11 @@ jobs:
       - name: Upload derived R2 credentials artifact (prod)
         uses: actions/upload-artifact@v4
         with:
-          name: r2-credentials-prod
-          path: .r2-credentials
-          if-no-files-found: error
-          retention-days: 1
+            name: r2-credentials-prod
+            path: .r2-credentials
+            include-hidden-files: true
+            if-no-files-found: error
+            retention-days: 1
 
   build:
     name: Build OpenNext bundle
