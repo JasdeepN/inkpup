@@ -153,7 +153,7 @@ describe('upload and delete gallery images', () => {
 
     const server = await import('./r2-server');
 
-    expect(server.hasR2Credentials()).toBe(true);
+  expect(await server.hasR2Credentials()).toBe(true);
     await server.deleteGalleryImage('flash/image.webp', 'flash');
 
     expect(process.env.R2_SECRET_ACCESS_KEY).toBe(expectedHash);

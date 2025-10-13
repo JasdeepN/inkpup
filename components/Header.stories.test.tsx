@@ -1,36 +1,20 @@
-import { screen, act, render } from '@testing-library/react';
-import { composeStories } from '@storybook/nextjs-vite';
-import * as stories from './Header.stories';
+import { screen, render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import Header from './Header';
 
-const { MobileMenu } = composeStories(stories);
+describe('Header', () => {
+  test('MobileMenu opens and closes the navigation', async () => {
+    render(<Header />);
+    // Find the menu button and click it
+    const menuBtn = screen.getByRole('button', { name: /open menu/i });
+    await userEvent.click(menuBtn);
 
-describe('Header stories', () => {
-  test('MobileMenu story opens and closes the navigation', async () => {
-    // Try to run the story's play function (wrapped in act). If that doesn't render elements
-    // as expected in the test environment, fall back to rendering the Header component directly.
-    let usedFallback = false;
-    try {
-      await act(async () => {
-        await MobileMenu.run();
-      });
-    } catch (err) {
-      // fall back to rendering the component directly (silence error)
-      /* eslint-disable-next-line no-unused-vars */
-      const _err = err;
-      usedFallback = true;
-      render(<Header />);
-    }
+    // Wait for the mobile nav to appear
+    const nav = screen.getByRole('navigation', { name: /mobile/i });
+    expect(nav).toHaveAttribute('aria-hidden', 'false');
 
-    const nav = screen
-      .getAllByRole('navigation', { hidden: true })
-      .find((element) => element.getAttribute('aria-label') === 'Mobile');
-
-    expect(nav).toBeDefined();
-    if (!nav) throw new Error('Mobile navigation not found');
-
+    // Press Escape to close
+    await userEvent.keyboard('{Escape}');
     expect(nav).toHaveAttribute('aria-hidden', 'true');
-    // if we used fallback, ensure we at least mounted the component
-    if (usedFallback) expect(screen.getAllByTestId('nav-toggle').length).toBeGreaterThan(0);
   });
 });

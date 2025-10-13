@@ -21,7 +21,7 @@ function shouldBypass(pathname: string): boolean {
   );
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const host = request.headers.get('host');
   if (!isAdminHost(host)) {
     return NextResponse.next();
@@ -57,7 +57,3 @@ export function middleware(request: NextRequest) {
 
   return NextResponse.next();
 }
-
-export const config = {
-  matcher: ['/((?!_next/).*)'],
-};

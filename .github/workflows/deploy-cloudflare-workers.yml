@@ -280,8 +280,7 @@ jobs:
           R2_BUCKET: ${{ vars.R2_BUCKET }}
           R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-        run: npx --yes @opennextjs/cloudflare@latest build --config=open-next.config.cjs
-
+        run: npm run opennext:build  
       - name: Upload OpenNext artifact
         uses: actions/upload-artifact@v4
         with:
@@ -340,8 +339,7 @@ jobs:
           R2_BUCKET: ${{ vars.R2_BUCKET }}
           R2_PUBLIC_HOSTNAME: ${{ env.R2_PUBLIC_HOSTNAME }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-        run: npx --yes @opennextjs/cloudflare@latest build --config=open-next.config.cjs
-
+        run: npm run opennext:build  
       - name: Upload OpenNext artifact
         uses: actions/upload-artifact@v4
         with:

@@ -15,7 +15,7 @@ describe('r2-server fallback behaviour', () => {
   test('returns fallback gallery items when credentials are missing', async () => {
     const { hasR2Credentials, listGalleryImages } = await import(modulePath);
 
-    expect(hasR2Credentials()).toBe(false);
+  expect(await hasR2Credentials()).toBe(false);
 
     const result = await listGalleryImages('healed');
     expect(result.isFallback).toBe(true);
@@ -58,7 +58,7 @@ describe('r2-server fallback behaviour', () => {
 
     const { hasR2Credentials } = await import(modulePath);
 
-    expect(hasR2Credentials()).toBe(true);
+  expect(await hasR2Credentials()).toBe(true);
     expect(process.env.R2_SECRET_ACCESS_KEY).not.toBe(token);
     expect(process.env.R2_SECRET_ACCESS_KEY).toMatch(/^[0-9a-f]{64}$/i);
   });
@@ -73,7 +73,7 @@ describe('r2-server fallback behaviour', () => {
 
     const { hasR2Credentials } = await import(modulePath);
 
-    expect(hasR2Credentials()).toBe(true);
+  expect(await hasR2Credentials()).toBe(true);
     expect(process.env.R2_SECRET_ACCESS_KEY).toMatch(/^[0-9a-f]{64}$/i);
     expect(process.env.R2_API_TOKEN).toBe(token);
   });

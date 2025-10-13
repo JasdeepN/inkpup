@@ -1,3 +1,34 @@
+// Simple mime/extension detection for fallback paths
+export function sniffContentType(buf: Buffer, fallbackName?: string): { contentType: string; ext: string } {
+  // Signatures
+  const sig = buf.subarray(0, 12);
+  const isJPEG = sig[0] === 0xff && sig[1] === 0xd8 && sig[2] === 0xff;
+  const isPNG = sig[0] === 0x89 && sig[1] === 0x50 && sig[2] === 0x4e && sig[3] === 0x47;
+  const isGIF = sig[0] === 0x47 && sig[1] === 0x49 && sig[2] === 0x46 && sig[3] === 0x38;
+  const isWEBP =
+    sig[0] === 0x52 &&
+    sig[1] === 0x49 &&
+    sig[2] === 0x46 &&
+    sig[3] === 0x46 &&
+    sig[8] === 0x57 &&
+    sig[9] === 0x45 &&
+    sig[10] === 0x42 &&
+    sig[11] === 0x50;
+
+  if (isWEBP) return { contentType: 'image/webp', ext: 'webp' };
+  if (isPNG) return { contentType: 'image/png', ext: 'png' };
+  if (isGIF) return { contentType: 'image/gif', ext: 'gif' };
+  if (isJPEG) return { contentType: 'image/jpeg', ext: 'jpg' };
+
+  // Fallback: infer from filename extension
+  const name = (fallbackName || '').toLowerCase();
+  if (name.endsWith('.webp')) return { contentType: 'image/webp', ext: 'webp' };
+  if (name.endsWith('.png')) return { contentType: 'image/png', ext: 'png' };
+  if (name.endsWith('.gif')) return { contentType: 'image/gif', ext: 'gif' };
+  if (name.endsWith('.jpg') || name.endsWith('.jpeg')) return { contentType: 'image/jpeg', ext: 'jpg' };
+
+  return { contentType: 'application/octet-stream', ext: 'bin' };
+}
 import {
   DeleteObjectCommand,
   ListObjectsV2Command,
@@ -57,7 +88,7 @@ type GlobalPropertyProbe = {
   bindingNull: boolean;
 };
 
-function probeBindingViaContext(): ContextAccessProbe {
+async function probeBindingViaContext(): Promise<ContextAccessProbe> {
   let binding: R2Bucket | undefined;
   let envHasBucket = false;
   let bindingNull = false;
@@ -65,7 +96,7 @@ function probeBindingViaContext(): ContextAccessProbe {
   let errorMessage: string | undefined;
 
   try {
-    const { env } = getCloudflareContext();
+    const { env } = await getCloudflareContext({ async: true });
     attempted = true;
     const lookup = env as CloudflareContextLookup['env'];
     if (lookup && 'R2_BUCKET' in lookup) {
@@ -135,13 +166,13 @@ function probeBindingViaGlobalProperty(
   };
 }
 
-function probeR2Binding(): R2BindingProbe {
+async function probeR2Binding(): Promise<R2BindingProbe> {
   try {
     const globalWithContext = globalThis as typeof globalThis &
       R2BindingLookup &
       Partial<Record<typeof CLOUDFLARE_CONTEXT_SYMBOL, CloudflareContextLookup>>;
 
-    const contextProbe = probeBindingViaContext();
+    const contextProbe = await probeBindingViaContext();
     const symbolProbe = probeBindingViaSymbol(globalWithContext);
     const directProbe = probeBindingViaGlobalProperty(globalWithContext);
 
@@ -178,16 +209,17 @@ function probeR2Binding(): R2BindingProbe {
   }
 }
 
-function readR2Binding(): R2Bucket | undefined {
-  return probeR2Binding().binding;
+async function readR2Binding(): Promise<R2Bucket | undefined> {
+  const probe = await probeR2Binding();
+  return probe.binding;
 }
 
 function bindingHasMethod(binding: unknown, method: string): boolean {
   return Boolean(binding && typeof (binding as any)[method] === 'function');
 }
 
-function getR2BindingFor(method: 'put' | 'list' | 'delete'): R2Bucket | undefined {
-  const probe = probeR2Binding();
+async function getR2BindingFor(method: 'put' | 'list' | 'delete'): Promise<R2Bucket | undefined> {
+  const probe = await probeR2Binding();
   const binding = probe.binding;
   if (bindingHasMethod(binding, method)) {
     return binding as unknown as R2Bucket;
@@ -246,12 +278,14 @@ let verifyAccessKeyPromise: Promise<string | null> | null = null;
 let clientPromise: Promise<S3Client> | null = null;
 
 // Check if R2 binding is available
-function hasR2Binding(): boolean {
-  return typeof probeR2Binding().binding !== 'undefined';
+async function hasR2Binding(): Promise<boolean> {
+  const probe = await probeR2Binding();
+  return typeof probe.binding !== 'undefined';
 }
 
-function getR2Binding(): R2Bucket {
-  const { binding } = probeR2Binding();
+async function getR2Binding(): Promise<R2Bucket> {
+  const probe = await probeR2Binding();
+  const binding = probe.binding;
   if (!binding) {
     throw new Error('R2_BUCKET binding is not available');
   }
@@ -387,11 +421,11 @@ async function resolveCredentials(): Promise<{ accessKeyId: string; secretAccess
   };
 }
 
-export function hasR2Credentials(): boolean {
+export async function hasR2Credentials(): Promise<boolean> {
   // Prefer a real Cloudflare binding that supports required methods unless forced to S3
   if (!FORCE_S3) {
-    const canPut = Boolean(getR2BindingFor('put'));
-    const canDelete = Boolean(getR2BindingFor('delete'));
+    const canPut = Boolean(await getR2BindingFor('put'));
+    const canDelete = Boolean(await getR2BindingFor('delete'));
     if (canPut && canDelete) {
       return true;
     }
@@ -403,7 +437,7 @@ export function hasR2Credentials(): boolean {
 }
 
 async function getClient(): Promise<S3Client> {
-  if (!hasR2Credentials()) {
+  if (!(await hasR2Credentials())) {
     throw new Error(
       'R2 credentials are not fully configured. Please set R2_ACCOUNT_ID, R2_BUCKET, and either (R2_ACCESS_KEY_ID with R2_SECRET_ACCESS_KEY) or an R2_API_TOKEN.'
     );
@@ -550,6 +584,62 @@ export type UploadGalleryImageResult = {
   item: GalleryItem;
 };
 
+async function optimizeOrFallback(buffer: Buffer, originalFilename: string) {
+  try {
+    return await createOptimizedImage(buffer);
+  } catch (err) {
+    console.warn('Image optimization failed, uploading original bytes instead.', err);
+    const guessed = sniffContentType(buffer, originalFilename);
+    return {
+      buffer,
+      info: { size: buffer.length },
+      contentType: guessed.contentType,
+      ext: guessed.ext,
+    };
+  }
+}
+
+function buildMetadata(alt?: string, caption?: string) {
+  const metadata: Record<string, string> = {};
+  if (alt) metadata.alt = alt.slice(0, 256);
+  if (caption) metadata.caption = caption.slice(0, 256);
+  return metadata;
+}
+
+async function uploadToR2Binding(bindingForPut: R2Bucket, key: string, optimized: any, metadata: Record<string, string>) {
+  const bodyForBinding: ArrayBuffer | ArrayBufferView | ReadableStream | string =
+    optimized.buffer instanceof Buffer ? new Uint8Array(optimized.buffer) : (optimized.buffer as unknown as ArrayBuffer | ArrayBufferView);
+  const putResult = await bindingForPut.put(key, bodyForBinding, {
+    httpMetadata: {
+      contentType: optimized.contentType || OPTIMIZED_CONTENT_TYPE,
+      cacheControl: CACHE_CONTROL_IMMUTABLE,
+    },
+    customMetadata: metadata,
+  });
+  if (putResult === null) {
+    throw new Error(`R2 put() returned null for key '${key}' (precondition failed or storage issue).`);
+  }
+  if (VERIFY_AFTER_PUT && bindingHasMethod(bindingForPut, 'head')) {
+    const headObj = await (bindingForPut as any).head(key);
+    if (!headObj) {
+      throw new Error(`R2 head() could not find key after put: '${key}'.`);
+    }
+  }
+}
+
+async function uploadToS3(key: string, optimized: any, metadata: Record<string, string>) {
+  const clientInstance = await getClient();
+  const putParams: PutObjectCommandInput = {
+    Bucket: bucket,
+    Key: key,
+    Body: optimized.buffer,
+    ContentType: optimized.contentType || OPTIMIZED_CONTENT_TYPE,
+    CacheControl: CACHE_CONTROL_IMMUTABLE,
+    Metadata: Object.keys(metadata).length ? metadata : undefined,
+  };
+  await clientInstance.send(new PutObjectCommand(putParams));
+}
+
 export async function uploadGalleryImage({
   category,
   originalFilename,
@@ -557,99 +647,21 @@ export async function uploadGalleryImage({
   alt,
   caption,
 }: UploadGalleryImageInput): Promise<UploadGalleryImageResult> {
-  if (!hasR2Credentials()) {
+  if (!(await hasR2Credentials())) {
     throw new Error('R2 credentials are required to upload images.');
   }
 
-  // Simple mime/extension detection for fallback paths
-  const sniffContentType = (buf: Buffer, fallbackName?: string): { contentType: string; ext: string } => {
-    // Signatures
-    const sig = buf.subarray(0, 12);
-    const isJPEG = sig[0] === 0xff && sig[1] === 0xd8 && sig[2] === 0xff;
-    const isPNG = sig[0] === 0x89 && sig[1] === 0x50 && sig[2] === 0x4e && sig[3] === 0x47;
-    const isGIF = sig[0] === 0x47 && sig[1] === 0x49 && sig[2] === 0x46 && sig[3] === 0x38;
-    const isWEBP =
-      sig[0] === 0x52 &&
-      sig[1] === 0x49 &&
-      sig[2] === 0x46 &&
-      sig[3] === 0x46 &&
-      sig[8] === 0x57 &&
-      sig[9] === 0x45 &&
-      sig[10] === 0x42 &&
-      sig[11] === 0x50;
-
-    if (isWEBP) return { contentType: 'image/webp', ext: 'webp' };
-    if (isPNG) return { contentType: 'image/png', ext: 'png' };
-    if (isGIF) return { contentType: 'image/gif', ext: 'gif' };
-    if (isJPEG) return { contentType: 'image/jpeg', ext: 'jpg' };
-
-    // Fallback: infer from filename extension
-    const name = (fallbackName || '').toLowerCase();
-    if (name.endsWith('.webp')) return { contentType: 'image/webp', ext: 'webp' };
-    if (name.endsWith('.png')) return { contentType: 'image/png', ext: 'png' };
-    if (name.endsWith('.gif')) return { contentType: 'image/gif', ext: 'gif' };
-    if (name.endsWith('.jpg') || name.endsWith('.jpeg')) return { contentType: 'image/jpeg', ext: 'jpg' };
-
-    return { contentType: 'application/octet-stream', ext: 'bin' };
-  };
-
-  // Attempt optimization; if it fails (unsupported image), fall back to original
-  let optimized: Awaited<ReturnType<typeof createOptimizedImage>>;
-  try {
-    optimized = await createOptimizedImage(buffer);
-  } catch (err) {
-    console.warn('Image optimization failed, uploading original bytes instead.', err);
-    const guessed = sniffContentType(buffer, originalFilename);
-    optimized = {
-      buffer,
-      info: { size: buffer.length },
-      contentType: guessed.contentType,
-      ext: guessed.ext,
-    };
-  }
-
-  // Build object key using the actual output extension (webp when optimized, else original)
+  const optimized = await optimizeOrFallback(buffer, originalFilename);
   const slug = sanitizeFilename(originalFilename);
   const ext = optimized.ext || sniffContentType(buffer, originalFilename).ext;
   const key = `${category}/${slug}.${ext}`;
+  const metadata = buildMetadata(alt, caption);
 
-  const metadata: Record<string, string> = {};
-  if (alt) metadata.alt = alt.slice(0, 256);
-  if (caption) metadata.caption = caption.slice(0, 256);
-
-  // Use R2 binding if available
-  const bindingForPut = FORCE_S3 ? undefined : getR2BindingFor('put');
+  const bindingForPut = FORCE_S3 ? undefined : await getR2BindingFor('put');
   if (bindingForPut) {
-    const bodyForBinding: ArrayBuffer | ArrayBufferView | ReadableStream | string =
-      optimized.buffer instanceof Buffer ? new Uint8Array(optimized.buffer) : (optimized.buffer as unknown as ArrayBuffer | ArrayBufferView);
-    const putResult = await bindingForPut.put(key, bodyForBinding, {
-      httpMetadata: {
-        contentType: optimized.contentType || OPTIMIZED_CONTENT_TYPE,
-        cacheControl: CACHE_CONTROL_IMMUTABLE,
-      },
-      customMetadata: metadata,
-    });
-    if (putResult === null) {
-      throw new Error(`R2 put() returned null for key '${key}' (precondition failed or storage issue).`);
-    }
-    if (VERIFY_AFTER_PUT && bindingHasMethod(bindingForPut, 'head')) {
-      const headObj = await (bindingForPut as any).head(key);
-      if (!headObj) {
-        throw new Error(`R2 head() could not find key after put: '${key}'.`);
-      }
-    }
+    await uploadToR2Binding(bindingForPut, key, optimized, metadata);
   } else {
-    // Fall back to S3-compatible API
-    const clientInstance = await getClient();
-    const putParams: PutObjectCommandInput = {
-      Bucket: bucket,
-      Key: key,
-      Body: optimized.buffer,
-      ContentType: optimized.contentType || OPTIMIZED_CONTENT_TYPE,
-      CacheControl: CACHE_CONTROL_IMMUTABLE,
-      Metadata: Object.keys(metadata).length ? metadata : undefined,
-    };
-    await clientInstance.send(new PutObjectCommand(putParams));
+    await uploadToS3(key, optimized, metadata);
   }
 
   const item: GalleryItem = {
@@ -667,7 +679,7 @@ export async function uploadGalleryImage({
 }
 
 export async function deleteGalleryImage(key: string, category: GalleryCategory): Promise<void> {
-  if (!hasR2Credentials()) {
+  if (!(await hasR2Credentials())) {
     throw new Error('R2 credentials are required to delete images.');
   }
 
@@ -676,7 +688,7 @@ export async function deleteGalleryImage(key: string, category: GalleryCategory)
   }
 
   // Use R2 binding if available
-  const bindingForDelete = FORCE_S3 ? undefined : getR2BindingFor('delete');
+  const bindingForDelete = FORCE_S3 ? undefined : await getR2BindingFor('delete');
   if (bindingForDelete) {
     await bindingForDelete.delete(key);
     console.info(`Deleted R2 object via binding: ${key}`);
@@ -849,8 +861,8 @@ export async function listGalleryImages(
   const prefix = `${category}`.replace(/\/+$/, '');
 
   // Use R2 binding if available (faster, no auth needed)
-  const bindingProbe = probeR2Binding();
-  const bindingForList = FORCE_S3 ? undefined : getR2BindingFor('list');
+  const bindingProbe = await probeR2Binding();
+  const bindingForList = FORCE_S3 ? undefined : await getR2BindingFor('list');
   // Debug: log which binding is used and if it's a mock
   console.info('[DEBUG] R2 binding probe result:', {
     source: bindingProbe.source,
@@ -862,13 +874,13 @@ export async function listGalleryImages(
     contextAccessAttempted: bindingProbe.contextAccessAttempted,
     contextAccessError: bindingProbe.contextAccessError,
     bindingForListType: typeof bindingForList,
-  bindingForListIsMock: (bindingForList?.list as any)?._isMockFunction ?? false,
+    bindingForListIsMock: (bindingForList?.list as any)?._isMockFunction ?? false,
     bindingForListKeys: bindingForList ? Object.keys(bindingForList) : undefined,
   });
 
   if (bindingForList) {
     // Debug: log when using R2 binding
-  console.info('[DEBUG] Using R2 binding for listGalleryImages. Is mock:', (bindingForList.list as any)?._isMockFunction ?? false);
+    console.info('[DEBUG] Using R2 binding for listGalleryImages. Is mock:', (bindingForList.list as any)?._isMockFunction ?? false);
     try {
       const images = await fetchGalleryImagesFromR2Binding(bindingForList, prefix, category);
       console.info('Fetched gallery listing from R2 binding.', { prefix, count: images.length });
@@ -888,7 +900,7 @@ export async function listGalleryImages(
   }
 
   // Check if S3-compatible credentials are available
-  if (!hasR2Credentials()) {
+  if (!(await hasR2Credentials())) {
     console.error('R2 credentials are incomplete; skipping remote gallery fetch.', credentialStatus);
     return fallbackResult('missing_credentials');
   }

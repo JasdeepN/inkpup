@@ -127,9 +127,6 @@ const DEFAULT_R2_REMOTE_PATTERNS = [
 
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    appDir: true,
-  },
   images: {
     // Cloudflare Workers does not support Next.js default image optimizer; serve originals instead.
     // https://nextjs.org/docs/app/api-reference/components/image#unoptimized

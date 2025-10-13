@@ -8,8 +8,8 @@ const createJestConfig = nextJest({
 
 const customConfig = {
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts', '<rootDir>/storybook.setup.ts'],
-  testPathIgnorePatterns: ['<rootDir>/tests/e2e/'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  testPathIgnorePatterns: ['<rootDir>/tests/e2e/', '<rootDir>/storybook.setup.ts', '<rootDir>/components/.*\\.stories\\.[jt]sx?$', '<rootDir>/app/.*\\.stories\\.[jt]sx?$'],
   testMatch: ['<rootDir>/**/*.(test|spec).{js,jsx,ts,tsx,mjs,cjs,mts,cts}'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'mjs', 'cjs', 'mts', 'cts', 'json', 'node'],
   moduleNameMapper: {

@@ -16,7 +16,7 @@ describe('r2-server branch coverage helpers', () => {
     delete process.env.R2_SECRET_ACCESS_KEY;
 
     let mod = await import(MODULE);
-    expect(mod.hasR2Credentials()).toBe(false);
+  expect(await mod.hasR2Credentials()).toBe(false);
 
     process.env.R2_ACCOUNT_ID = 'a';
     process.env.R2_BUCKET = 'b';
@@ -25,7 +25,7 @@ describe('r2-server branch coverage helpers', () => {
 
     jest.resetModules();
     mod = await import(MODULE);
-    expect(mod.hasR2Credentials()).toBe(true);
+  expect(await mod.hasR2Credentials()).toBe(true);
   });
 
   test('generateGalleryObjectKey normalizes filenames with diacritics and spaces', async () => {
