@@ -71,6 +71,10 @@ jobs:
           api_token = os.environ["R2_API_TOKEN"]
           account_id = os.environ["CF_ACCOUNT_ID"]
 
+          print('api', api_token)
+          print('account', account_id)
+          print('url', f"https://api.cloudflare.com/client/v4/accounts/{account_id}/r2/access_keys")
+
           headers = {
               "Authorization": f"Bearer {api_token}",
               "Content-Type": "application/json",
