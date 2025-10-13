@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint app components lib pages",
+    "postbuild": "node scripts/create-missing-ssr-chunk.cjs",
     "opennext:build": "npx --yes @opennextjs/cloudflare@latest build --config=open-next.config.cjs",
     "opennext:deploy": "npx --yes @opennextjs/cloudflare@latest deploy --config=wrangler.toml",
     "test:e2e": "playwright test",
