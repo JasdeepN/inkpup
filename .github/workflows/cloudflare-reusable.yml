@@ -62,7 +62,7 @@ jobs:
           echo "CF_ZONE_ID: $CF_ZONE_ID"
     
       - name: Derive R2 credentials from Cloudflare API token
-        if: ${{ secrets.R2_ACCESS_KEY_ID == '' || secrets.R2_SECRET_ACCESS_KEY == '' }}
+        if: ${{ env.R2_ACCESS_KEY_ID == '' || env.R2_SECRET_ACCESS_KEY == '' }}
         shell: bash
         env:
           R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
@@ -96,6 +96,17 @@ jobs:
               f.write(f"R2_ACCESS_KEY_ID={keys['access_key_id']}\n")
               f.write(f"R2_SECRET_ACCESS_KEY={keys['secret_access_key']}\n")
           PY
+          else:
+            - name: Use provided R2 credentials
+              shell: bash
+              run: |
+                set -euo pipefail
+                mkdir -p .r2-credentials
+                {
+                  echo "R2_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }}"
+                  echo "R2_ACCESS_KEY_ID=${{ secrets.R2_ACCESS_KEY_ID }}"
+                  echo "R2_SECRET_ACCESS_KEY=${{ secrets.R2_SECRET_ACCESS_KEY }}"
+                } > .r2-credentials/credentials.env
       - name: Append all environment variables to credentials file
         env:
           R2_BUCKET: ${{ vars.R2_BUCKET }}
