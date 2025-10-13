@@ -20,14 +20,15 @@
     "act:cache:prune": "bash scripts/act-cache-images.sh prune",
     "r2:cors:show": "node scripts/configure-r2-cors.js --show",
     "r2:cors:apply": "node scripts/configure-r2-cors.js",
-    "r2:content-type:fix": "node scripts/fix-r2-content-type.js"
+    "r2:content-type:fix": "node scripts/fix-r2-content-type.js",
+    "preopennext:build": "node scripts/create-missing-ssr-chunk.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.653.0",
     "@opennextjs/cloudflare": "^1.10.1",
     "@tsparticles/react": "^3.0.0",
     "minimist": "^1.2.8",
-    "next": "^15.5.4",
+    "next": ">=16.0.0-canary.3",
     "open-next": "^3.1.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
