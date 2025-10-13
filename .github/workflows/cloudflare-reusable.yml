@@ -197,7 +197,7 @@ jobs:
           R2_FORCE_S3: ${{ vars.R2_FORCE_S3 }}
         run: |
           set -euo pipefail
-          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_ZONE_ID R2_BUCKET R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY; do
+          for name in CF_ACCOUNT_ID CF_ZONE_ID R2_API_KEY R2_BUCKET R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY; do
             value="${!name:-}"
             if [ -z "$value" ]; then
               echo "::error::${name} is empty at runtime." >&2
@@ -245,15 +245,15 @@ jobs:
       - name: Render Wrangler config with environment secrets
         run: |
           set -euo pipefail
-          envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID} ${R2_PUBLIC_HOSTNAME} ${R2_BUCKET} ${CF_WEB_ANALYTICS_TOKEN}' < wrangler.toml > wrangler.resolved.toml
+          envsubst '${CF_ACCOUNT_ID} ${CF_ZONE_ID} ${R2_PUBLIC_HOSTNAME} ${R2_BUCKET} ${CF_WEB_ANALYTICS_TOKEN}' < wrangler.toml > wrangler.resolved.toml
       - name: Deploy to environment
         run: |
           set -euo pipefail
-          CLOUDFLARE_ACCOUNT_ID="$CLOUDFLARE_ACCOUNT_ID" \
-          CLOUDFLARE_ZONE_ID="$CLOUDFLARE_ZONE_ID" \
+          CF_ACCOUNT_ID="$CF_ACCOUNT_ID" \
+          CF_ZONE_ID="$CF_ZONE_ID" \
           npx --yes wrangler@4 deploy --config wrangler.resolved.toml --env ${{ inputs.environment }}
       - name: Confirm latest deployment
         run: |
           set -euo pipefail
-          CLOUDFLARE_ACCOUNT_ID="$CLOUDFLARE_ACCOUNT_ID" \
+          CF_ACCOUNT_ID="$CF_ACCOUNT_ID" \
           npx --yes wrangler@4 deployments status --config wrangler.resolved.toml --env ${{ inputs.environment }}
