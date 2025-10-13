@@ -21,7 +21,8 @@
     "act:cache:list": "bash scripts/act-cache-images.sh list",
     "act:cache:prune": "bash scripts/act-cache-images.sh prune",
     "r2:cors:show": "node scripts/configure-r2-cors.js --show",
-    "r2:cors:apply": "node scripts/configure-r2-cors.js"
+    "r2:cors:apply": "node scripts/configure-r2-cors.js",
+    "r2:content-type:fix": "node scripts/fix-r2-content-type.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.653.0",

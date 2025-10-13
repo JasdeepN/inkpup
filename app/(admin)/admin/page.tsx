@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import SmartImage from '../../../components/SmartImage';
 import {
@@ -9,9 +9,9 @@ import {
   getSessionCookieClearOptions,
   getSessionCookieOptions,
   isAdminEnabled,
-  isValidAdminSlug,
   verifySessionToken,
 } from '../../../lib/admin-auth';
+import { ADMIN_INTERNAL_PATH, ADMIN_PUBLIC_BASE_PATH, isAdminHost } from '../../../lib/admin-hosts';
 import {
   GALLERY_CATEGORIES,
   type GalleryCategory,
@@ -27,13 +27,15 @@ import {
 
 type AdminSearchParams = Record<string, string | string[] | undefined>;
 
-// Use a permissive incoming props type to match Next's generated PageProps during CI builds.
-// We'll narrow the shape locally to preserve type safety for the implementation.
-type PageProps = any;
+// In Next.js 15, searchParams is asynchronous and must be awaited.
+type PageProps = { searchParams?: Promise<AdminSearchParams> };
 
 export const metadata: Metadata = {
   title: 'Gallery Admin Portal',
 };
+
+const ADMIN_REVALIDATE_PATH = ADMIN_INTERNAL_PATH;
+const ADMIN_BASE_PATH = ADMIN_PUBLIC_BASE_PATH;
 
 function resolveCategory(searchParams?: AdminSearchParams): GalleryCategory {
   const raw = typeof searchParams?.category === 'string' ? searchParams.category : undefined;
@@ -44,44 +46,42 @@ function resolveFeedback(searchParams?: AdminSearchParams) {
   const rawStatus = typeof searchParams?.status === 'string' ? searchParams.status : undefined;
   const rawError = typeof searchParams?.error === 'string' ? searchParams.error : undefined;
 
-  const statusMessage = rawStatus
-    ? {
-        uploaded: 'Image uploaded successfully.',
-        deleted: 'Image deleted successfully.',
-        logout: 'You have been signed out.',
-        login: 'Signed in successfully.',
-      }[rawStatus as keyof Record<string, string>]
-    : undefined;
-
-  const errorMessage = rawError
-    ? {
-        invalid: 'The password you entered was incorrect.',
-        unauthorized: 'Your session has expired. Please sign in again.',
-        upload_failed: 'Upload failed. Please try again with a supported image.',
-        delete_failed: 'Delete failed. Please try again.',
-      }[rawError as keyof Record<string, string>]
-    : undefined;
-
-  return {
-    statusMessage,
-    errorMessage,
+  const statusMap: Record<string, string> = {
+    uploaded: 'Image uploaded successfully.',
+    deleted: 'Image deleted successfully.',
+    logout: 'You have been signed out.',
+    login: 'Signed in successfully.',
   };
+
+  const errorMap: Record<string, string> = {
+    invalid: 'The password you entered was incorrect.',
+    unauthorized: 'Your session has expired. Please sign in again.',
+    upload_failed: 'Upload failed. Please try again with a supported image.',
+    delete_failed: 'Delete failed. Please try again.',
+  };
+
+  const statusMessage = rawStatus ? statusMap[rawStatus] : undefined;
+  const errorMessage = rawError ? errorMap[rawError] : undefined;
+
+  return { statusMessage, errorMessage };
 }
 
 export default async function AdminPortalPage(props: PageProps) {
-  const { params, searchParams } = props as { params: { admin?: string[] }; searchParams?: AdminSearchParams };
   if (!isAdminEnabled()) {
     notFound();
   }
 
-  const slug = params.admin?.[0] ?? '';
-  if (!isValidAdminSlug(slug)) {
+  // Only allow access from admin subdomains
+  const headerStore = await headers();
+  const hostHeader = headerStore.get('host');
+  // Accept only admin subdomains, e.g. admin.devapp.lan, admin.inkpup.com, etc.
+  if (!hostHeader || !isAdminHost(hostHeader)) {
     notFound();
   }
 
-  const resolvedSearchParams = searchParams ?? undefined;
+  // Await the async searchParams to avoid the sync-dynamic-apis error in Next 15
+  const resolvedSearchParams = props.searchParams ? await props.searchParams : undefined;
 
-  const basePath = `/${slug}`;
   const category = resolveCategory(resolvedSearchParams);
   const feedback = resolveFeedback(resolvedSearchParams);
 
@@ -97,14 +97,14 @@ export default async function AdminPortalPage(props: PageProps) {
     const config = getAdminConfig();
 
     if (password !== config.password) {
-      redirect(`${basePath}?error=invalid`);
+      redirect(`${ADMIN_BASE_PATH}?error=invalid`);
     }
 
     const token = createSessionToken();
     const { name, options } = getSessionCookieOptions();
     const store = await cookies();
     store.set(name, token, options);
-    redirect(`${basePath}?status=login`);
+    redirect(`${ADMIN_BASE_PATH}?status=login`);
   }
 
   async function logoutAction() {
@@ -113,7 +113,7 @@ export default async function AdminPortalPage(props: PageProps) {
     const { name, options } = getSessionCookieClearOptions();
     const store = await cookies();
     store.set(name, '', options);
-    redirect(`${basePath}?status=logout`);
+    redirect(`${ADMIN_BASE_PATH}?status=logout`);
   }
 
   async function ensureAuthenticated() {
@@ -123,7 +123,7 @@ export default async function AdminPortalPage(props: PageProps) {
     const store = await cookies();
     const token = store.get(name)?.value ?? null;
     if (!verifySessionToken(token)) {
-      redirect(`${basePath}?error=unauthorized`);
+      redirect(`${ADMIN_BASE_PATH}?error=unauthorized`);
     }
   }
 
@@ -134,12 +134,12 @@ export default async function AdminPortalPage(props: PageProps) {
 
     const categoryValue = formData.get('category')?.toString() ?? '';
     if (!isGalleryCategory(categoryValue)) {
-      redirect(`${basePath}?error=upload_failed`);
+      redirect(`${ADMIN_BASE_PATH}?error=upload_failed`);
     }
 
     const file = formData.get('file');
     if (!(file instanceof File) || file.size === 0) {
-      redirect(`${basePath}?category=${categoryValue}&error=upload_failed`);
+      redirect(`${ADMIN_BASE_PATH}?category=${categoryValue}&error=upload_failed`);
     }
 
     const alt = formData.get('alt')?.toString() || undefined;
@@ -156,11 +156,11 @@ export default async function AdminPortalPage(props: PageProps) {
       });
     } catch (error) {
       console.error('Failed to upload image', error);
-      redirect(`${basePath}?category=${categoryValue}&error=upload_failed`);
+      redirect(`${ADMIN_BASE_PATH}?category=${categoryValue}&error=upload_failed`);
     }
 
-    revalidatePath(basePath);
-    redirect(`${basePath}?category=${categoryValue}&status=uploaded`);
+    revalidatePath(ADMIN_REVALIDATE_PATH);
+    redirect(`${ADMIN_BASE_PATH}?category=${categoryValue}&status=uploaded`);
   }
 
   async function deleteAction(formData: FormData) {
@@ -172,18 +172,18 @@ export default async function AdminPortalPage(props: PageProps) {
     const key = formData.get('key')?.toString() ?? '';
 
     if (!isGalleryCategory(categoryValue) || !key) {
-      redirect(`${basePath}?error=delete_failed`);
+      redirect(`${ADMIN_BASE_PATH}?error=delete_failed`);
     }
 
     try {
       await deleteGalleryImage(key, categoryValue);
     } catch (error) {
       console.error('Failed to delete image', error);
-      redirect(`${basePath}?category=${categoryValue}&error=delete_failed`);
+      redirect(`${ADMIN_BASE_PATH}?category=${categoryValue}&error=delete_failed`);
     }
 
-    revalidatePath(basePath);
-    redirect(`${basePath}?category=${categoryValue}&status=deleted`);
+    revalidatePath(ADMIN_REVALIDATE_PATH);
+    redirect(`${ADMIN_BASE_PATH}?category=${categoryValue}&status=deleted`);
   }
 
   if (!authenticated) {
@@ -234,7 +234,7 @@ export default async function AdminPortalPage(props: PageProps) {
   const fallbackDetail = (() => {
     switch (fallbackReason) {
       case 'missing_credentials':
-        return 'Verify Cloudflare R2 credentials to restore live syncing.';
+        return 'Provide a Cloudflare R2 binding (R2_BUCKET) or configure R2 credentials to restore live syncing.';
       case 'client_initialization_failed':
         return 'The R2 client failed to initialize; check API credentials and network access.';
       case 'r2_fetch_failed':
@@ -258,10 +258,11 @@ export default async function AdminPortalPage(props: PageProps) {
 
       {!canMutate && (
         <section className="admin-card admin-card--warning">
-          <h2>Missing R2 credentials</h2>
+          <h2>Cloudflare R2 not configured</h2>
           <p>
-            Uploads and deletions are disabled until <code>R2_ACCOUNT_ID</code>, <code>R2_BUCKET</code>, <code>R2_ACCESS_KEY_ID</code>, and
-            {' '}<code>R2_SECRET_ACCESS_KEY</code> are provided in the environment.
+            Uploads and deletions are disabled until a Cloudflare R2 binding <code>R2_BUCKET</code> is available at runtime, or environment
+            credentials are configured: <code>R2_ACCOUNT_ID</code>, <code>R2_BUCKET</code>, and either (<code>R2_ACCESS_KEY_ID</code> with{' '}
+            <code>R2_SECRET_ACCESS_KEY</code>) or a single <code>R2_API_TOKEN</code>.
           </p>
         </section>
       )}
@@ -327,9 +328,8 @@ export default async function AdminPortalPage(props: PageProps) {
                 ? 'Gallery items below are served from bundled backups because the Cloudflare R2 storage container is currently unreachable. The images may be outdated until connectivity is restored.'
                 : 'The Cloudflare R2 storage container is currently unreachable and bundled gallery backups are disabled in this environment. Gallery items will appear again once connectivity is restored.'}
               {fallbackDetail ? ` ${fallbackDetail}` : ''}
-              {fallbackReason === 'missing_credentials' && credentialStatus && (
-                ` Missing credentials — accountId: ${credentialStatus.accountId ? 'ok' : 'missing'}, bucket: ${credentialStatus.bucket ? 'ok' : 'missing'}, accessKey: ${credentialStatus.accessKey ? 'ok' : 'missing'}, secret: ${credentialStatus.secretAccessKey ? 'ok' : 'missing'}.`
-              )}
+              {fallbackReason === 'missing_credentials' && credentialStatus &&
+                ` No R2 binding or credentials — accountId: ${credentialStatus.accountId ? 'ok' : 'missing'}, bucket: ${credentialStatus.bucket ? 'ok' : 'missing'}, accessKey: ${credentialStatus.accessKey ? 'ok' : 'missing'}, secret/api-token: ${credentialStatus.secretAccessKey ? 'ok' : 'missing'}.`}
             </output>
           </section>
         )}
@@ -339,7 +339,7 @@ export default async function AdminPortalPage(props: PageProps) {
             return (
               <a
                 key={cat}
-                href={`${basePath}?category=${cat}`}
+                href={`${ADMIN_BASE_PATH}?category=${cat}`}
                 className={`admin-category-nav__link ${isActive ? 'is-active' : ''}`}
               >
                 {getCategoryLabel(cat)}

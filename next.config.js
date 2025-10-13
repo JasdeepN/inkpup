@@ -1,3 +1,17 @@
+// Initialize OpenNext Cloudflare dev context to support getCloudflareContext() during `next dev`.
+// Safe to run outside production; it is a no-op in other environments.
+try {
+  if (process.env.NODE_ENV !== 'production') {
+    const { initOpenNextCloudflareForDev } = require('@opennextjs/cloudflare');
+    if (typeof initOpenNextCloudflareForDev === 'function') {
+      initOpenNextCloudflareForDev();
+    }
+  }
+} catch (e) {
+  // Non-fatal in environments where the package is unavailable or not needed.
+  console.warn('[OpenNext Cloudflare] Dev init not applied:', e && e.message ? e.message : e);
+}
+
 const publicHostname = process.env.R2_PUBLIC_HOSTNAME;
 const accountId = process.env.R2_ACCOUNT_ID;
 const bucketName = process.env.R2_BUCKET;
@@ -123,6 +137,18 @@ const nextConfig = {
     unoptimized: true,
     remotePatterns: [...baseRemotePatterns, ...DEFAULT_R2_REMOTE_PATTERNS],
   },
+  allowedDevOrigins: [
+    'http://*.devapp.lan:3002',
+    'https://*.devapp.lan:3002',
+    'http://localhost:3002',
+    'https://localhost:3002',
+    'https://*.dev.inkpup.ca',
+    'https://*.inkpup.ca',
+    '*.devapp.lan',
+    'devapp.lan',
+
+    // add other dev/admin subdomains as needed
+  ],
   async headers() {
     return [
       {
