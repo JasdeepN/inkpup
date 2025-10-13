@@ -23,6 +23,11 @@ jobs:
     name: Derive Cloudflare R2 credentials
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
+    env:
+      R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
+      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      R2_PUBLIC_HOSTNAME: ${{ secrets.R2_PUBLIC_HOSTNAME }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,10 +39,29 @@ jobs:
           cache-dependency-path: package-lock.json
       - name: Install dependencies
         run: npm install --legacy-peer-deps --silent
+      - name: Fail fast if credentials missing
+        run: |
+          missing=0
+          for var in R2_API_TOKEN CF_ACCOUNT_ID R2_BUCKET R2_PUBLIC_HOSTNAME; do
+            if [ -z "${!var}" ]; then
+              echo "::error::$var is missing or empty at runtime." >&2
+              missing=1
+            else
+              echo "$var is set. Length: ${#var}"
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            exit 1
+          fi
+      - name: Debug R2_API_TOKEN value
+        run: |
+          if [ -z "$R2_API_TOKEN" ]; then
+            echo "::error::R2_API_TOKEN is missing or empty at runtime." >&2
+            exit 1
+          else
+            echo "R2_API_TOKEN is set. Length: ${#R2_API_TOKEN}"
+          fi
       - name: Derive R2 credentials from Cloudflare API token
-        env:
-          R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
-          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
           set -euo pipefail
           python <<'PY'
@@ -68,9 +92,6 @@ jobs:
               f.write(f"R2_SECRET_ACCESS_KEY={keys['secret_access_key']}\n")
           PY
       - name: Set R2 bucket and hostname from environment secrets
-        env:
-          R2_BUCKET: ${{ secrets.R2_BUCKET }}
-          R2_PUBLIC_HOSTNAME: ${{ secrets.R2_PUBLIC_HOSTNAME }}
         run: |
           echo "R2_BUCKET=$R2_BUCKET" >> .r2-credentials/credentials.env
           echo "R2_PUBLIC_HOSTNAME=$R2_PUBLIC_HOSTNAME" >> .r2-credentials/credentials.env
