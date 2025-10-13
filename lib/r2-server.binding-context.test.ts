@@ -14,7 +14,7 @@ async function ensureWhyIsNodeRunning() {
     const loaded = require('why-is-node-running');
     whyIsNodeRunning = typeof loaded === 'function' ? loaded : null;
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.warn('why-is-node-running is unavailable; skipping async resource diagnostics.', error);
     whyIsNodeRunning = null;
   }
@@ -27,12 +27,12 @@ async function logActiveAsyncResources(context: string): Promise<void> {
   if (!diagnostic) {
     return;
   }
-  // eslint-disable-next-line no-console
+   
   console.info('[TEST DEBUG] Checking active async resources via why-is-node-running:', context);
   try {
     await diagnostic();
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.warn('why-is-node-running threw while collecting diagnostics.', error);
   }
 }
@@ -120,7 +120,7 @@ describe('r2-server Cloudflare context binding', () => {
       if ('verifyAccessKeyPromise' in r2Server) r2Server.verifyAccessKeyPromise = null;
       if ('clientPromise' in r2Server) r2Server.clientPromise = null;
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.warn('Could not reset r2-server singleton promises:', error);
     }
   });
@@ -137,7 +137,7 @@ describe('r2-server Cloudflare context binding', () => {
         }
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.warn('Could not destroy mocked R2 client:', error);
     }
     try {
@@ -145,7 +145,7 @@ describe('r2-server Cloudflare context binding', () => {
       if ('verifyAccessKeyPromise' in r2Server) r2Server.verifyAccessKeyPromise = null;
       if ('clientPromise' in r2Server) r2Server.clientPromise = null;
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.warn('Could not reset r2-server singleton promises in afterEach:', error);
     }
     delete (globalThis as any).R2_BUCKET;

@@ -1,5 +1,7 @@
 // Initialize OpenNext Cloudflare dev context to support getCloudflareContext() during `next dev`.
 // Safe to run outside production; it is a no-op in other environments.
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 try {
   if (process.env.NODE_ENV !== 'production') {
     const { initOpenNextCloudflareForDev } = require('@opennextjs/cloudflare');
@@ -190,4 +192,4 @@ if (accountId && bucketName) {
   });
 }
 
-module.exports = nextConfig;
+export default nextConfig;
