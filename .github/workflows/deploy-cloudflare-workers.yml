@@ -108,11 +108,19 @@ jobs:
           print(f"::add-mask::{token_id}")
           print(f"::add-mask::{secret}")
 
+          # Explicitly print working directory and credentials file location
+          import os
+          print(f"Current working directory: {os.getcwd()}")
+          credentials_path = os.path.abspath('.r2-credentials/credentials.env')
+          print(f"Credentials will be written to: {credentials_path}")
+
           pathlib.Path('.r2-credentials').mkdir(parents=True, exist_ok=True)
           with open('.r2-credentials/credentials.env', 'w', encoding='utf-8') as fh:
               fh.write(f"R2_ACCOUNT_ID={account_id}\n")
               fh.write(f"R2_ACCESS_KEY_ID={token_id}\n")
               fh.write(f"R2_SECRET_ACCESS_KEY={secret}\n")
+
+          print(f"Credentials file exists: {os.path.exists(credentials_path)}")
 
           prefix = token_id[:8]
           print(f"Derived R2 access key ID prefix: {prefix}****")
@@ -198,11 +206,19 @@ jobs:
           print(f"::add-mask::{token_id}")
           print(f"::add-mask::{secret}")
 
+          # Explicitly print working directory and credentials file location
+          import os
+          print(f"Current working directory: {os.getcwd()}")
+          credentials_path = os.path.abspath('.r2-credentials/credentials.env')
+          print(f"Credentials will be written to: {credentials_path}")
+
           pathlib.Path('.r2-credentials').mkdir(parents=True, exist_ok=True)
           with open('.r2-credentials/credentials.env', 'w', encoding='utf-8') as fh:
               fh.write(f"R2_ACCOUNT_ID={account_id}\n")
               fh.write(f"R2_ACCESS_KEY_ID={token_id}\n")
               fh.write(f"R2_SECRET_ACCESS_KEY={secret}\n")
+
+          print(f"Credentials file exists: {os.path.exists(credentials_path)}")
 
           prefix = token_id[:8]
           print(f"Derived R2 access key ID prefix: {prefix}****")
