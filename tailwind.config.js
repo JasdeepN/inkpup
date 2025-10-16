@@ -1,4 +1,8 @@
-module.exports = {
+import typography from '@tailwindcss/typography';
+import forms from '@tailwindcss/forms';
+import aspectRatio from '@tailwindcss/aspect-ratio';
+
+const config = {
   content: [
     './app/**/*.{js,jsx,ts,tsx}',
     './components/**/*.{js,jsx,ts,tsx}',
@@ -58,11 +62,13 @@ module.exports = {
     },
   },
   plugins: [
-    require('@tailwindcss/typography'),
-    require('@tailwindcss/forms'),
-    require('@tailwindcss/aspect-ratio'),
+    typography,
+    forms,
+    aspectRatio,
     function({ addVariant }) {
       addVariant('dark', '.dark &');
     }
   ]
 };
+
+export default config;

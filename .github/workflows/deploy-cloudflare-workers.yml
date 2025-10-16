@@ -30,9 +30,74 @@ jobs:
           CI: true
         run: npm test
 
+  playwright-e2e:
+    name: Playwright end-to-end tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      PLAYWRIGHT_BASE_URL: http://localhost:3002
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.14'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-browsers-${{ runner.os }}-
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps --silent
+      - name: Build
+        run: npm run build
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      - name: Run Playwright tests
+        id: playwright
+        run: npx playwright test
+      - name: Check for Playwright traces
+        if: always()
+        id: check_traces
+        run: |
+          set -e
+          shopt -s globstar || true
+          if compgen -G "test-results/**/trace.zip" >/dev/null 2>&1; then
+            echo "has_traces=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_traces=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+      - name: Upload Playwright JUnit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-junit
+          path: test-results/junit-results.xml
+      - name: Upload Playwright traces
+        if: ${{ steps.playwright.outcome == 'failure' && steps.check_traces.outputs.has_traces == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/**/trace.zip
+
   deploy:
     name: Deploy to Cloudflare Workers
-    needs: validate
+    needs:
+      - validate
+      - playwright-e2e
     uses: ./.github/workflows/cloudflare-reusable.yml
     with:
       environment: ${{ github.ref == 'refs/heads/master' && 'production' || 'dev' }}

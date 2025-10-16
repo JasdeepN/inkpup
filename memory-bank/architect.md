@@ -11,6 +11,10 @@ Architecture notes for the InkPup Tattoos web platform deployed on Cloudflare Wo
 - Centralize business metadata and SEO schema through data/business.json, Meta, and LocalBusinessJsonLd components so copy updates stay consistent across the site.
 
 ## Design Considerations
+
+- Terminal usage: run long-lived commands (e.g. npm run dev) in background mode using '&' or a new terminal session; avoid interrupting them with Ctrl+C immediately after launch.
+
+
 - Local development toggles between Next-only dev (shimmed bindings) and Wrangler dev with real bindings; scripts make it easy to switch without leaking credentials.
 - Storage helpers preserve synchronous instrumentation (global sendMock) so existing Jest suites can assert on client behavior without refactoring.
 

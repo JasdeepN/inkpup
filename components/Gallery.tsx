@@ -8,7 +8,7 @@ import { isGalleryCaptionsEnabled } from '../lib/featureFlags';
 type GalleryProps = {
   readonly items: GalleryItem[];
   readonly loading?: boolean;
-  readonly onSelect?: (item: GalleryItem) => void;
+  readonly onSelect?: (item: GalleryItem, trigger: HTMLButtonElement) => void;
   readonly fallbackActive?: boolean;
 };
 
@@ -32,7 +32,7 @@ export default function Gallery({ items, loading = false, onSelect, fallbackActi
         <button
           type="button"
           className="gallery-card__inner"
-          onClick={() => onSelect?.(item)}
+          onClick={(event) => onSelect?.(item, event.currentTarget)}
           aria-label={`View ${item.alt || 'tattoo artwork'} in full size`}
         >
           {fallbackActive && <span className="gallery-card__badge">Backup</span>}

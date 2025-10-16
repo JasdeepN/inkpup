@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SyntheticEvent } from 'react';
 import type { GalleryItem, GalleryCategory } from '../lib/gallery-types';
 import { GALLERY_CATEGORIES, getCategoryLabel } from '../lib/gallery-types';
@@ -57,6 +57,7 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
   const [selected, setSelected] = useState<GalleryItem | null>(null);
   const [imageMeta, setImageMeta] = useState<{ naturalWidth: number; naturalHeight: number } | null>(null);
   const [modalSize, setModalSize] = useState<{ width: number; height: number } | null>(null);
+  const lastTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const items = useMemo(() => itemsByCategory[activeCategory] ?? [], [activeCategory, itemsByCategory]);
   const fallbackState = fallbackByCategory[activeCategory] ?? { fallback: false, usedBundledFallback: false };
@@ -124,6 +125,11 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
     setSelected(null);
     setImageMeta(null);
     setModalSize(null);
+
+    if (lastTriggerRef.current) {
+      lastTriggerRef.current.focus();
+      lastTriggerRef.current = null;
+    }
   }, []);
 
   const updateModalSize = useCallback(
@@ -171,6 +177,11 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
     }
   }, [selected]);
 
+  const handleSelect = useCallback((item: GalleryItem, trigger: HTMLButtonElement) => {
+    lastTriggerRef.current = trigger;
+    setSelected(item);
+  }, []);
+
   return (
     <div className="gallery-view">
       <div className="gallery-filters" role="tablist" aria-label="Gallery categories">
@@ -208,7 +219,7 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
       <Gallery
         items={items}
         loading={loading}
-        onSelect={setSelected}
+        onSelect={handleSelect}
         fallbackActive={fallbackState.usedBundledFallback}
       />
 

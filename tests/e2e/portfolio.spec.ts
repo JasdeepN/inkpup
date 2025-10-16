@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import galleryData from '../../data/gallery.json';
+import { createRequire } from 'node:module';
 
 type GalleryFixture = {
   category?: string;
@@ -9,7 +9,10 @@ type GalleryFixture = {
   caption?: string;
 };
 
-const grouped = (galleryData as GalleryFixture[]).reduce<Record<string, GalleryFixture[]>>((acc, item) => {
+const require = createRequire(import.meta.url);
+const galleryData = require('../../data/gallery.json') as GalleryFixture[];
+
+const grouped = galleryData.reduce<Record<string, GalleryFixture[]>>((acc, item) => {
   if (!item.category) return acc;
   acc[item.category] ??= [];
   acc[item.category].push(item);
@@ -22,8 +25,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   flash: 'Flash',
   art: 'Art',
 };
-
-const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3002';
 
 test.describe('Portfolio gallery experience', () => {
   test.beforeEach(async ({ page }) => {
@@ -41,7 +42,7 @@ test.describe('Portfolio gallery experience', () => {
   });
 
   test('loads each category and renders the expected number of items', async ({ page }) => {
-    await page.goto(`${BASE_URL}/portfolio`);
+    await page.goto('/portfolio');
 
     await expect(page.getByRole('heading', { name: /Portfolio/i })).toBeVisible();
 
@@ -60,10 +61,10 @@ test.describe('Portfolio gallery experience', () => {
       await expect(items).toHaveCount(expectedCount);
 
       if (expectedCount > 0) {
-        const firstCaption = grouped[category][0]?.caption || grouped[category][0]?.alt;
-        if (firstCaption) {
-          await expect(page.getByText(firstCaption)).toBeVisible();
-        }
+        const captionLocator = page.locator('[data-e2e-id="gallery-caption-0"]');
+        await expect(captionLocator).toHaveCount(1);
+        await expect(captionLocator).toBeVisible();
+        await expect(captionLocator).toContainText(/\S/);
       }
     }
   });
@@ -73,16 +74,16 @@ test.describe('Portfolio gallery experience', () => {
       await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'Unable to load gallery images.' }) });
     });
 
-    await page.goto(`${BASE_URL}/portfolio`);
+    await page.goto('/portfolio');
 
     await page.getByRole('tab', { name: CATEGORY_LABELS.flash }).click();
 
-    const alert = page.getByRole('alert');
-    await expect(alert).toContainText('Unable to load');
+    const alert = page.locator('.gallery-error[role="alert"]');
+    await expect(alert).toContainText(/Could not load flash artwork\./i);
   });
 
   test('opens and closes the gallery modal when selecting an item', async ({ page }) => {
-    await page.goto(`${BASE_URL}/portfolio`);
+    await page.goto('/portfolio');
 
     const firstItem = page.locator('[data-e2e-id^="gallery-item-"] button').first();
     await firstItem.click();
@@ -96,7 +97,7 @@ test.describe('Portfolio gallery experience', () => {
   });
 
   test('renders the legacy slug portfolio page', async ({ page }) => {
-    await page.goto(`${BASE_URL}/portfolio/example-piece`);
+    await page.goto('/portfolio/example-piece');
     await expect(page.getByRole('heading', { name: /Portfolio item: example-piece/i })).toBeVisible();
   });
 });

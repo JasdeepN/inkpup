@@ -278,6 +278,83 @@ describe('r2-server fallback behaviour', () => {
     });
   });
 
+  test('module export setters allow overriding and clearing values', async () => {
+    await jest.isolateModulesAsync(async () => {
+      const resetSpy = jest.fn();
+      const initialVerify = Promise.resolve('initial-verify');
+      const initialClient = Promise.resolve('initial-client');
+
+      jest.doMock('./r2server/credentials', () => ({
+        __esModule: true,
+        _resetSingletons: resetSpy,
+        verifyAccessKeyPromise: initialVerify,
+        clientPromise: initialClient,
+        getClient: jest.fn(),
+        getClientSync: jest.fn(),
+        hasR2Credentials: jest.fn(),
+        normalizeSecretAccessKey: jest.fn(),
+        resolveCredentials: jest.fn(),
+      }));
+
+      jest.doMock('./r2server/storage', () => ({
+        __esModule: true,
+        uploadGalleryImage: jest.fn(),
+        deleteGalleryImage: jest.fn(),
+        generateGalleryObjectKey: jest.fn(),
+        fallbackResult: jest.fn(),
+        listGalleryImages: jest.fn().mockResolvedValue({ items: [], isFallback: false, usedBundledFallback: false }),
+        getCredentialStatus: jest.fn().mockReturnValue(undefined),
+      }));
+
+      jest.doMock('./r2server/utils', () => ({
+        __esModule: true,
+        buildFallbackItems: jest.fn(),
+        formatLabelFromKey: jest.fn(),
+        getFallbackGalleryItems: jest.fn(),
+        sanitizeFilename: jest.fn(),
+      }));
+
+      jest.doMock('./r2server/probe', () => ({
+        __esModule: true,
+        getR2Binding: jest.fn(),
+        probeR2Binding: jest.fn(),
+        probeR2BindingSync: jest.fn(),
+      }));
+
+      jest.doMock('./r2server/sniff', () => ({
+        __esModule: true,
+        sniffContentType: jest.fn(),
+      }));
+
+      await import(modulePath);
+      const { createRequire } = await import('module');
+      const require = createRequire(import.meta.url);
+      const legacy = require(modulePath);
+
+      const overrideVerify = Promise.resolve('override-verify');
+      const overrideClient = Promise.resolve('override-client');
+
+      legacy.verifyAccessKeyPromise = overrideVerify;
+      legacy.clientPromise = overrideClient;
+
+      expect(legacy.verifyAccessKeyPromise).toBe(overrideVerify);
+      expect(legacy.clientPromise).toBe(overrideClient);
+
+      legacy.verifyAccessKeyPromise = undefined;
+      legacy.clientPromise = undefined;
+
+      expect(legacy.verifyAccessKeyPromise).toBeUndefined();
+      expect(legacy.clientPromise).toBeUndefined();
+
+      legacy.verifyAccessKeyPromise = initialVerify;
+      legacy.clientPromise = initialClient;
+
+      expect(legacy.verifyAccessKeyPromise).toBe(initialVerify);
+      expect(legacy.clientPromise).toBe(initialClient);
+      expect(resetSpy).toHaveBeenCalledTimes(6);
+    });
+  });
+
   test('module export initialization tolerates non-configurable properties', async () => {
     await jest.isolateModulesAsync(async () => {
       const originalModule = (globalThis as any).module;

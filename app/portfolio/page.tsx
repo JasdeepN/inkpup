@@ -5,7 +5,10 @@ import type { GalleryCategory } from '../../lib/gallery-types';
 const DEFAULT_CATEGORY: GalleryCategory = 'healed';
 
 export default async function PortfolioPage() {
-  const initialData = await listGalleryImages(DEFAULT_CATEGORY).asPromise();
+  const legacyResult = listGalleryImages(DEFAULT_CATEGORY);
+  const resolved = typeof (legacyResult as { asPromise?: () => Promise<any> })?.asPromise === 'function'
+    ? await legacyResult.asPromise()
+    : await legacyResult;
 
   return (
     <section className="portfolio-gallery">
@@ -16,11 +19,11 @@ export default async function PortfolioPage() {
       <GalleryView
         initialCategory={DEFAULT_CATEGORY}
         initialData={{
-          items: initialData.items,
-          fallback: initialData.isFallback,
-          fallbackReason: initialData.fallbackReason,
-          usedBundledFallback: initialData.usedBundledFallback,
-          credentialStatus: initialData.credentialStatus,
+          items: resolved.items,
+          fallback: resolved.isFallback,
+          fallbackReason: resolved.fallbackReason,
+          usedBundledFallback: resolved.usedBundledFallback,
+          credentialStatus: resolved.credentialStatus,
         }}
       />
     </section>

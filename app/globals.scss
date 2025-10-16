@@ -906,12 +906,16 @@ html.dark {
 }
 
 .gallery-modal {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
   border: none;
   border-radius: 1.2rem;
-  padding: 0;
+  padding: 1rem;
   background: transparent;
-  max-width: min(960px, 90vw);
   width: 100%;
+  z-index: 80;
 }
 
 .gallery-modal::backdrop {
@@ -926,6 +930,8 @@ html.dark {
   overflow: hidden;
   border: 1px solid var(--border);
   box-shadow: 0 45px 85px rgba(5, 12, 28, 0.45);
+  pointer-events: auto;
+  width: min(960px, 90vw);
 }
 
 .gallery-modal__close {
@@ -941,6 +947,7 @@ html.dark {
   font-size: 1.2rem;
   cursor: pointer;
   transition: transform 0.2s ease, background 0.2s ease;
+  z-index: 2;
 }
 
 .gallery-modal__close:hover,

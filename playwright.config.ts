@@ -25,4 +25,18 @@ export default defineConfig({
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
   ],
+  webServer: {
+    command: 'npm run dev -- --hostname 0.0.0.0 --port 3002',
+    url: BASE_URL,
+    reuseExistingServer: !process.env.CI,
+    stdout: 'pipe',
+    stderr: 'pipe',
+    timeout: 120_000,
+    env: {
+      PORT: '3002',
+      PLAYWRIGHT_BASE_URL: BASE_URL,
+      DISABLE_ADMIN_LOCAL_FALLBACKS: 'true',
+      ADMIN_PORTAL_HOSTS: '',
+    },
+  },
 });

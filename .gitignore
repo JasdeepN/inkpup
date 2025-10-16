@@ -69,6 +69,7 @@ cypress/screenshots/
 
 # OpenNext generated build artifacts
 .open-next/
+.wrangler/state/*
 
 # Generated social or large media assets
 /public/social/og-generated/

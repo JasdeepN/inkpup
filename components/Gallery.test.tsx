@@ -71,7 +71,7 @@ test('Gallery invokes onSelect and renders captions for items', async () => {
   const button = screen.getByRole('button', { name: /View tattoo artwork in full size/i });
   await user.click(button);
 
-  expect(handleSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'item-1' }));
+  expect(handleSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'item-1' }), expect.any(HTMLButtonElement));
   expect(screen.getByText('Featured piece')).toBeInTheDocument();
 });
 

@@ -32,8 +32,14 @@ export function getAdminHosts(): readonly string[] {
   return appendLocalFallbacks([...DEFAULT_ADMIN_HOSTS]);
 }
 
+function isTruthyEnv(value: string | undefined): boolean {
+  if (!value) return false;
+  return ['1', 'true', 'yes', 'on'].includes(value.trim().toLowerCase());
+}
+
 export function appendLocalFallbacks(hosts: string[]): readonly string[] {
-  if (process.env.NODE_ENV === 'production') {
+  const disableFallbacks = isTruthyEnv(process.env.DISABLE_ADMIN_LOCAL_FALLBACKS);
+  if (process.env.NODE_ENV === 'production' || disableFallbacks) {
     return hosts;
   }
 
