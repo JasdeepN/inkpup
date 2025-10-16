@@ -5,7 +5,7 @@ import type { GalleryCategory } from '../../lib/gallery-types';
 const DEFAULT_CATEGORY: GalleryCategory = 'healed';
 
 export default async function PortfolioPage() {
-  const initialData = await listGalleryImages(DEFAULT_CATEGORY);
+  const initialData = await listGalleryImages(DEFAULT_CATEGORY).asPromise();
 
   return (
     <section className="portfolio-gallery">

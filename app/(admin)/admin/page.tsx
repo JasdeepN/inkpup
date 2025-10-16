@@ -229,7 +229,7 @@ export default async function AdminPortalPage(props: PageProps) {
     fallbackReason,
     usedBundledFallback,
     credentialStatus,
-  } = await listGalleryImages(category);
+  } = await listGalleryImages(category).asPromise();
   const canMutate = hasR2Credentials();
   const fallbackDetail = (() => {
     switch (fallbackReason) {

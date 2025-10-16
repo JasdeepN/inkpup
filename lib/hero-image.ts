@@ -22,7 +22,7 @@ export const getHeroImage = cache(async (): Promise<HeroImagePayload | null> => 
   const category = resolveHeroCategory();
 
   try {
-    const { items } = await listGalleryImages(category, { fallback: false });
+  const { items } = await listGalleryImages(category, { fallback: false }).asPromise();
     const candidate = items.find((item) => Boolean(item.src));
     if (!candidate) {
       return null;

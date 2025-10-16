@@ -45,6 +45,9 @@ const r2BindingMock = {
   put: jest.fn(),
   delete: jest.fn(),
 };
+// Patch: assign mocks to both globalThis and global
+(globalThis as any).listMock = listMock;
+(global as any).listMock = listMock;
 
 // Set all possible R2 binding locations to the same mock
 (globalThis as any).R2_BUCKET = r2BindingMock;

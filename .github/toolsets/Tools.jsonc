@@ -1,0 +1,36 @@
+{
+	"Thinking MCPs": {
+		"tools": [
+            "upstash/context7",
+			"think",
+            "websearch",
+            "fetch",
+            "think_about_collected_information",
+            "think_about_whether_you_are_done",
+            "think_about_task_adherence",
+            "showMemory",
+            "logDecision",
+            "switchMode",
+            "updateArchitect",
+            	
+		],
+		"description": "Tools for structured thinking and problem solving, prioritizing MCPs (Research and Create Action Plan).",
+		"icon": "microscope"
+	},
+    "Memory Management": {
+        "tools": [
+            "updateArchitect",
+            "updateProductContext",
+            "updateProgress",
+            "updateProjectBrief",
+            "updateSystemPatterns",
+            "updateContext",
+            "showMemory",
+            "logDecision",
+            "switchMode"
+        ],
+        "description": "Tools for managing and utilizing memory effectively.",
+        "icon": "lightbulb"
+}
+
+

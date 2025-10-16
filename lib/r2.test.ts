@@ -23,6 +23,15 @@ describe('toPublicR2Url', () => {
 
     expect(toPublicR2Url('')).toBe('');
     expect(toPublicR2Url('/artwork/item.webp')).toBe('/artwork/item.webp');
+    expect(toPublicR2Url('artwork/item.webp')).toBe('/artwork/item.webp');
+  });
+
+  test('getR2PublicBaseUrl infers missing scheme', async () => {
+    process.env.R2_PUBLIC_HOSTNAME = 'cdn.example.com/gallery';
+
+    const { getR2PublicBaseUrl } = await import(MODULE_PATH);
+
+    expect(getR2PublicBaseUrl()).toBe('https://cdn.example.com/gallery');
   });
 
   test('leaves absolute URLs untouched', async () => {
@@ -49,5 +58,47 @@ describe('toPublicR2Url', () => {
 
     expect(toPublicR2Url('/gallery/item.webp')).toBe('https://account123.r2.cloudflarestorage.com/artist-bucket/gallery/item.webp');
     expect(toPublicR2Url('gallery/item.webp')).toBe('https://account123.r2.cloudflarestorage.com/artist-bucket/gallery/item.webp');
+  });
+
+  test('getR2PublicBaseUrl returns null when configuration is incomplete', async () => {
+    delete process.env.R2_PUBLIC_HOSTNAME;
+    delete process.env.R2_ACCOUNT_ID;
+    delete process.env.R2_BUCKET;
+
+    const { getR2PublicBaseUrl } = await import(MODULE_PATH);
+
+    expect(getR2PublicBaseUrl()).toBeNull();
+  });
+
+  test('getR2PublicBaseUrl normalizes custom hostnames', async () => {
+    process.env.R2_PUBLIC_HOSTNAME = ' https://static.example.com/assets/ ';
+
+    const { getR2PublicBaseUrl } = await import(MODULE_PATH);
+
+    expect(getR2PublicBaseUrl()).toBe('https://static.example.com/assets');
+  });
+
+  test('getR2PublicBaseUrl falls back to default when hostname is invalid', async () => {
+    process.env.R2_PUBLIC_HOSTNAME = '://bad host';
+    process.env.R2_ACCOUNT_ID = 'acct';
+    process.env.R2_BUCKET = 'bucket';
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const { getR2PublicBaseUrl } = await import(MODULE_PATH);
+
+    expect(getR2PublicBaseUrl()).toBe('https://acct.r2.cloudflarestorage.com/bucket');
+    expect(warnSpy).toHaveBeenCalledWith('R2_PUBLIC_HOSTNAME is not a valid URL:', '://bad host');
+
+    warnSpy.mockRestore();
+  });
+
+  test('getR2PublicBaseUrl ignores blank hostname and uses default', async () => {
+    process.env.R2_PUBLIC_HOSTNAME = '   ';
+    process.env.R2_ACCOUNT_ID = 'acct';
+    process.env.R2_BUCKET = 'bucket';
+
+    const { getR2PublicBaseUrl } = await import(MODULE_PATH);
+
+    expect(getR2PublicBaseUrl()).toBe('https://acct.r2.cloudflarestorage.com/bucket');
   });
 });

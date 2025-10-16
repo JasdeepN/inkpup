@@ -1,7 +1,24 @@
 # Copilot instructions — Tattoo business website (Next.js + Cloudflare)
 
+
+**CHAT MODE INSTRUCTIONS ALWAYS TAKE PRIORITY**
+
 Purpose
 - Provide explicit, actionable guidance for implementing a SEO-first Next.js website for a Toronto/GTA tattoo business and for any automated assistant (Copilot-style) working on this repository.
+
+Toolsets for Implementation (from Tools.toolsets.jsonc):
+
+**Deep Thinking**
+- Use for structured thinking, problem solving, and action planning. Always prefer these tools for research, planning, and complex analysis.
+
+**Memory Management**
+- Use for managing and utilizing project memory, tracking progress, updating context, and logging decisions.
+
+**Web Research**
+- Use for light web research and information gathering only when Deep Thinking tools are not sufficient.
+
+**Project Management**
+- Use for managing project briefs, tracking progress, updating system patterns, and overall project organization.
 
 High-level requirements (extract from user request)
 - Build a Next.js site optimized for SEO and social engagement.
@@ -91,7 +108,8 @@ Linting & consistency
 - Document component styling patterns in this instructions file when you introduce a new pattern.
 
 Tests
-- Always use the -ForceExit Flag if manually entering test to terminal 
-
+- Is using `npx jest` for any testing you MUST use the `--forceExit` flag in addition to any other flags you are using if running tests in Terminal.
+- Do NOT run tests without this flag if you don't, test suite will hang forever and you will not be able to continue without human intervention.
+- `--testTimeout=xxxxx` does not work DO NOT use it
 
 File created by Copilot instructions generator. Keep this file updated as the project evolves.

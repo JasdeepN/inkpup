@@ -16,6 +16,9 @@ test('uploadGalleryImage skips optimization when sharp fails to load', async () 
 	process.env.R2_API_TOKEN = API_TOKEN_VALUE;
 
 	const sendMock = jest.fn();
+	// Patch: assign mocks to both globalThis and global
+	(globalThis as any).sendMock = sendMock;
+	(global as any).sendMock = sendMock;
 
 	const fetchMock = jest.fn(async () => ({
 		ok: true,

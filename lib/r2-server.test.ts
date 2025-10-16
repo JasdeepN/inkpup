@@ -10,6 +10,12 @@ describe('r2-server fallback behaviour', () => {
     delete process.env.R2_ACCESS_KEY_ID;
     delete process.env.R2_SECRET_ACCESS_KEY;
     delete process.env.R2_API_TOKEN;
+
+    delete (globalThis as any).R2_BUCKET;
+    const ctxSymbol = Symbol.for('__cloudflare-context__');
+    if (Object.prototype.hasOwnProperty.call(globalThis, ctxSymbol)) {
+      delete (globalThis as any)[ctxSymbol];
+    }
   });
 
   test('returns fallback gallery items when credentials are missing', async () => {
@@ -111,5 +117,264 @@ describe('r2-server fallback behaviour', () => {
     const fallbackItems = getFallbackGalleryItems('flash');
     expect(items.length).toBe(fallbackItems.length);
     expect(items.every((item) => item.category === 'flash')).toBe(true);
+  });
+
+  test('listGalleryImages surfaces background errors as fallback', async () => {
+    const backgroundError = new Error('background failure');
+
+    await jest.isolateModulesAsync(async () => {
+      jest.doMock('./r2server/storage', () => ({
+        __esModule: true,
+        uploadGalleryImage: jest.fn(),
+        deleteGalleryImage: jest.fn(),
+        generateGalleryObjectKey: jest.fn(),
+        fallbackResult: jest.fn(),
+        getClient: jest.fn(),
+        getClientSync: jest.fn(),
+        hasR2Credentials: jest.fn(),
+        normalizeSecretAccessKey: jest.fn(),
+        resolveCredentials: jest.fn(),
+        listGalleryImages: jest.fn().mockRejectedValue(backgroundError),
+        getCredentialStatus: jest.fn().mockReturnValue({
+          accountId: false,
+          bucket: false,
+          accessKey: false,
+          secretAccessKey: false,
+        }),
+      }));
+
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const { listGalleryImages } = await import(modulePath);
+
+      const result = listGalleryImages('flash');
+      await expect(result.asPromise()).resolves.toEqual({ items: [], isFallback: true, usedBundledFallback: false });
+      expect(errorSpy).toHaveBeenCalledWith('listGalleryImages background error', backgroundError);
+      errorSpy.mockRestore();
+    });
+  });
+
+  test('module export setters reset credential singletons', async () => {
+    await jest.isolateModulesAsync(async () => {
+      const resetSpy = jest.fn();
+
+      jest.doMock('./r2server/credentials', () => ({
+        __esModule: true,
+        _resetSingletons: resetSpy,
+        verifyAccessKeyPromise: Promise.resolve(),
+        clientPromise: Promise.resolve(),
+        getClient: jest.fn(),
+        getClientSync: jest.fn(),
+        hasR2Credentials: jest.fn(),
+        normalizeSecretAccessKey: jest.fn(),
+        resolveCredentials: jest.fn(),
+      }));
+
+      jest.doMock('./r2server/storage', () => ({
+        __esModule: true,
+        uploadGalleryImage: jest.fn(),
+        deleteGalleryImage: jest.fn(),
+        generateGalleryObjectKey: jest.fn(),
+        fallbackResult: jest.fn(),
+        listGalleryImages: jest.fn().mockResolvedValue({ items: [], isFallback: false, usedBundledFallback: false }),
+        getCredentialStatus: jest.fn().mockReturnValue(undefined),
+      }));
+
+      jest.doMock('./r2server/utils', () => ({
+        __esModule: true,
+        buildFallbackItems: jest.fn(),
+        formatLabelFromKey: jest.fn(),
+        getFallbackGalleryItems: jest.fn(),
+        sanitizeFilename: jest.fn(),
+      }));
+
+      jest.doMock('./r2server/probe', () => ({
+        __esModule: true,
+        getR2Binding: jest.fn(),
+        probeR2Binding: jest.fn(),
+        probeR2BindingSync: jest.fn(),
+      }));
+
+      jest.doMock('./r2server/sniff', () => ({
+        __esModule: true,
+        sniffContentType: jest.fn(),
+      }));
+
+      const mod = await import(modulePath);
+      expect(typeof mod.listGalleryImages).toBe('function');
+
+      const { createRequire } = await import('module');
+      const require = createRequire(import.meta.url);
+      const legacy = require(modulePath);
+      const verifyDescriptor = Object.getOwnPropertyDescriptor(legacy, 'verifyAccessKeyPromise');
+      const clientDescriptor = Object.getOwnPropertyDescriptor(legacy, 'clientPromise');
+
+      verifyDescriptor?.set?.(null);
+      clientDescriptor?.set?.(null);
+
+      expect(resetSpy).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  test('module export setters swallow reset errors', async () => {
+    await jest.isolateModulesAsync(async () => {
+      const resetSpy = jest.fn(() => {
+        throw new Error('reset failure');
+      });
+
+      jest.doMock('./r2server/credentials', () => ({
+        __esModule: true,
+        _resetSingletons: resetSpy,
+        verifyAccessKeyPromise: Promise.resolve(),
+        clientPromise: Promise.resolve(),
+        getClient: jest.fn(),
+        getClientSync: jest.fn(),
+        hasR2Credentials: jest.fn(),
+        normalizeSecretAccessKey: jest.fn(),
+        resolveCredentials: jest.fn(),
+      }));
+
+      jest.doMock('./r2server/storage', () => ({
+        __esModule: true,
+        uploadGalleryImage: jest.fn(),
+        deleteGalleryImage: jest.fn(),
+        generateGalleryObjectKey: jest.fn(),
+        fallbackResult: jest.fn(),
+        listGalleryImages: jest.fn().mockResolvedValue({ items: [], isFallback: false, usedBundledFallback: false }),
+        getCredentialStatus: jest.fn().mockReturnValue(undefined),
+      }));
+
+      jest.doMock('./r2server/utils', () => ({
+        __esModule: true,
+        buildFallbackItems: jest.fn(),
+        formatLabelFromKey: jest.fn(),
+        getFallbackGalleryItems: jest.fn(),
+        sanitizeFilename: jest.fn(),
+      }));
+
+      jest.doMock('./r2server/probe', () => ({
+        __esModule: true,
+        getR2Binding: jest.fn(),
+        probeR2Binding: jest.fn(),
+        probeR2BindingSync: jest.fn(),
+      }));
+
+      jest.doMock('./r2server/sniff', () => ({
+        __esModule: true,
+        sniffContentType: jest.fn(),
+      }));
+
+      const mod = await import(modulePath);
+      expect(typeof mod.listGalleryImages).toBe('function');
+
+      const { createRequire } = await import('module');
+      const require = createRequire(import.meta.url);
+      const legacy = require(modulePath);
+      const verifyDescriptor = Object.getOwnPropertyDescriptor(legacy, 'verifyAccessKeyPromise');
+      const clientDescriptor = Object.getOwnPropertyDescriptor(legacy, 'clientPromise');
+
+      expect(() => verifyDescriptor?.set?.(null)).not.toThrow();
+      expect(() => clientDescriptor?.set?.(null)).not.toThrow();
+      expect(resetSpy).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  test('module export initialization tolerates non-configurable properties', async () => {
+    await jest.isolateModulesAsync(async () => {
+      const originalModule = (globalThis as any).module;
+      const fakeModule = { exports: {} };
+      Object.defineProperty(fakeModule.exports, 'verifyAccessKeyPromise', { value: 1, configurable: false });
+      Object.defineProperty(fakeModule.exports, 'clientPromise', { value: 1, configurable: false });
+      (globalThis as any).module = fakeModule;
+
+      try {
+        const mod = await import(modulePath);
+        expect(typeof mod.listGalleryImages).toBe('function');
+      } finally {
+        if (originalModule === undefined) {
+          delete (globalThis as any).module;
+        } else {
+          (globalThis as any).module = originalModule;
+        }
+      }
+    });
+  });
+
+  test('listGalleryImages handles missing getCredentialStatus export', async () => {
+    await jest.isolateModulesAsync(async () => {
+      jest.doMock('./r2server/credentials', () => ({
+        __esModule: true,
+        _resetSingletons: jest.fn(),
+        verifyAccessKeyPromise: Promise.resolve(),
+        clientPromise: Promise.resolve(),
+        getClient: jest.fn(),
+        getClientSync: jest.fn(),
+        hasR2Credentials: jest.fn(),
+        normalizeSecretAccessKey: jest.fn(),
+        resolveCredentials: jest.fn(),
+      }));
+
+      const asyncResult = {
+        items: [{ id: 'a', key: 'flash/a.webp' }],
+        isFallback: false,
+        usedBundledFallback: false,
+        credentialStatus: { accountId: true, bucket: true, accessKey: true, secretAccessKey: true },
+      };
+
+      jest.doMock('./r2server/storage', () => ({
+        __esModule: true,
+        uploadGalleryImage: jest.fn(),
+        deleteGalleryImage: jest.fn(),
+        generateGalleryObjectKey: jest.fn(),
+        fallbackResult: jest.fn(),
+        listGalleryImages: jest.fn().mockResolvedValue(asyncResult),
+        getCredentialStatus: undefined,
+      }));
+
+      jest.doMock('./r2server/utils', () => ({
+        __esModule: true,
+        buildFallbackItems: jest.fn(),
+        formatLabelFromKey: jest.fn(),
+        getFallbackGalleryItems: jest.fn(),
+        sanitizeFilename: jest.fn(),
+      }));
+
+      jest.doMock('./r2server/probe', () => ({
+        __esModule: true,
+        getR2Binding: jest.fn(),
+        probeR2Binding: jest.fn(),
+        probeR2BindingSync: jest.fn(),
+      }));
+
+      jest.doMock('./r2server/sniff', () => ({
+        __esModule: true,
+        sniffContentType: jest.fn(),
+      }));
+
+      const mod = await import(modulePath);
+      const result = mod.listGalleryImages('flash');
+
+      expect(result.credentialStatus).toBeUndefined();
+      await expect(result.asPromise()).resolves.toEqual(expect.objectContaining({ credentialStatus: asyncResult.credentialStatus }));
+      expect(result.credentialStatus).toEqual(asyncResult.credentialStatus);
+    });
+  });
+
+  test('initialization tolerates lack of CommonJS module global', async () => {
+    await jest.isolateModulesAsync(async () => {
+      const originalModule = (globalThis as any).module;
+      // Ensure the global is absent to hit the outer catch block.
+      delete (globalThis as any).module;
+
+      try {
+        const mod = await import(modulePath);
+        expect(typeof mod.listGalleryImages).toBe('function');
+      } finally {
+        if (originalModule === undefined) {
+          delete (globalThis as any).module;
+        } else {
+          (globalThis as any).module = originalModule;
+        }
+      }
+    });
   });
 });
