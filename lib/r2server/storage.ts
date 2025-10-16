@@ -283,13 +283,11 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
         };
       } catch (err) {
         // If binding call fails, fall through to S3 client path but log for diagnostics
-        // eslint-disable-next-line no-console
         console.warn('[r2server] r2 binding list() failed', err);
       }
     }
   } catch (err) {
     // Log probe errors for diagnostics and continue to S3 path
-    // eslint-disable-next-line no-console
     console.warn('[r2server] probeR2Binding failed', err);
   }
 
@@ -308,7 +306,6 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
     } catch (error) {
       // Log the error and return a fallback result so callers can continue in CI/test environments.
       // Keep the fallback behavior to avoid hard failures when R2 is not configured.
-      // eslint-disable-next-line no-console
       console.error('[r2server] client initialization failed while listing gallery images', error);
       return fallbackResult('client_initialization_failed');
     }
@@ -326,7 +323,6 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
     };
   } catch (error) {
     // Log fetch errors and return a fallback result.
-    // eslint-disable-next-line no-console
     console.error('[r2server] failed to fetch gallery images from R2', error);
     return fallbackResult('r2_fetch_failed');
   }

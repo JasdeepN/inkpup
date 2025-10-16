@@ -209,7 +209,6 @@ export const listGalleryImages = (category: any, options?: any) => {
       return res;
     } catch (err) {
       // preserve synchronous behavior: log and return a minimal fallback
-      // eslint-disable-next-line no-console
       console.error('listGalleryImages background error', err);
       const fallback = {
         items: [],
@@ -260,7 +259,6 @@ export const listGalleryImages = (category: any, options?: any) => {
     },
   });
 
-  // eslint-disable-next-line no-console
   console.debug('[r2-server] listGalleryImages returning result keys:', Object.keys(result));
 
   return result;

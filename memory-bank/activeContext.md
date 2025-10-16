@@ -2,7 +2,7 @@
 
 ## Current Goals
 
-- Implement Playwright UAT coverage: add new e2e specs, stabilize selectors, configure test server automation, and integrate CI workflow.
+- Tracking post-fix coverage verification for Jest suites and ensuring Cloudflare deploy workflow unblocks after successful CI run.
 
 ## Current Blockers
 

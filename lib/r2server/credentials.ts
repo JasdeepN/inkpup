@@ -6,6 +6,8 @@ let rawAccessKey = initialRawAccessKey;
 let rawSecretKey = initialRawSecretKey;
 let rawApiToken = initialRawApiToken;
 
+type S3ClientCtor = new (...args: ConstructorParameters<typeof S3Client>) => S3Client;
+
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 
 let cachedSecretKey: string | null | undefined;
@@ -101,10 +103,8 @@ export function hasR2Credentials(): boolean {
 export async function getClient(): Promise<S3Client> {
   if (!hasR2Credentials()) throw new Error('R2 credentials are not fully configured.');
   clientPromise ??= resolveCredentials().then(({ accessKeyId, secretAccessKey }) => {
-    // Allow tests to override the S3 client constructor via globalThis.S3ClientMock
-    // so they can simulate failures or inspect created instances.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ClientCtor: any = (globalThis as any).S3ClientMock ?? S3Client;
+    const scope = globalThis as { S3ClientMock?: S3ClientCtor };
+    const ClientCtor: S3ClientCtor = scope.S3ClientMock ?? S3Client;
     return new ClientCtor({ forcePathStyle: true, region: 'auto', endpoint: `https://${accountId}.r2.cloudflarestorage.com`, credentials: { accessKeyId, secretAccessKey } });
   }).catch((e) => { clientPromise = null; throw e; });
   return clientPromise;
@@ -121,8 +121,8 @@ export function getClientSync(): S3Client | null {
     if (!secret) return null;
     const access = rawAccessKey ?? process.env.R2_ACCESS_KEY_ID;
     if (!access) return null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ClientCtor: any = (globalThis as any).S3ClientMock ?? S3Client;
+    const scope = globalThis as { S3ClientMock?: S3ClientCtor };
+    const ClientCtor: S3ClientCtor = scope.S3ClientMock ?? S3Client;
     return new ClientCtor({ forcePathStyle: true, region: 'auto', endpoint: `https://${accountId}.r2.cloudflarestorage.com`, credentials: { accessKeyId: access, secretAccessKey: secret } });
   } catch (e) {
     return null;
@@ -130,9 +130,8 @@ export function getClientSync(): S3Client | null {
 }
 
 // Debug helper used in tests to inspect the client implementation
-export async function _debug_getClientInstance(): Promise<any> {
+export async function _debug_getClientInstance(): Promise<S3Client> {
   const client = await getClient();
-  // eslint-disable-next-line no-console
-  console.debug('[r2server.debug] obtained S3 client instance', { hasSend: typeof (client as any).send === 'function' });
+  console.debug('[r2server.debug] obtained S3 client instance', { hasSend: typeof client.send === 'function' });
   return client;
 }
