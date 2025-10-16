@@ -1,23 +1,14 @@
 # System Patterns
 
 ## Architectural Patterns
-
-- Pattern 1: Description
+- Cloudflare Worker deployment via OpenNext: Next.js App Router builds are produced by @opennextjs/cloudflare/OpenNext and run on Cloudflare Workers with nodejs_compat enabled, mirroring production in Wrangler dev.
+- Layered R2 access and fallback: lib/r2server prefers Cloudflare bindings, falls back to the AWS S3 client, and serves bundled gallery backups in non-production environments so the UI remains responsive without credentials.
 
 ## Design Patterns
-
-- Pattern 1: Description
+- Server actions with signed session cookies: the admin portal authenticates via password-protected forms, stores sessions in signed cookies, and revalidates pages after uploads or deletes.
+- Instrumented storage helpers: listGalleryImages and callSendAndMaybeGlobal mirror client.send calls to global mocks, keeping Jest suites synchronous without refactoring to async observers.
 
 ## Common Idioms
-
-- Idiom 1: Description
-
-## Jest --forceExit required when running tests in Terminal
-
-Project rule: When running tests in a Terminal with `npx jest`, always include the `--forceExit` flag.
-
-Details (user-provided):
-- Is using `npx jest` for any testing you MUST use the `--forceExit` flag in addition to any other flags you are using if running tests in Terminal.
-- Do NOT run tests without this flag if you don't, test suite will hang forever and you will not be able to continue without human intervention.
-
-Note: The user states they've had to intervene many times. Source: user instruction saved on 2025-10-15. This pattern ensures terminal test runs don't hang and preserves developer workflow. Examples: `npx jest --forceExit`, `npx jest --runInBand --forceExit`.
+- Use data/business.json as the single source of truth for business copy, metadata, and structured data components.
+- Call listGalleryImages().asPromise() when asynchronous iteration is required while preserving the legacy synchronous result object.
+- Run Jest from the terminal with `npx jest --forceExit` (and additional flags as needed) to avoid hung processes.
