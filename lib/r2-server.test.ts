@@ -121,6 +121,12 @@ describe('r2-server fallback behaviour', () => {
 
   test('listGalleryImages surfaces background errors as fallback', async () => {
     const backgroundError = new Error('background failure');
+    const credentialStatus = {
+      accountId: false,
+      bucket: false,
+      accessKey: false,
+      secretAccessKey: false,
+    };
 
     await jest.isolateModulesAsync(async () => {
       jest.doMock('./r2server/storage', () => ({
@@ -135,19 +141,29 @@ describe('r2-server fallback behaviour', () => {
         normalizeSecretAccessKey: jest.fn(),
         resolveCredentials: jest.fn(),
         listGalleryImages: jest.fn().mockRejectedValue(backgroundError),
-        getCredentialStatus: jest.fn().mockReturnValue({
-          accountId: false,
-          bucket: false,
-          accessKey: false,
-          secretAccessKey: false,
-        }),
+        getCredentialStatus: jest.fn().mockReturnValue(credentialStatus),
       }));
 
       const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const { listGalleryImages } = await import(modulePath);
 
       const result = listGalleryImages('flash');
-      await expect(result.asPromise()).resolves.toEqual({ items: [], isFallback: true, usedBundledFallback: false });
+      await expect(result.asPromise()).resolves.toEqual(
+        expect.objectContaining({
+          items: [],
+          isFallback: true,
+          usedBundledFallback: false,
+          fallbackReason: 'r2_fetch_failed',
+          credentialStatus,
+        }),
+      );
+      expect(result).toMatchObject({
+        items: [],
+        isFallback: true,
+        usedBundledFallback: false,
+        fallbackReason: 'r2_fetch_failed',
+        credentialStatus,
+      });
       expect(errorSpy).toHaveBeenCalledWith('listGalleryImages background error', backgroundError);
       errorSpy.mockRestore();
     });

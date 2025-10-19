@@ -2,10 +2,11 @@ import Gallery from '../../../components/Gallery';
 import gallery from '../../../data/gallery';
 
 type PortfolioItemPageProps = {
-  readonly params: { slug: string };
+  readonly params: Promise<{ slug: string }>;
 };
 
-export default function PortfolioItem({ params }: PortfolioItemPageProps) {
+export default async function PortfolioItem(props: PortfolioItemPageProps) {
+  const params = await props.params;
   const { slug } = params;
 
   return (

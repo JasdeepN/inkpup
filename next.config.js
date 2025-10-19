@@ -129,6 +129,8 @@ const DEFAULT_R2_REMOTE_PATTERNS = [
 
 const nextConfig = {
   reactStrictMode: true,
+  // Skip static page generation for error pages to avoid Document bundling bug
+  output: 'standalone',
   images: {
     // Cloudflare Workers does not support Next.js default image optimizer; serve originals instead.
     // https://nextjs.org/docs/app/api-reference/components/image#unoptimized

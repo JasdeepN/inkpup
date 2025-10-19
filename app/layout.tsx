@@ -1,15 +1,13 @@
 import './globals.scss';
+import type { Metadata } from 'next';
 import Script from 'next/script';
-import { Meta } from '../components/Meta';
-import LocalBusinessJsonLd from '../components/LocalBusinessJsonLd';
-import business from '../data/business.json';
 import Header from '../components/Header';
+import LocalBusinessJsonLd from '../components/LocalBusinessJsonLd';
 import ParticlesBackground from '../components/ParticlesBackground';
+import business from '../data/business.json';
+import { siteMetadata } from '../lib/site-metadata';
 
-export const metadata = {
-  title: `${business.name} — ${business.address.city}`,
-  description: `Custom tattoos, re-works, consults, and aftercare. Serving ${business.address.city} and the GTA.`
-};
+export const metadata: Metadata = siteMetadata;
 
 export default function RootLayout({ children }) {
   const cfBeaconConfig = (() => {
@@ -38,11 +36,15 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="en" className="dark">
-      <head />
-  <body>
-  <a href="#content" className="skip-link sr-only focus:not-sr-only" data-testid="skip-link">Skip to content</a>
-    <Meta title={metadata.title} description={metadata.description} url={business.website} />
-    <ParticlesBackground />
+      <body>
+        <a
+          href="#content"
+          className="skip-link sr-only focus:not-sr-only"
+          data-testid="skip-link"
+        >
+          Skip to content
+        </a>
+        <ParticlesBackground />
         {/* LocalBusiness JSON-LD - populated from `data/business.json` */}
         <LocalBusinessJsonLd
           name={business.name}
@@ -57,7 +59,9 @@ export default function RootLayout({ children }) {
 
         <div id="app-root" className="site-content">
           <Header />
-          <main id="content" className="py-6 container">{children}</main>
+          <main id="content" className="py-6 container">
+            {children}
+          </main>
           <footer className="site-footer">
             <div className="container site-footer__inner">
               <div className="site-footer__cta">
@@ -81,10 +85,20 @@ export default function RootLayout({ children }) {
                   <span className="site-footer__cta-text">Follow @inkpup.tattoos</span>
                 </a>
               </div>
-              <p className="text-sm text-muted mt-2">Icon (favicon): &quot;Wolf&quot; by <a className="underline" href="https://www.flaticon.com/authors/freepik">Freepik</a> from <a className="underline" href="https://www.flaticon.com/free-icon/wolf_101711">Flaticon</a></p>
+              <p className="text-sm text-muted mt-2">
+                Icon (favicon): &quot;Wolf&quot; by{' '}
+                <a className="underline" href="https://www.flaticon.com/authors/freepik">
+                  Freepik
+                </a>{' '}
+                from{' '}
+                <a className="underline" href="https://www.flaticon.com/free-icon/wolf_101711">
+                  Flaticon
+                </a>
+              </p>
             </div>
           </footer>
         </div>
+
         {cfBeaconConfig && (
           <Script
             id="cloudflare-web-analytics"

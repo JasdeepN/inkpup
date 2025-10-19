@@ -1,4 +1,4 @@
-import { createGalleryObjectKey as _unused } from './r2-server';
+import { generateGalleryObjectKey as _unused } from '../r2-server';
 import fallbackDataRaw from '../../data/gallery.json';
 import type { GalleryItem, GalleryCategory } from '../gallery-types';
 import { GALLERY_CATEGORIES, getCategoryLabel, isGalleryCategory } from '../gallery-types';

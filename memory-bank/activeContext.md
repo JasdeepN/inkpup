@@ -2,7 +2,7 @@
 
 ## Current Goals
 
-- Tracking post-fix coverage verification for Jest suites and ensuring Cloudflare deploy workflow unblocks after successful CI run.
+- Build blocker resolved via NODE_ENV=production enforcement and admin route restructuring. All builds passing (Next.js 15.5.6 + OpenNext 1.11.0). Ready for deployment testing.
 
 ## Current Blockers
 

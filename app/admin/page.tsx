@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { cookies, headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
-import SmartImage from '../../../components/SmartImage';
+import SmartImage from '../../components/SmartImage';
 import {
   createSessionToken,
   getAdminConfig,
@@ -10,20 +10,20 @@ import {
   getSessionCookieOptions,
   isAdminEnabled,
   verifySessionToken,
-} from '../../../lib/admin-auth';
-import { ADMIN_INTERNAL_PATH, ADMIN_PUBLIC_BASE_PATH, isAdminHost } from '../../../lib/admin-hosts';
+} from '../../lib/admin-auth';
+import { ADMIN_INTERNAL_PATH, ADMIN_PUBLIC_BASE_PATH, isAdminHost } from '../../lib/admin-hosts';
 import {
   GALLERY_CATEGORIES,
   type GalleryCategory,
   getCategoryLabel,
   isGalleryCategory,
-} from '../../../lib/gallery-types';
+} from '../../lib/gallery-types';
 import {
   deleteGalleryImage,
   hasR2Credentials,
   listGalleryImages,
   uploadGalleryImage,
-} from '../../../lib/r2-server';
+} from '../../lib/r2-server';
 
 type AdminSearchParams = Record<string, string | string[] | undefined>;
 

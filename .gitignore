@@ -49,7 +49,7 @@ Thumbs.db
 *.sln
 *.swp
 
-# Typescript
+# Typescript 
 *.tsbuildinfo
 
 # Test output
@@ -88,3 +88,6 @@ playwright-report/
 # Keep the instructions directory tracked
 !.github/instructions/
 TODO.IGNORE
+
+
+scripts/

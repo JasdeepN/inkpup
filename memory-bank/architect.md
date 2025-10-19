@@ -12,6 +12,10 @@ Architecture notes for the InkPup Tattoos web platform deployed on Cloudflare Wo
 
 ## Design Considerations
 
+- For Python scripts we must use Pylance tools (e.g., configure environment, run code snippets) rather than generic alternatives.
+
+
+
 - Terminal usage: run long-lived commands (e.g. npm run dev) in background mode using '&' or a new terminal session; avoid interrupting them with Ctrl+C immediately after launch.
 
 

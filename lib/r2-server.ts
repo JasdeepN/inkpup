@@ -98,7 +98,7 @@ const resolveLegacyExportsObject = (): Record<string, unknown> | null => {
 
 const LEGACY_WRAPPED_SYMBOL = Symbol.for('r2-server:legacy-wrapped');
 
-type WrappedLegacyExports = Record<string, unknown> & { [typeof LEGACY_WRAPPED_SYMBOL]?: boolean };
+type WrappedLegacyExports = Record<PropertyKey, unknown>;
 
 const defineLegacyProperty = (target: Record<string, unknown>, prop: TrackedLegacyProp, enumerable: boolean) => {
   Object.defineProperty(target, prop, {
@@ -178,48 +178,65 @@ try {
   // ignore descriptor installation failures to preserve compatibility in exotic runtimes
 }
 
+type AsyncListGalleryImagesResult = Awaited<ReturnType<typeof asyncListGalleryImages>>;
+type LegacyListGalleryImagesParams = Parameters<typeof asyncListGalleryImages>;
+type LegacyListGalleryImagesResult = AsyncListGalleryImagesResult & {
+  asPromise(): Promise<AsyncListGalleryImagesResult>;
+  then: Promise<AsyncListGalleryImagesResult>['then'];
+  catch: Promise<AsyncListGalleryImagesResult>['catch'];
+  finally: Promise<AsyncListGalleryImagesResult>['finally'];
+  [Symbol.asyncIterator](): AsyncGenerator<AsyncListGalleryImagesResult['items'][number], void, unknown>;
+};
+
 // Provide the legacy API shape for listGalleryImages: synchronous immediate result
 // object with `.asPromise()`/`then()` compatibility while delegating the real work
 // to the modular async function.
-export const listGalleryImages = (category: any, options?: any) => {
-  let initialCredentialStatus: unknown;
+export const listGalleryImages = (
+  category: LegacyListGalleryImagesParams[0],
+  options?: LegacyListGalleryImagesParams[1],
+): LegacyListGalleryImagesResult => {
+  let initialCredentialStatus: AsyncListGalleryImagesResult['credentialStatus'];
   if (typeof storageGetCredentialStatus === 'function') {
     try {
       initialCredentialStatus = storageGetCredentialStatus();
     } catch {
       initialCredentialStatus = undefined;
     }
+  } else {
+    initialCredentialStatus = undefined;
   }
 
-  const result: Record<string, unknown> = {
-    items: [],
+  const result = {
+    items: [] as AsyncListGalleryImagesResult['items'],
     isFallback: false,
     usedBundledFallback: false,
     credentialStatus: initialCredentialStatus,
-  };
+    fallbackReason: undefined as AsyncListGalleryImagesResult['fallbackReason'],
+  } as LegacyListGalleryImagesResult;
 
-  const backgroundPromise = (async () => {
+  const backgroundPromise: Promise<AsyncListGalleryImagesResult> = (async () => {
     try {
       const res = await asyncListGalleryImages(category, options);
-      (result as any).items = res.items;
-      (result as any).isFallback = res.isFallback;
-      (result as any).fallbackReason = (res as any).fallbackReason;
-      (result as any).usedBundledFallback = res.usedBundledFallback;
-      (result as any).credentialStatus = res.credentialStatus ?? initialCredentialStatus;
+      result.items = res.items;
+      result.isFallback = res.isFallback;
+      result.fallbackReason = res.fallbackReason;
+      result.usedBundledFallback = res.usedBundledFallback;
+      result.credentialStatus = res.credentialStatus ?? initialCredentialStatus;
       return res;
     } catch (err) {
-      // preserve synchronous behavior: log and return a minimal fallback
       console.error('listGalleryImages background error', err);
-      const fallback = {
-        items: [],
+      const fallback: AsyncListGalleryImagesResult = {
+        items: [] as AsyncListGalleryImagesResult['items'],
         isFallback: true,
         usedBundledFallback: false,
+        fallbackReason: 'r2_fetch_failed',
+        credentialStatus: initialCredentialStatus,
       };
-      (result as any).items = fallback.items;
-      (result as any).isFallback = true;
-      (result as any).fallbackReason = (result as any).fallbackReason ?? 'background_error';
-      (result as any).usedBundledFallback = fallback.usedBundledFallback;
-      (result as any).credentialStatus = initialCredentialStatus;
+      result.items = fallback.items;
+      result.isFallback = fallback.isFallback;
+      result.fallbackReason = fallback.fallbackReason;
+      result.usedBundledFallback = fallback.usedBundledFallback;
+      result.credentialStatus = fallback.credentialStatus;
       return fallback;
     }
   })();
@@ -231,17 +248,17 @@ export const listGalleryImages = (category: any, options?: any) => {
       configurable: true,
     },
     then: {
-      value: backgroundPromise.then.bind(backgroundPromise),
+      value: backgroundPromise.then.bind(backgroundPromise) as LegacyListGalleryImagesResult['then'],
       enumerable: false,
       configurable: true,
     },
     catch: {
-      value: backgroundPromise.catch.bind(backgroundPromise),
+      value: backgroundPromise.catch.bind(backgroundPromise) as LegacyListGalleryImagesResult['catch'],
       enumerable: false,
       configurable: true,
     },
     finally: {
-      value: backgroundPromise.finally.bind(backgroundPromise),
+      value: backgroundPromise.finally.bind(backgroundPromise) as LegacyListGalleryImagesResult['finally'],
       enumerable: false,
       configurable: true,
     },
@@ -250,11 +267,14 @@ export const listGalleryImages = (category: any, options?: any) => {
   Object.defineProperty(result, Symbol.asyncIterator, {
     enumerable: false,
     configurable: true,
-    value: async function* () {
+    value: async function* (): AsyncGenerator<
+      AsyncListGalleryImagesResult['items'][number],
+      void,
+      unknown
+    > {
       const final = await backgroundPromise;
-      const items = (final?.items || []) as any[];
-      for (const it of items) {
-        yield it;
+      for (const item of final.items) {
+        yield item;
       }
     },
   });

@@ -1,9 +1,11 @@
-# Progress (Updated: 2025-10-16)
+# Progress (Updated: 2025-10-19)
 
 ## Done
 
-- 2025-10-16: Ran full Jest suite with coverage, resolving global coverage threshold failure (statements 87.56%, branches 70.64%).
-- 2025-10-16: Cleared R2 lint warnings in R2 server modules by removing unused eslint-disable directives and replacing `any` overrides with typed S3 client constructors.
+- Portfolio slug test updated for async params
+- Playwright E2E suite verified across browsers
+- Full Jest test suite passing (183 tests)
+- TypeScript compile clean (tests excluded via tsconfig)
 
 ## Doing
 
@@ -11,4 +13,6 @@
 
 ## Next
 
-
+- Find and remove NODE_ENV=development from environment configuration
+- Test deployment to Cloudflare Workers
+- Document Next.js 16 canary incompatibility for future reference
