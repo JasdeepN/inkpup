@@ -2,7 +2,7 @@
 
 ## Done
 
-- Adjusted Cloudflare deploy workflow to tolerate missing SSR chunk directory before copying
+- Updated Cloudflare reusable workflow to export CLOUDFLARE_* env vars alongside legacy CF_* names and adjust deployment steps accordingly.
 
 ## Doing
 
