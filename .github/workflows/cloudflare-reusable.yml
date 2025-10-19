@@ -312,7 +312,14 @@ jobs:
       - name: Render Wrangler config with environment secrets
         run: |
           set -euo pipefail
+          cat wrangler.toml
+          echo "---"
+          echo "R2_BUCKET=$R2_BUCKET"
+          echo "CLOUDFLARE_ACCOUNT_ID=$CLOUDFLARE_ACCOUNT_ID"
+          echo "CLOUDFLARE_ZONE_ID=$CLOUDFLARE_ZONE_ID"
           envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID} ${CF_ACCOUNT_ID} ${CF_ZONE_ID} ${R2_PUBLIC_HOSTNAME} ${R2_BUCKET} ${CF_WEB_ANALYTICS_TOKEN}' < wrangler.toml > wrangler.resolved.toml
+          echo "---"
+          cat wrangler.resolved.toml
       - name: Deploy to environment
         run: |
           set -euo pipefail
