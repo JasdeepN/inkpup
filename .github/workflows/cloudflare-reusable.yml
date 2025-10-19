@@ -312,14 +312,30 @@ jobs:
       - name: Render Wrangler config with environment secrets
         run: |
           set -euo pipefail
-          cat wrangler.toml
-          echo "---"
-          echo "R2_BUCKET=$R2_BUCKET"
-          echo "CLOUDFLARE_ACCOUNT_ID=$CLOUDFLARE_ACCOUNT_ID"
-          echo "CLOUDFLARE_ZONE_ID=$CLOUDFLARE_ZONE_ID"
-          envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID} ${CF_ACCOUNT_ID} ${CF_ZONE_ID} ${R2_PUBLIC_HOSTNAME} ${R2_BUCKET} ${CF_WEB_ANALYTICS_TOKEN}' < wrangler.toml > wrangler.resolved.toml
-          echo "---"
-          cat wrangler.resolved.toml
+          required_vars=(
+            CLOUDFLARE_ACCOUNT_ID
+            CLOUDFLARE_ZONE_ID
+            CF_ACCOUNT_ID
+            CF_ZONE_ID
+            R2_ACCOUNT_ID
+            R2_BUCKET
+            R2_PUBLIC_HOSTNAME
+            R2_API_TOKEN
+            R2_ACCESS_KEY_ID
+            R2_SECRET_ACCESS_KEY
+            CF_WEB_ANALYTICS_TOKEN
+          )
+          missing=()
+          for name in "${required_vars[@]}"; do
+            if [ -z "${!name:-}" ]; then
+              missing+=("$name")
+            fi
+          done
+          if [ "${#missing[@]}" -ne 0 ]; then
+            printf '::error::Missing required environment variables: %s\n' "${missing[*]}" >&2
+            exit 1
+          fi
+          envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID} ${CF_ACCOUNT_ID} ${CF_ZONE_ID} ${R2_ACCOUNT_ID} ${R2_BUCKET} ${R2_PUBLIC_HOSTNAME} ${R2_API_TOKEN} ${R2_ACCESS_KEY_ID} ${R2_SECRET_ACCESS_KEY} ${CF_WEB_ANALYTICS_TOKEN}' < wrangler.toml > wrangler.resolved.toml
       - name: Deploy to environment
         run: |
           set -euo pipefail

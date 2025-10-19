@@ -2,7 +2,7 @@
 
 ## Done
 
-- Updated Cloudflare reusable workflow to export CLOUDFLARE_* env vars alongside legacy CF_* names and adjust deployment steps accordingly.
+- Inlined R2 credentials into wrangler config via placeholders and tightened workflow substitutions to ensure Workers receive bucket/credential env vars.
 
 ## Doing
 

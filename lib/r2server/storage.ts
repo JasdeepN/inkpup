@@ -222,6 +222,13 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
 
   const fallbackResult = (reason: GalleryFallbackReason): GalleryFetchResult => {
     const items = bundledFallbackAllowed ? buildFallbackItems(category) : [];
+    console.warn('[r2server] returning fallback gallery items', {
+      category,
+      reason,
+      bundledFallbackAllowed,
+      credentialStatus,
+      itemsCount: items.length,
+    });
     return {
       items,
       isFallback: true,
@@ -232,6 +239,10 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
   };
 
   if (!hasR2Credentials()) {
+    console.warn('[r2server] missing R2 credentials when fetching gallery items', {
+      category,
+      credentialStatus,
+    });
     return fallbackResult('missing_credentials');
   }
   // Trim leading/trailing slashes from the category to form the R2 prefix.
@@ -253,6 +264,13 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
         // Call the binding.list API as used in Workers: { prefix, limit, cursor }
         const bindingResult = await binding.list({ prefix: `${prefix}/`, limit: 1000, cursor: undefined });
         const objects = bindingResult?.objects ?? [];
+        console.info('[r2server] r2 binding list()', {
+          category,
+          prefix,
+          objects: objects.length,
+          source: probe.source,
+          contextSymbolPresent: probe.contextSymbolPresent,
+        });
         const images: GalleryItem[] = objects
           .filter((o: any) => o?.key && !String(o.key).endsWith('/'))
           .map((o: any) => ({
@@ -275,6 +293,13 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
           return bTime - aTime;
         });
 
+        if (images.length === 0) {
+          console.warn('[r2server] r2 binding returned no gallery objects', {
+            category,
+            prefix,
+            source: probe.source,
+          });
+        }
         return {
           items: images,
           isFallback: false,
@@ -315,6 +340,11 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
 
   try {
     const images = await fetchGalleryImagesFromR2(clientInstance as S3Client, prefix, category);
+    console.info('[r2server] r2 s3 client fetched gallery objects', {
+      category,
+      prefix,
+      count: images.length,
+    });
     return {
       items: images,
       isFallback: false,
