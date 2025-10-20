@@ -2,8 +2,7 @@
 
 ## Done
 
-- Patched Jest setup to force NODE_ENV=test and provide React.act compatibility for React 19.
-- Re-ran full Jest suite; all 28 suites pass after adjusting act shim.
+- Wrapped GalleryView dialog cancel and resize interactions in React.act to eliminate React 19 warnings; Jest suite rerun cleanly.
 
 ## Doing
 
@@ -11,4 +10,4 @@
 
 ## Next
 
-- Trigger Cloudflare reusable deploy when ready to revalidate workflow changes.
+

@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { act } from 'react';
 
 // Mock feature flag module so we can toggle captions on/off in tests
 jest.mock('../lib/featureFlags', () => ({
@@ -113,7 +114,9 @@ describe('GalleryView', () => {
     // Set a large window size and dispatch resize
     (window as any).innerWidth = 1600;
     (window as any).innerHeight = 900;
-    window.dispatchEvent(new Event('resize'));
+    act(() => {
+      window.dispatchEvent(new Event('resize'));
+    });
 
     // dialog should render and have inline style for modal size or at least be present
     const dialog = await screen.findByRole('dialog');
@@ -181,7 +184,9 @@ describe('GalleryView', () => {
       const dialog = await screen.findByRole('dialog');
       // Simulate onCancel event
       const event = new Event('cancel', { bubbles: true, cancelable: true });
-      dialog.dispatchEvent(event);
+      act(() => {
+        dialog.dispatchEvent(event);
+      });
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     });
 
