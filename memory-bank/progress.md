@@ -4,6 +4,7 @@
 
 - Wrapped GalleryView dialog cancel and resize interactions in React.act to eliminate React 19 warnings; Jest suite rerun cleanly.
 - Made CF_WEB_ANALYTICS_TOKEN optional in reusable Cloudflare deploy workflow to prevent false-required failure.
+- Moved R2 credentials into env-specific vars in wrangler.toml so Cloudflare Worker inherits secrets; resolved wrangler warning.
 
 ## Doing
 
