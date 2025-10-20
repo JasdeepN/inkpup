@@ -45,8 +45,9 @@ export async function probeR2Binding(): Promise<ProbeResult> {
       return result;
     }
 
-    if (process.env.R2_BUCKET) {
-      result.binding = process.env.R2_BUCKET;
+    const envBinding = process.env.R2_BUCKET ?? process.env.R2_BUCKET_NAME;
+    if (envBinding) {
+      result.binding = envBinding;
       result.source = 'env';
       return result;
     }
@@ -99,8 +100,9 @@ export function probeR2BindingSync(): ProbeResult {
       return result;
     }
 
-    if (process.env.R2_BUCKET) {
-      result.binding = process.env.R2_BUCKET;
+    const envBinding = process.env.R2_BUCKET ?? process.env.R2_BUCKET_NAME;
+    if (envBinding) {
+      result.binding = envBinding;
       result.source = 'env';
       return result;
     }

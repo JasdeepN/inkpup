@@ -16,7 +16,7 @@ try {
 
 const publicHostname = process.env.R2_PUBLIC_HOSTNAME;
 const accountId = process.env.R2_ACCOUNT_ID;
-const bucketName = process.env.R2_BUCKET;
+const bucketName = process.env.R2_BUCKET ?? process.env.R2_BUCKET_NAME;
 
 const cspDirectives = {
   "default-src": ["'self'"],

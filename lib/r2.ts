@@ -15,7 +15,7 @@ function normalizeHostname(hostname: string): string | null {
 
 function buildDefaultR2Base(): string | null {
   const accountId = process.env.R2_ACCOUNT_ID?.trim();
-  const bucket = process.env.R2_BUCKET?.trim();
+  const bucket = (process.env.R2_BUCKET ?? process.env.R2_BUCKET_NAME)?.trim();
   if (!accountId || !bucket) {
     return null;
   }

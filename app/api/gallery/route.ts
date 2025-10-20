@@ -38,7 +38,7 @@ export async function GET(request: Request) {
         usedBundledFallback: fallbackItems.length > 0,
         credentialStatus: {
           accountId: Boolean(process.env.R2_ACCOUNT_ID?.trim()),
-          bucket: Boolean(process.env.R2_BUCKET?.trim()),
+          bucket: Boolean((process.env.R2_BUCKET ?? process.env.R2_BUCKET_NAME)?.trim()),
           accessKey: Boolean(process.env.R2_ACCESS_KEY_ID?.trim()),
           secretAccessKey: Boolean(process.env.R2_SECRET_ACCESS_KEY?.trim() || process.env.R2_API_TOKEN?.trim()),
         },

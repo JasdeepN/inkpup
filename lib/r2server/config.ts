@@ -12,7 +12,11 @@ export const CACHE_CONTROL_IMMUTABLE = 'public, max-age=31536000, immutable';
 export const OPTIMIZED_CONTENT_TYPE = 'image/webp';
 
 export const accountId = process.env.R2_ACCOUNT_ID?.trim();
-export const bucket = process.env.R2_BUCKET?.trim();
+const bucketEnv = process.env.R2_BUCKET ?? process.env.R2_BUCKET_NAME;
+export const bucket = bucketEnv?.trim();
+if (!process.env.R2_BUCKET && bucket) {
+  process.env.R2_BUCKET = bucket;
+}
 export let rawAccessKey = process.env.R2_ACCESS_KEY_ID?.trim();
 export let rawSecretKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
 export let rawApiToken = process.env.R2_API_TOKEN?.trim();
