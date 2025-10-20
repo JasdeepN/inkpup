@@ -328,7 +328,6 @@ jobs:
             R2_API_TOKEN
             R2_ACCESS_KEY_ID
             R2_SECRET_ACCESS_KEY
-            CF_WEB_ANALYTICS_TOKEN
           )
           missing=()
           for name in "${required_vars[@]}"; do
@@ -340,6 +339,12 @@ jobs:
             printf '::error::Missing required environment variables: %s\n' "${missing[*]}" >&2
             exit 1
           fi
+          if [ -z "${CF_WEB_ANALYTICS_TOKEN:-}" ]; then
+            echo "CF_WEB_ANALYTICS_TOKEN is not set; continuing without web analytics token"
+          else
+            echo "CF_WEB_ANALYTICS_TOKEN provided"
+          fi
+          export CF_WEB_ANALYTICS_TOKEN="${CF_WEB_ANALYTICS_TOKEN:-}"
           envsubst '${CLOUDFLARE_ACCOUNT_ID} ${CLOUDFLARE_ZONE_ID} ${CF_ACCOUNT_ID} ${CF_ZONE_ID} ${R2_ACCOUNT_ID} ${R2_BUCKET} ${R2_BUCKET_NAME} ${R2_PUBLIC_HOSTNAME} ${R2_API_TOKEN} ${R2_ACCESS_KEY_ID} ${R2_SECRET_ACCESS_KEY} ${CF_WEB_ANALYTICS_TOKEN}' < wrangler.toml > wrangler.resolved.toml
       - name: Deploy to environment
         run: |
