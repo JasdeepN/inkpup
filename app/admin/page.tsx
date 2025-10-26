@@ -77,11 +77,9 @@ export default async function AdminPortalPage(props: PageProps) {
   const headerStore = await headers();
   const hostHeader = headerStore.get('host');
   // Accept only admin subdomains, e.g. admin.devapp.lan, admin.inkpup.com, etc.
-  // TEMPORARY: Disabled for debugging - middleware already validates admin hosts
-  // if (!hostHeader || !isAdminHost(hostHeader)) {
-  //   notFound();
-  // }
-  console.log('[DEBUG] Admin page accessed with host:', hostHeader, 'isAdminHost:', isAdminHost(hostHeader));
+  if (!hostHeader || !isAdminHost(hostHeader)) {
+    notFound();
+  }
 
   // Await the async searchParams to avoid the sync-dynamic-apis error in Next 15
   const resolvedSearchParams = props.searchParams ? await props.searchParams : undefined;
