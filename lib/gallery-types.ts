@@ -1,4 +1,4 @@
-export const GALLERY_CATEGORIES = ['healed', 'available', 'flash', 'art'] as const;
+export const GALLERY_CATEGORIES = ['healed', 'available', 'flash', 'art', 'hero'] as const;
 
 export type GalleryCategory = typeof GALLERY_CATEGORIES[number];
 
