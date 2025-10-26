@@ -31,7 +31,7 @@ Cloudflare Workers notes
 - Build and deploy with the `@opennextjs/cloudflare` adapter (`npm run opennext:build` / `npm run opennext:deploy`) as documented in [OpenNext for Cloudflare – Get started](https://opennext.js.org/cloudflare/get-started).
 - Ensure `wrangler.toml` keeps the compatibility date at `2024-09-23` or later with `nodejs_compat` enabled so the Worker runtime matches the adapter requirements.
 - All environments serve media from the shared `https://r2.inkpup.ca` custom hostname. The workflows and `.env.example` set `R2_PUBLIC_HOSTNAME` to this URL so dev, staging, and production resolve to the same bucket. If you need to fall back to the raw R2 endpoint for debugging, override `R2_PUBLIC_HOSTNAME` locally and revert after testing.
-- Keep the R2 bucket public access and CORS policy in sync with every environment. Update `configs/r2-cors.default.json` with the hostnames that should be able to read objects (for example `https://inkpup.ca`, `https://dev.inkpup.ca`, and local development ports) and apply it with `npm run r2:cors:apply`. The script uses Cloudflare’s S3-compatible API to call [`PutBucketCors`](https://developers.cloudflare.com/r2/api/s3/api/) following the public bucket guidance in [Public buckets](https://developers.cloudflare.com/r2/buckets/public-buckets/) and [Configure CORS](https://developers.cloudflare.com/r2/buckets/cors/). Run `npm run r2:cors:show` to inspect the current rules when troubleshooting 404s or preflight failures.
+- Keep the R2 bucket public access and CORS policy in sync with every environment. Update `configs/r2-cors.default.json` with the hostnames that should be able to read objects (for example `https://inkpup.ca`, `https://dev.inkpup.ca`, and local development ports) and apply it with `npm run r2:cors:apply`. The script uses Cloudflare’s S3-compatible API to call [`PutBucketCors`](nhttps://developers.cloudflare.com/r2/api/s3/api/) following the public bucket guidance in [Public buckets](https://developers.cloudflare.com/r2/buckets/public-buckets/) and [Configure CORS](https://developers.cloudflare.com/r2/buckets/cors/). Run `npm run r2:cors:show` to inspect the current rules when troubleshooting 404s or preflight failures.
 	- The validator enforces the S3 schema: `AllowedMethods` may only contain `GET`, `HEAD`, `POST`, `PUT`, or `DELETE` (no `OPTIONS`), and each origin must match the `scheme://host[:port]` pattern without a trailing slash. When Cloudflare rejects a policy the script prints the XML response body to help diagnose the mismatch quickly.
 
 For a focused local setup walkthrough (Next-only vs Wrangler dev, bindings, and env credentials), see: `docs/local-cloudflare-dev.md`.
@@ -143,6 +143,35 @@ A password-protected gallery portal is available for managing Cloudflare R2 asse
 - Optional overrides: `ADMIN_SESSION_COOKIE_NAME`, `ADMIN_SESSION_TTL_HOURS`, and `R2_MAX_IMAGE_WIDTH` (defaults to 1800px).
 
 Uploads are optimized with Sharp (auto-rotation, max width, WebP output) before being pushed to R2 with long-lived cache headers. The portal lists existing gallery assets, provides direct links, and supports deletion. R2 credentials (`R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and, when using temporary credentials, `R2_SESSION_TOKEN`) must be present for mutations; otherwise, the UI falls back to read-only mode.
+
+### Admin webhook (job notifications)
+
+This project includes an admin webhook receiver at `/api/admin/reciever` that accepts signed POST notifications from the upload worker (or any sender) to inform the site about job lifecycle events (queued, failed, succeeded, dead-lettered).
+
+Configuration:
+
+- `ADMIN_WEBHOOK_URL` — The full public URL where your deployment exposes the receiver (for example `https://devapp.lan/api/admin/reciever`) or a relative path on the same host. When empty, webhook sending is disabled.
+- `ADMIN_WEBHOOK_SECRET` — High-entropy secret used to sign payloads. Store this in a secure secrets manager (do NOT commit to source control).
+
+Signature/format:
+
+- Payloads are JSON. Example event types: `job_queued`, `job_failed`, `job_succeeded`, `job_dead_lettered`.
+- Signature header: `x-hub-signature-256: sha256=<hex>` where `<hex>` is the HMAC-SHA256 hex digest of the JSON payload using `ADMIN_WEBHOOK_SECRET`.
+- Timestamp header: `x-hub-timestamp` (epoch ms). The receiver enforces a small tolerance window (default ±5 minutes).
+
+Testing locally:
+
+- A helper script is included at `.tmp/test-webhook.cjs` to send a correctly-signed POST to the local dev server. From the repo root:
+
+```bash
+node ./.tmp/test-webhook.cjs
+```
+
+- On success the receiver responds with `200` and revalidates `/admin` so the portal reflects updated job state.
+
+Security note:
+
+- Rotate `ADMIN_WEBHOOK_SECRET` immediately if it is ever exposed. Use a secret store (GitHub Actions secrets, Cloudflare secret bindings, etc.) to provision it in production.
 
 ## Attribution
 

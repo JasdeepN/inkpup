@@ -1,3 +1,5 @@
+import { siteMetadataFields } from '../lib/site-metadata';
+
 export default function Head() {
   return (
     <>
@@ -5,6 +7,10 @@ export default function Head() {
       {/* Favicon - place the downloaded icon at /public/favicon.png or /public/favicon.ico */}
       <link rel="icon" href="/favicon.png" />
       <link rel="shortcut icon" href="/favicon.png" />
+      {/* canonical fallback for pages that don't provide their own metadata */}
+      {siteMetadataFields.canonicalUrl && (
+        <link rel="canonical" href={siteMetadataFields.canonicalUrl} />
+      )}
     </>
   );
 }

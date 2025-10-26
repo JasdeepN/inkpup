@@ -2,8 +2,10 @@
 
 ## Current Goals
 
-- Build blocker resolved via NODE_ENV=production enforcement and admin route restructuring. All builds passing (Next.js 15.5.6 + OpenNext 1.11.0). Ready for deployment testing.
+- Finalize admin webhook integration: ensure canonical receiver (`/api/admin/reciever`) is deployed and `ADMIN_WEBHOOK_SECRET` is provisioned securely in production.
+- Update runbook with webhook secret rotation steps, monitoring, and recovery playbook for failed jobs.
+- Add observability for the admin job pipeline (log webhook rejections, metrics for failures & retries).
 
 ## Current Blockers
 
-- None yet
+- None

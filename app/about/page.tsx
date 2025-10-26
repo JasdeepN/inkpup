@@ -1,4 +1,12 @@
 import Link from 'next/link';
+import { createPageMetadata } from '../../lib/site-metadata';
+
+export async function generateMetadata() {
+  return createPageMetadata({
+    title: `About — InkPup Tattoos`,
+    description: `About InkPup Tattoos — hand-drawn custom tattoos and consults in Toronto.`,
+  });
+}
 
 export default function AboutPage() {
   return (

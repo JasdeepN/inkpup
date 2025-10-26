@@ -22,7 +22,8 @@ import {
   deleteGalleryImage,
   hasR2Credentials,
   listGalleryImages,
-  uploadGalleryImage,
+  enqueueUploadJob,
+  getUploadJobSummary,
 } from '../../lib/r2-server';
 
 type AdminSearchParams = Record<string, string | string[] | undefined>;
@@ -47,6 +48,7 @@ function resolveFeedback(searchParams?: AdminSearchParams) {
   const rawError = typeof searchParams?.error === 'string' ? searchParams.error : undefined;
 
   const statusMap: Record<string, string> = {
+    queued: 'Image upload queued and will be processed shortly.',
     uploaded: 'Image uploaded successfully.',
     deleted: 'Image deleted successfully.',
     logout: 'You have been signed out.',
@@ -146,21 +148,23 @@ export default async function AdminPortalPage(props: PageProps) {
     const caption = formData.get('caption')?.toString() || undefined;
 
     try {
-      const buffer = Buffer.from(await file.arrayBuffer());
-      await uploadGalleryImage({
-        category: categoryValue,
-        originalFilename: file.name,
-        buffer,
-        alt,
-        caption,
-      });
+    const buffer = Buffer.from(await file.arrayBuffer());
+    // Enqueue the upload for background processing to avoid blocking the server action.
+    await enqueueUploadJob({
+    category: categoryValue,
+    originalFilename: file.name,
+    buffer,
+    alt,
+      caption,
+        contentType: (file as any).type ?? undefined,
+    });
     } catch (error) {
-      console.error('Failed to upload image', error);
+      console.error('Failed to enqueue upload job', error);
       redirect(`${ADMIN_BASE_PATH}?category=${categoryValue}&error=upload_failed`);
     }
 
     revalidatePath(ADMIN_REVALIDATE_PATH);
-    redirect(`${ADMIN_BASE_PATH}?category=${categoryValue}&status=uploaded`);
+    redirect(`${ADMIN_BASE_PATH}?category=${categoryValue}&status=queued`);
   }
 
   async function deleteAction(formData: FormData) {
@@ -223,6 +227,11 @@ export default async function AdminPortalPage(props: PageProps) {
     );
   }
 
+  const jobSummary = await getUploadJobSummary();
+  const pendingTotal = jobSummary.queued + jobSummary.scheduled;
+  const nextRetryDisplay = jobSummary.nextReadyAt ? new Date(jobSummary.nextReadyAt).toLocaleString() : null;
+  const oldestQueuedDisplay = jobSummary.oldestQueuedAt ? new Date(jobSummary.oldestQueuedAt).toLocaleString() : null;
+
   const {
     items,
     isFallback: isFallbackGallery,
@@ -255,6 +264,24 @@ export default async function AdminPortalPage(props: PageProps) {
           <button type="submit" className="btn btn--secondary">Sign out</button>
         </form>
       </header>
+
+      <section className="admin-card admin-card--compact">
+        <div className="admin-card__header">
+          <h2>Upload processing status</h2>
+          <p className="text-muted">Queued uploads appear after the worker finishes processing pending jobs.</p>
+        </div>
+        <div>
+          <p><strong>Queued:</strong> {jobSummary.queued}</p>
+          <p><strong>Scheduled retries:</strong> {jobSummary.scheduled}</p>
+          <p><strong>Dead-lettered:</strong> {jobSummary.deadLetter}</p>
+          {pendingTotal > 0 && oldestQueuedDisplay && (
+            <p className="text-muted">Oldest queued: {oldestQueuedDisplay}</p>
+          )}
+          {jobSummary.scheduled > 0 && nextRetryDisplay && (
+            <p className="text-muted">Next retry: {nextRetryDisplay}</p>
+          )}
+        </div>
+      </section>
 
       {!canMutate && (
         <section className="admin-card admin-card--warning">

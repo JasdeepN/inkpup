@@ -4,6 +4,11 @@
 Architecture notes for the InkPup Tattoos web platform deployed on Cloudflare Workers via OpenNext and surfaced through Next.js App Router.
 
 ## Architectural Decisions
+
+- Adopt Next.js 15 metadata API and React 19 features as architectural foundation
+- Automate as much as possible (sitemaps, audits, monitoring) for reliability and maintainability
+
+
 - Serve the public site with Next.js App Router (Next 15) bundled by @opennextjs/cloudflare/OpenNext so the worker build runs on Cloudflare Workers with .open-next assets and nodejs_compat enabled.
 - Persist gallery media in Cloudflare R2; lib/r2server probes for native bindings, falls back to the AWS S3 client, and can return bundled backups in non-production environments to keep the UI responsive.
 - Expose a password-protected admin portal scoped to approved admin hosts; server actions manage uploads and deletes while enforcing signed session cookies.
@@ -11,6 +16,12 @@ Architecture notes for the InkPup Tattoos web platform deployed on Cloudflare Wo
 - Centralize business metadata and SEO schema through data/business.json, Meta, and LocalBusinessJsonLd components so copy updates stay consistent across the site.
 
 ## Design Considerations
+
+- Each step validated with real user and SEO tools before moving to the next
+- Automated and manual audits for accessibility and SEO
+- A/B testing for CTAs and user engagement elements
+
+
 
 - For Python scripts we must use Pylance tools (e.g., configure environment, run code snippets) rather than generic alternatives.
 
@@ -23,6 +34,37 @@ Architecture notes for the InkPup Tattoos web platform deployed on Cloudflare Wo
 - Storage helpers preserve synchronous instrumentation (global sendMock) so existing Jest suites can assert on client behavior without refactoring.
 
 ## Components
+
+### SEO Optimization
+
+Implements modern SEO best practices for Next.js 15 portfolio site, including metadata, structured data, SSR/SSG/ISR, image optimization, Core Web Vitals, routing, and automated sitemap/robots.txt.
+
+**Responsibilities:**
+
+- Centralize metadata using Next.js 15 metadata API
+- Add and validate JSON-LD structured data
+- Choose optimal rendering mode per page (SSR/SSG/ISR)
+- Optimize all images with Next.js Image component
+- Monitor and improve Core Web Vitals
+- Maintain clean, canonical URLs with dynamic routing
+- Automate sitemap and robots.txt generation
+
+### User Impact Optimization
+
+Maximizes user engagement and accessibility using React 19 features, mobile-first design, fast/bold UX, clear CTAs, and social proof.
+
+**Responsibilities:**
+
+- Leverage React 19 Server Components and use() for performance
+- Ensure accessibility with semantic HTML, ARIA, and audits
+- Design mobile-first, responsive layouts and components
+- Deliver fast, bold, interactive UX with suspense, code splitting, and micro-interactions
+- Strategically place and test CTAs
+- Showcase social proof with testimonials and project stats
+
+
+
+
 
 ### Public App Router
 app/ layout, head, and page modules render the marketing site, hero, and Instagram CTA.

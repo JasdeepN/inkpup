@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" width="120" height="80" role="img" aria-label="Broken image">
+  <rect width="120" height="80" rx="8" fill="#0b1220"/>
+  <g transform="translate(8 8)" fill="none" stroke="#e6eef8" stroke-width="2">
+    <rect x="0" y="0" width="104" height="64" rx="6" fill="#0f172a" stroke="#1f2937"/>
+    <!-- mountain/placeholder -->
+    <path d="M6 52 L30 26 L48 46 L66 18 L98 50" stroke="#9aaad0" stroke-width="2.5" fill="none"/>
+    <!-- broken cross -->
+    <line x1="18" y1="14" x2="86" y2="54" stroke="#fb7185" stroke-width="3" stroke-linecap="round"/>
+    <line x1="86" y1="14" x2="18" y2="54" stroke="#fb7185" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>

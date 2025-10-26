@@ -4,6 +4,7 @@ export * from './r2server/credentials';
 export * from './r2server/utils';
 export * from './r2server/probe';
 export * from './r2server/sniff';
+export * from './r2server/queue';
 
 import * as credentialsModule from './r2server/credentials';
 import { listGalleryImages as asyncListGalleryImages, getCredentialStatus as storageGetCredentialStatus } from './r2server/storage';

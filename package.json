@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "cross-env NODE_ENV=development next dev",
     "build": "cross-env NODE_ENV=production next build",
     "start": "next start",
     "lint": "eslint app components lib pages",
@@ -24,6 +24,7 @@
     "check-braces": "node scripts/count-braces.js lib/r2-server.ts",
     "trace-braces": "node scripts/trace-braces.js lib/r2-server.ts",
     "check-list": "npx ts-node scripts/check-listGallery.ts",
+    "process-jobs": "npx tsx -r dotenv/config scripts/process-upload-jobs.ts",
     "postinstall": "patch-package"
   },
   "dependencies": {

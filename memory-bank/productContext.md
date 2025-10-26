@@ -10,6 +10,7 @@ InkPup Tattoos runs a Cloudflare-hosted Next.js App Router site that showcases t
 - Password-protected admin portal with server actions for gallery management and credential status messaging.
 - Automation scripts and docs for configuring R2 CORS, custom domains, and Wrangler/OpenNext deployments.
 - Playwright and Jest coverage for gallery views, navigation experiences, and storage behaviors.
+- Admin webhook receiver for job lifecycle notifications: the site accepts signed job events from the upload worker to revalidate the admin UI and surface job states.
 
 ## Technical Stack
 - Next.js 15 App Router running on Cloudflare Workers via @opennextjs/cloudflare/OpenNext.

@@ -1,4 +1,12 @@
 import { isCalendlyBookingEnabled } from '../../lib/featureFlags';
+import { createPageMetadata } from '../../lib/site-metadata';
+
+export async function generateMetadata() {
+  return createPageMetadata({
+    title: `Contact — InkPup Tattoos`,
+    description: `Get in touch with InkPup Tattoos for bookings, consults, and questions.`,
+  });
+}
 
 export default function ContactPage() {
   const calendlyEnabled = isCalendlyBookingEnabled();

@@ -1,11 +1,13 @@
-# Progress (Updated: 2025-10-20)
+# Progress (Updated: 2025-10-26)
 
 ## Done
 
-- Wrapped GalleryView dialog cancel and resize interactions in React.act to eliminate React 19 warnings; Jest suite rerun cleanly.
-- Made CF_WEB_ANALYTICS_TOKEN optional in reusable Cloudflare deploy workflow to prevent false-required failure.
-- Moved R2 credentials into env-specific vars in wrangler.toml so Cloudflare Worker inherits secrets; resolved wrangler warnings about missing env vars.
-- Renamed env var to R2_BUCKET_NAME in wrangler.toml to avoid binding name collision with R2 bucket binding.
+- 2025-10-25: Created `/api/admin/reciever` POST route with HMAC-SHA256 verification and revalidation of `/admin`.
+- 2025-10-25: Added unit tests: `lib/admin-webhooks.test.ts` and `app/api/admin/reciever/route.test.ts`.
+- 2025-10-25: Removed legacy `app/api/admin/job-webhook/route.ts` and archived a copy to `/archive/removed/`.
+- 2025-10-25: Updated `README.md` and `.env.example` to document the webhook URL, signing format, and local testing helper `.tmp/test-webhook.cjs`.
+- 2025-10-25: Performed live signed POST test against local dev server (port 3002); receiver returned 200 OK and revalidated `/admin`.
+- 2025-10-25: Created `CHECKPOINT.md` summarizing the session and providing a conventional commit message suggestion.
 
 ## Doing
 
@@ -13,4 +15,5 @@
 
 ## Next
 
-
+- Update runbook with webhook secret rotation, monitoring, and recovery steps.
+- Add logging/alerts for repeated `job_failed` events and consider rate-limiting or IP allow-list for the webhook receiver.

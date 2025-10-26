@@ -1,0 +1,38 @@
+import { NextResponse } from 'next/server';
+import { getAdminWebhookConfig } from '../../../../lib/admin-webhooks';
+
+// Legacy endpoint: redirect permanently (307 to preserve method) to the canonical receiver.
+export async function POST(request: Request) {
+  const config = getAdminWebhookConfig();
+  const canonical = config?.url ?? new URL('/api/admin/reciever', request.url).toString();
+
+  try {
+    const canonicalUrl = new URL(canonical);
+    const requestUrl = new URL(request.url);
+
+    // Avoid redirect loops: if the canonical path equals the current request path, return a 200.
+    if (canonicalUrl.pathname === requestUrl.pathname) {
+      return NextResponse.json({ ok: true, message: 'already canonical' }, { status: 200 });
+    }
+  } catch (e) {
+    // If URL parsing fails, fall back to relative redirect
+  }
+
+  return NextResponse.redirect(canonical, 307);
+}
+
+export async function GET(request: Request) {
+  // Also redirect GETs for discoverability in browsers
+  const config = getAdminWebhookConfig();
+  const canonical = config?.url ?? new URL('/api/admin/reciever', request.url).toString();
+
+  try {
+    const canonicalUrl = new URL(canonical);
+    const requestUrl = new URL(request.url);
+    if (canonicalUrl.pathname === requestUrl.pathname) {
+      return NextResponse.json({ ok: true, message: 'already canonical' }, { status: 200 });
+    }
+  } catch (e) {}
+
+  return NextResponse.redirect(canonical, 307);
+}

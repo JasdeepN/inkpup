@@ -55,3 +55,30 @@ Always use cross-env to enforce NODE_ENV=production in build scripts. Next.js us
 - package.json: "build": "cross-env NODE_ENV=production next build"
 - cross-env package installed as devDependency
 - Validates across Next.js 15.x and 16.x versions
+
+
+## Mobile-first UX design
+
+Implement accessibility-focused mobile UX following 2025 best practices: minimum 44×44px touch targets (iOS) / 48×48dp (Android), 16px+ body text with 1.5 line-height, adequate spacing between interactive elements (min 8px), tactile feedback on touch interactions, and progressive enhancement from mobile to desktop.
+
+### Examples
+
+- Theme toggle: 3rem (48px) touch target
+- Mobile menu button: 3rem min-width/height with increased padding
+- Mobile nav links: 0.85rem vertical padding with background hover state
+- Hero title: text-3xl on mobile, text-5xl on desktop (better fit)
+- Gallery cards: active state with scale(0.98) for tactile feedback
+- Gallery modal close: 3rem (48px) touch target
+- All buttons: min-height 2.75rem (44px) for comfortable tapping
+- Body text: explicit 16px font-size with 1.5 line-height
+- Gallery captions: 0.9rem (improved from 0.85rem) for readability
+- Mobile-specific spacing: reduced gallery grid gap to 1.25rem, increased hero actions padding
+
+
+## Webhook & Admin-job patterns
+
+- Canonical receiver: Use a single canonical webhook receiver at `/api/admin/reciever` to handle all job lifecycle notifications (events: `job_queued`, `job_failed`, `job_succeeded`, `job_dead_lettered`). Avoid duplicating handler logic across routes.
+- Signing & timestamping: Accept signed JSON payloads where the HMAC-SHA256 hex digest of the payload is provided in header `x-hub-signature-256` prefixed by `sha256=` and the epoch-ms timestamp is provided in `x-hub-timestamp`. Enforce a timestamp tolerance window (default ±5 minutes).
+- Revalidation: On valid events, the canonical receiver should revalidate admin pages (for example `revalidatePath('/admin')`) so the admin UI reflects job status changes.
+- Tests & mocks: Use unit tests that mock `revalidatePath` and `NextResponse` to validate behavior without a running dev server.
+- Legacy handling: Archive legacy or duplicate endpoints rather than keeping divergent logic; if needed, support redirects during a transition window but remove legacy routes once senders are migrated.

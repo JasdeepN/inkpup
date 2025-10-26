@@ -1,6 +1,14 @@
 import GalleryView from '../../components/GalleryView';
 import { listGalleryImages } from '../../lib/r2-server';
 import type { GalleryCategory } from '../../lib/gallery-types';
+import { createPageMetadata } from '../../lib/site-metadata';
+
+export async function generateMetadata() {
+  return createPageMetadata({
+    title: `Portfolio — InkPup Tattoos`,
+    description: `Browse healed pieces, available designs, flash, and fine art from InkPup Tattoos.`,
+  });
+}
 
 const DEFAULT_CATEGORY: GalleryCategory = 'healed';
 

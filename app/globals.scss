@@ -43,7 +43,8 @@
   font-weight: 600;
   font-size: 1rem;
   line-height: 1.2;
-  padding: 0.65rem 1.5rem;
+  padding: 0.75rem 1.5rem;
+  min-height: 2.75rem;
   text-align: center;
   border: none;
   cursor: pointer;
@@ -102,6 +103,7 @@
   color: #fff;
   border: none;
   box-shadow: 0 16px 40px rgba(221, 42, 123, 0.45);
+  min-height: 3rem;
 }
 
 .btn--instagram:hover,
@@ -162,6 +164,8 @@
 body {
   background-color: var(--bg);
   color: var(--text);
+  font-size: 16px;
+  line-height: 1.5;
 }
 
 /* dark theme overrides when .dark is present on <html> */
@@ -201,6 +205,44 @@ html.dark {
   transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
+/* At 550px and above prefer the full primary nav and hide the hamburger.
+   This provides a slightly narrower 'desktop' breakpoint than Tailwind's md
+   so the nav is restored earlier on mid-size phones and small tablets. */
+@media (min-width: 550px) {
+  .primary-nav { display: flex !important; }
+  /* ensure the hidden utility doesn't keep it hidden */
+  .primary-nav.hidden { display: flex !important; }
+  /* hide the mobile hamburger and mobile menu area at this width */
+  .mobile-menu-button { display: none !important; }
+  .mobile-nav { display: none !important; }
+
+  /* Prevent header from wrapping when we restore the inline nav */
+  .site-header__inner {
+    flex-wrap: nowrap !important;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  /* Allow brand and nav to shrink so header fits on one line */
+  .site-header__brand {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .primary-nav {
+    display: flex !important;
+    flex-shrink: 1;
+    gap: 1rem;
+  }
+
+  /* Keep header action buttons stable and prevent them from shrinking */
+  .header-actions {
+    flex-shrink: 0;
+  }
+}
+
 .site-header__inner {
   display: flex;
   align-items: center;
@@ -229,7 +271,6 @@ html.dark {
 }
 
 .primary-nav {
-  display: flex;
   gap: 1.25rem;
   font-size: 0.95rem;
   letter-spacing: 0.015em;
@@ -270,8 +311,8 @@ html.dark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 3rem;
+  height: 3rem;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--surface-elevated);
@@ -290,7 +331,9 @@ html.dark {
 .mobile-menu-button {
   border: 1px solid var(--border);
   border-radius: 0.9rem;
-  padding: 0.45rem 0.75rem;
+  padding: 0.65rem 0.95rem;
+  min-width: 3rem;
+  min-height: 3rem;
   background: var(--surface-elevated);
   color: var(--header-text);
   transition: border 0.2s ease, color 0.2s ease, background 0.2s ease;
@@ -312,18 +355,23 @@ html.dark {
 .mobile-nav__inner {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .mobile-nav__inner a {
   color: var(--nav-link);
   font-size: 1.05rem;
+  padding: 0.85rem 0.5rem;
+  border-radius: 0.5rem;
+  transition: background 0.2s ease;
 }
 
 .mobile-nav__inner a:hover,
 .mobile-nav__inner a:focus-visible {
-  color: var(--nav-link-hover);
+  background: var(--surface-elevated);
 }
+
+
 
 /* ----------------------------------------------
    Hero section
@@ -354,12 +402,35 @@ html.dark {
   z-index: 1;
   display: grid;
   gap: 2.5rem;
+  /* Mobile-first grid areas: title(copy) -> media -> actions */
+  grid-template-areas:
+    "copy"
+    "media"
+    "actions";
 }
 
 @media (min-width: 768px) {
   .hero-section > .container {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* On larger screens place copy left and media right; actions sit under copy */
+    grid-template-areas:
+      "copy media"
+      "actions media";
     align-items: center;
+  }
+
+  .hero-copy {
+    grid-area: copy;
+  }
+
+  .hero-media {
+    grid-area: media;
+    align-self: center;
+  }
+
+  .hero-actions {
+    grid-area: actions;
+    align-self: start;
   }
 }
 
@@ -378,13 +449,19 @@ html.dark {
 .hero-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.25rem;
   flex-wrap: wrap;
+  padding-bottom: 0.5rem;
 }
 
 .hero-link {
   color: var(--nav-link-hover);
   font-weight: 500;
+}
+
+.hero-media {
+  display: grid;
+  gap: 0.75rem;
 }
 
 .hero-image {
@@ -394,6 +471,115 @@ html.dark {
   border-radius: 1.25rem;
   overflow: hidden;
   box-shadow: 0 24px 45px rgba(0, 0, 0, 0.35);
+}
+
+/* Carousel styles (hero) */
+.hero-carousel {
+  position: relative;
+  width: 100%;
+}
+
+.hero-carousel__viewport {
+  position: relative;
+  width: 100%;
+  height: auto;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  min-height: 220px;
+}
+
+.hero-carousel__slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: scale(1.02);
+  transition: opacity 700ms cubic-bezier(.2,.9,.2,1), transform 700ms cubic-bezier(.2,.9,.2,1);
+  pointer-events: none;
+}
+
+.hero-carousel__slide.is-active {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+  z-index: 1;
+}
+
+.hero-carousel__slide-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 4 / 3;
+}
+
+@media (min-width: 768px) {
+  .hero-carousel__slide-inner {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+.hero-carousel__caption {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  color: #fff;
+  background: rgba(0,0,0,0.35);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.hero-carousel__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  justify-content: flex-end;
+}
+
+.hero-carousel__btn {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  min-width: 3rem;
+}
+
+.hero-carousel__btn:hover,
+.hero-carousel__btn:focus-visible {
+  border-color: var(--nav-link-hover);
+  color: var(--nav-link-hover);
+  transform: translateY(-1px);
+}
+
+.hero-carousel__indicators {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.hero-carousel__indicator {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.18);
+  border: none;
+  cursor: pointer;
+}
+
+.hero-carousel__indicator.is-active {
+  background: var(--brand-accent);
+  box-shadow: 0 6px 18px rgba(251,113,133,0.24);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-carousel__slide { transition: none !important; }
+  .hero-carousel__btn { transition: none !important; }
 }
 
 /* ----------------------------------------------
@@ -785,7 +971,7 @@ html.dark {
 
 .gallery-grid {
   display: grid;
-  gap: 1.2rem;
+  gap: 1.5rem;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
@@ -811,6 +997,11 @@ html.dark {
   padding: 0;
   cursor: pointer;
   position: relative;
+  transition: transform 0.15s ease;
+}
+
+.gallery-card__inner:active {
+  transform: scale(0.98);
 }
 
 .gallery-card__badge {
@@ -845,7 +1036,7 @@ html.dark {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   padding: 0.85rem 1rem 1.1rem;
   color: var(--muted);
 }
@@ -942,8 +1133,8 @@ html.dark {
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.45);
   color: #fff;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 3rem;
+  height: 3rem;
   font-size: 1.2rem;
   cursor: pointer;
   transition: transform 0.2s ease, background 0.2s ease;
@@ -1001,8 +1192,22 @@ html.dark {
     padding: 2.5rem 0;
   }
 
+  .hero-actions {
+    gap: 1rem;
+    padding-bottom: 1rem;
+  }
+
   .gallery-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gallery-filter {
+    padding: 0.75rem 0.85rem;
+    min-height: 2.75rem;
+  }
+
+  .gallery-grid {
+    gap: 1.25rem;
   }
 
   .gallery-modal__image {
