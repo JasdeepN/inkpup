@@ -24,7 +24,7 @@ bucket_name = "${R2_BUCKET}"
 
 [env.dev]
 name = "inkpup-dev"
-route = "dev.inkpup.ca/*"
+route = "dev.admin.inkpup.ca/*"
 zone_id = "${CLOUDFLARE_ZONE_ID}"
 logpush = true
 
