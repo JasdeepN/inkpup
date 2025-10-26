@@ -82,3 +82,14 @@ Implement accessibility-focused mobile UX following 2025 best practices: minimum
 - Revalidation: On valid events, the canonical receiver should revalidate admin pages (for example `revalidatePath('/admin')`) so the admin UI reflects job status changes.
 - Tests & mocks: Use unit tests that mock `revalidatePath` and `NextResponse` to validate behavior without a running dev server.
 - Legacy handling: Archive legacy or duplicate endpoints rather than keeping divergent logic; if needed, support redirects during a transition window but remove legacy routes once senders are migrated.
+
+
+## GitHub Actions environment secrets in reusable workflows
+
+When using GitHub environment secrets (scoped to dev/production) in reusable workflows, secrets must be explicitly passed via env: sections in job steps. Simply declaring them in the workflow_call secrets: section is insufficient. Additionally, when sourcing credential files that may contain special characters, temporarily disable undefined variable checking (set +u) before sourcing, then re-enable (set -u) to prevent exit code 127 errors. Use printf '%q' format when writing secrets to bash-sourceable files to properly escape special characters.
+
+### Examples
+
+- Workflow pattern: secrets declared at workflow_call level, passed to steps via env: ADMIN_PORTAL_PASSWORD: ${{ secrets.ADMIN_PORTAL_PASSWORD }}
+- Safe sourcing: set +u; source .credentials; set -u
+- Safe writing: printf 'SECRET=%q\n' "${SECRET}" >> file
