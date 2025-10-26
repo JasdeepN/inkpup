@@ -255,112 +255,31 @@ export default async function AdminPortalPage(props: PageProps) {
 
   return (
     <div className="admin-shell">
-      <header className="admin-card admin-header">
+      <header className="admin-card admin-header flex items-center justify-between gap-6">
         <div>
           <h1>Gallery admin portal</h1>
-          <p className="text-muted">Manage R2-backed gallery assets with automatic optimization and quick cleanup tools.</p>
         </div>
-        <form action={logoutAction} className="admin-header__actions">
-          <button type="submit" className="btn btn--secondary">Sign out</button>
-        </form>
+        <div className="admin-card admin-card--compact admin-header__status" aria-live="polite">
+          <div className="admin-card__header">
+            <h2>Upload processing status</h2>
+            <p className="text-muted">Queued uploads appear after the worker finishes processing pending jobs.</p>
+          </div>
+          <div>
+            <p><strong>Queued:</strong> {jobSummary.queued}</p>
+            <p><strong>Scheduled retries:</strong> {jobSummary.scheduled}</p>
+            <p><strong>Dead-lettered:</strong> {jobSummary.deadLetter}</p>
+            {pendingTotal > 0 && oldestQueuedDisplay && (
+              <p className="text-muted">Oldest queued: {oldestQueuedDisplay}</p>
+            )}
+            {jobSummary.scheduled > 0 && nextRetryDisplay && (
+              <p className="text-muted">Next retry: {nextRetryDisplay}</p>
+            )}
+          </div>
+        </div>
       </header>
 
-      <section className="admin-card admin-card--compact">
-        <div className="admin-card__header">
-          <h2>Upload processing status</h2>
-          <p className="text-muted">Queued uploads appear after the worker finishes processing pending jobs.</p>
-        </div>
-        <div>
-          <p><strong>Queued:</strong> {jobSummary.queued}</p>
-          <p><strong>Scheduled retries:</strong> {jobSummary.scheduled}</p>
-          <p><strong>Dead-lettered:</strong> {jobSummary.deadLetter}</p>
-          {pendingTotal > 0 && oldestQueuedDisplay && (
-            <p className="text-muted">Oldest queued: {oldestQueuedDisplay}</p>
-          )}
-          {jobSummary.scheduled > 0 && nextRetryDisplay && (
-            <p className="text-muted">Next retry: {nextRetryDisplay}</p>
-          )}
-        </div>
-      </section>
-
-      {!canMutate && (
-        <section className="admin-card admin-card--warning">
-          <h2>Cloudflare R2 not configured</h2>
-          <p>
-            Uploads and deletions are disabled until a Cloudflare R2 binding <code>R2_BUCKET</code> is available at runtime, or environment
-            credentials are configured: <code>R2_ACCOUNT_ID</code>, <code>R2_BUCKET</code>, and either (<code>R2_ACCESS_KEY_ID</code> with{' '}
-            <code>R2_SECRET_ACCESS_KEY</code>) or a single <code>R2_API_TOKEN</code>.
-          </p>
-        </section>
-      )}
-
-      {(feedback.statusMessage || feedback.errorMessage) && (
-        <section className={`admin-alert ${feedback.errorMessage ? 'admin-alert--error' : 'admin-alert--success'}`}>
-          <output aria-live="polite">{feedback.errorMessage ?? feedback.statusMessage}</output>
-        </section>
-      )}
-
-      <section className="admin-card">
-        <div className="admin-card__header">
-          <h2>Upload new artwork</h2>
-          <p className="text-muted">Choose a gallery category and add a high-resolution image. We&apos;ll handle the optimization for you.</p>
-        </div>
-        <form action={uploadAction} className="admin-form">
-          <div className="admin-form__row admin-form__row--columns-2">
-            <div className="admin-field">
-              <label htmlFor="category">Category</label>
-              <select id="category" name="category" defaultValue={category} disabled={!canMutate}>
-                {GALLERY_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {getCategoryLabel(cat)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="admin-field">
-              <label htmlFor="file">Image file</label>
-              <input id="file" type="file" name="file" accept="image/*" required disabled={!canMutate} />
-              <p className="admin-field__hint">Large uploads are auto-rotated, resized, and converted to WebP.</p>
-            </div>
-          </div>
-          <div className="admin-form__row admin-form__row--columns-2">
-            <div className="admin-field">
-              <label htmlFor="alt">Alt text</label>
-              <input id="alt" type="text" name="alt" placeholder="Describe the artwork" maxLength={256} disabled={!canMutate} />
-              <p className="admin-field__hint">Used for accessibility and shown beneath the image when no caption is provided.</p>
-            </div>
-            <div className="admin-field">
-              <label htmlFor="caption">Caption (optional)</label>
-              <input id="caption" type="text" name="caption" maxLength={256} disabled={!canMutate} />
-              <p className="admin-field__hint">Appears with the artwork in the gallery layout.</p>
-            </div>
-          </div>
-          <div className="admin-form__actions">
-            <button className="btn btn--primary" type="submit" disabled={!canMutate}>
-              Upload image
-            </button>
-          </div>
-        </form>
-      </section>
-
-      <section className="admin-card admin-gallery">
-        <div className="admin-card__header">
-          <h2>{getCategoryLabel(category)} gallery</h2>
-          <p className="text-muted">Browse previously uploaded artwork and remove items that no longer belong.</p>
-        </div>
-        {isFallbackGallery && (
-          <section className="admin-alert admin-alert--warning admin-alert--compact">
-            <output aria-live="polite">
-              {usedBundledFallback
-                ? 'Gallery items below are served from bundled backups because the Cloudflare R2 storage container is currently unreachable. The images may be outdated until connectivity is restored.'
-                : 'The Cloudflare R2 storage container is currently unreachable and bundled gallery backups are disabled in this environment. Gallery items will appear again once connectivity is restored.'}
-              {fallbackDetail ? ` ${fallbackDetail}` : ''}
-              {fallbackReason === 'missing_credentials' && credentialStatus &&
-                ` No R2 binding or credentials — accountId: ${credentialStatus.accountId ? 'ok' : 'missing'}, bucket: ${credentialStatus.bucket ? 'ok' : 'missing'}, accessKey: ${credentialStatus.accessKey ? 'ok' : 'missing'}, secret/api-token: ${credentialStatus.secretAccessKey ? 'ok' : 'missing'}.`}
-            </output>
-          </section>
-        )}
-        <nav className="admin-category-nav" aria-label="Gallery categories">
+      <nav className="admin-card admin-nav admin-card--compact flex items-center justify-between" aria-label="Admin navigation">
+        <div className="admin-category-nav" aria-label="Gallery categories">
           {GALLERY_CATEGORIES.map((cat) => {
             const isActive = cat === category;
             return (
@@ -373,52 +292,138 @@ export default async function AdminPortalPage(props: PageProps) {
               </a>
             );
           })}
-        </nav>
+        </div>
 
-        {items.length === 0 ? (
-          <p className="admin-empty-state">
-            {isFallbackGallery && !usedBundledFallback
-              ? 'Gallery items are temporarily unavailable because bundled backups are disabled outside automated tests.'
-              : 'No artwork uploaded yet for this category.'}
-          </p>
-        ) : (
-          <ul className="admin-gallery__grid">
-            {items.map((item) => (
-              <li key={item.id} className="admin-gallery__item">
-                <div className="admin-gallery__preview">
-                  <SmartImage
-                    src={item.src}
-                    alt={item.alt}
-                    fill
-                    sizes="(min-width: 768px) 300px, 100vw"
-                    className="admin-gallery__image"
-                  />
+      </nav>
+
+      <main className="admin-layout grid gap-6 md:grid-cols-4">
+        <aside className="admin-sidebar md:col-span-1 space-y-6">
+          {!canMutate && (
+            <section className="admin-card admin-card--warning">
+              <h2>Cloudflare R2 not configured</h2>
+              <p>
+                Uploads and deletions are disabled until a Cloudflare R2 binding <code>R2_BUCKET</code> is available at runtime, or environment
+                credentials are configured: <code>R2_ACCOUNT_ID</code>, <code>R2_BUCKET</code>, and either (<code>R2_ACCESS_KEY_ID</code> with{' '}
+                <code>R2_SECRET_ACCESS_KEY</code>) or a single <code>R2_API_TOKEN</code>.
+              </p>
+            </section>
+          )}
+
+          <section className="admin-card">
+            <div className="admin-card__header">
+              <h2>Upload new artwork</h2>
+              <p className="text-muted">Choose a gallery category and add a high-resolution image. We&apos;ll handle the optimization for you.</p>
+            </div>
+            <form action={uploadAction} className="admin-form">
+              <div className="admin-form__row admin-form__row--columns-2">
+                <div className="admin-field">
+                  <label htmlFor="category">Category</label>
+                  <select id="category" name="category" defaultValue={category} disabled={!canMutate}>
+                    {GALLERY_CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {getCategoryLabel(cat)}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <div className="admin-gallery__meta">
-                  <strong>{item.caption || item.alt}</strong>
-                  <p className="text-muted">
-                    {item.size ? `${(item.size / 1024).toFixed(1)} KB • ` : ''}
-                    {item.lastModified ? new Date(item.lastModified).toLocaleString() : 'Uploaded'}
-                  </p>
-                  <p className="admin-field__hint" style={{ wordBreak: 'break-all' }}>{item.key ?? 'Fallback item'}</p>
+                <div className="admin-field">
+                  <label htmlFor="file">Image file</label>
+                  <input id="file" type="file" name="file" accept="image/*" required disabled={!canMutate} />
+                  <p className="admin-field__hint">Large uploads are auto-rotated, resized, and converted to WebP.</p>
                 </div>
-                <div className="admin-gallery__actions">
-                  <a className="btn btn--secondary" href={item.src} target="_blank" rel="noreferrer">
-                    View
-                  </a>
-                  <form action={deleteAction}>
-                    <input type="hidden" name="category" value={category} />
-                    <input type="hidden" name="key" value={item.key ?? ''} />
-                    <button className="btn btn--danger" type="submit" disabled={!canMutate || !item.key}>
-                      Delete
-                    </button>
-                  </form>
+              </div>
+              <div className="admin-form__row admin-form__row--columns-2">
+                <div className="admin-field">
+                  <label htmlFor="alt">Alt text</label>
+                  <input id="alt" type="text" name="alt" placeholder="Describe the artwork" maxLength={256} disabled={!canMutate} />
+                  <p className="admin-field__hint">Used for accessibility and shown beneath the image when no caption is provided.</p>
                 </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                <div className="admin-field">
+                  <label htmlFor="caption">Caption (optional)</label>
+                  <input id="caption" type="text" name="caption" maxLength={256} disabled={!canMutate} />
+                  <p className="admin-field__hint">Appears with the artwork in the gallery layout.</p>
+                </div>
+              </div>
+              <div className="admin-form__actions">
+                <button className="btn btn--primary" type="submit" disabled={!canMutate}>
+                  Upload image
+                </button>
+              </div>
+            </form>
+          </section>
+        </aside>
+
+        <section className="md:col-span-3 space-y-6">
+          {(feedback.statusMessage || feedback.errorMessage) && (
+            <section className={`admin-alert ${feedback.errorMessage ? 'admin-alert--error' : 'admin-alert--success'}`}>
+              <output aria-live="polite">{feedback.errorMessage ?? feedback.statusMessage}</output>
+            </section>
+          )}
+
+          <section className="admin-card admin-gallery">
+            <div className="admin-card__header">
+              <h2>{getCategoryLabel(category)} gallery</h2>
+              <p className="text-muted">Browse previously uploaded artwork and remove items that no longer belong.</p>
+            </div>
+            {isFallbackGallery && (
+              <section className="admin-alert admin-alert--warning admin-alert--compact">
+                <output aria-live="polite">
+                  {usedBundledFallback
+                    ? 'Gallery items below are served from bundled backups because the Cloudflare R2 storage container is currently unreachable. The images may be outdated until connectivity is restored.'
+                    : 'The Cloudflare R2 storage container is currently unreachable and bundled gallery backups are disabled in this environment. Gallery items will appear again once connectivity is restored.'}
+                  {fallbackDetail ? ` ${fallbackDetail}` : ''}
+                  {fallbackReason === 'missing_credentials' && credentialStatus &&
+                    ` No R2 binding or credentials — accountId: ${credentialStatus.accountId ? 'ok' : 'missing'}, bucket: ${credentialStatus.bucket ? 'ok' : 'missing'}, accessKey: ${credentialStatus.accessKey ? 'ok' : 'missing'}, secret/api-token: ${credentialStatus.secretAccessKey ? 'ok' : 'missing'}.`}
+                </output>
+              </section>
+            )}
+
+            {items.length === 0 ? (
+              <p className="admin-empty-state">
+                {isFallbackGallery && !usedBundledFallback
+                  ? 'Gallery items are temporarily unavailable because bundled backups are disabled outside automated tests.'
+                  : 'No artwork uploaded yet for this category.'}
+              </p>
+            ) : (
+              <ul className="admin-gallery__grid">
+                {items.map((item) => (
+                  <li key={item.id} className="admin-gallery__item">
+                    <div className="admin-gallery__preview">
+                      <SmartImage
+                        src={item.src}
+                        alt={item.alt}
+                        fill
+                        sizes="(min-width: 768px) 300px, 100vw"
+                        className="admin-gallery__image"
+                      />
+                    </div>
+                    <div className="admin-gallery__meta">
+                      <strong>{item.caption || item.alt}</strong>
+                      <p className="text-muted">
+                        {item.size ? `${(item.size / 1024).toFixed(1)} KB • ` : ''}
+                        {item.lastModified ? new Date(item.lastModified).toLocaleString() : 'Uploaded'}
+                      </p>
+                      <p className="admin-field__hint" style={{ wordBreak: 'break-all' }}>{item.key ?? 'Fallback item'}</p>
+                    </div>
+                    <div className="admin-gallery__actions">
+                      <a className="btn btn--secondary" href={item.src} target="_blank" rel="noreferrer">
+                        View
+                      </a>
+                      <form action={deleteAction}>
+                        <input type="hidden" name="category" value={category} />
+                        <input type="hidden" name="key" value={item.key ?? ''} />
+                        <button className="btn btn--danger" type="submit" disabled={!canMutate || !item.key}>
+                          Delete
+                        </button>
+                      </form>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </section>
+      </main>
     </div>
   );
 }

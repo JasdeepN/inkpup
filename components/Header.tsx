@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function Header() {
   const [open, setOpen] = useState(false);
@@ -29,6 +30,9 @@ export default function Header() {
     else document.documentElement.classList.remove('dark');
   }, [dark]);
 
+  const pathname = usePathname();
+  const isAdmin = pathname?.startsWith('/admin');
+
   return (
     <header className="site-header">
       <div className="container site-header__inner">
@@ -42,7 +46,13 @@ export default function Header() {
         </div>
 
         <div className="header-actions">
-          <Link href="/contact" className="btn btn--primary" data-testid="nav-book">Book</Link>
+          {isAdmin ? (
+            <form action="?status=logout" method="POST">
+              <button type="submit" name="logout" className="btn btn--secondary" data-testid="nav-logout">Sign out</button>
+            </form>
+          ) : (
+            <Link href="/contact" className="btn btn--primary" data-testid="nav-book">Book</Link>
+          )}
           <button
             className="mobile-menu-button md:hidden"
             aria-label={open ? 'Close menu' : 'Open menu'}
@@ -72,7 +82,13 @@ export default function Header() {
           <Link href="/portfolio" ref={firstLinkRef} data-testid="mobile-portfolio">Portfolio</Link>
           <Link href="/contact" data-testid="mobile-contact">Contact</Link>
           <Link href="/about" data-testid="mobile-about">About</Link>
-          <Link href="/contact" className="btn btn--primary mt-2" data-testid="mobile-book">Book</Link>
+          {isAdmin ? (
+            <form action="?status=logout" method="POST" className="mt-2">
+              <button type="submit" name="logout" className="btn btn--secondary w-full" data-testid="mobile-logout">Sign out</button>
+            </form>
+          ) : (
+            <Link href="/contact" className="btn btn--primary mt-2" data-testid="mobile-book">Book</Link>
+          )}
         </div>
       </nav>
     </header>
