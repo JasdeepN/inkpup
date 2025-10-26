@@ -126,6 +126,7 @@ jobs:
           CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
         shell: bash
         run: |
+          source .r2-credentials/credentials.env
           {
             echo "R2_API_TOKEN=${R2_API_TOKEN:-}"
             echo "CF_API_TOKEN=${CF_API_TOKEN:-$R2_API_TOKEN}"
