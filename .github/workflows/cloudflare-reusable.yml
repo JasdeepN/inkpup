@@ -183,7 +183,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Source credentials file to load R2 variables
+          set +u  # Temporarily allow undefined variables
           source .r2-credentials/credentials.env
+          set -u  # Re-enable undefined variable check
+          # Export all variables to GitHub environment
           {
             echo "R2_ACCOUNT_ID=${R2_ACCOUNT_ID:-}"
             echo "R2_API_TOKEN=${R2_API_TOKEN:-}"
@@ -251,7 +255,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Source credentials file to load R2 variables
+          set +u  # Temporarily allow undefined variables
           source .r2-credentials/credentials.env
+          set -u  # Re-enable undefined variable check
+          # Export all variables to GitHub environment
           {
             echo "R2_ACCOUNT_ID=${R2_ACCOUNT_ID:-}"
             echo "R2_API_TOKEN=${R2_API_TOKEN:-}"
@@ -323,7 +331,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Source credentials file to load R2 variables
+          set +u  # Temporarily allow undefined variables
           source .r2-credentials/credentials.env
+          set -u  # Re-enable undefined variable check
+          # Export all variables to GitHub environment
           {
             echo "R2_ACCOUNT_ID=${R2_ACCOUNT_ID:-}"
             echo "R2_API_TOKEN=${R2_API_TOKEN:-}"
