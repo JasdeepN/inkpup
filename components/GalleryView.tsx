@@ -185,7 +185,7 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
   return (
     <div className="gallery-view">
       <div className="gallery-filters" role="tablist" aria-label="Gallery categories">
-        {GALLERY_CATEGORIES.map((category) => {
+        {GALLERY_CATEGORIES.filter(category => category !== 'hero').map((category) => {
           const label = getCategoryLabel(category);
           const isActive = category === activeCategory;
           return (

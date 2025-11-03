@@ -5,6 +5,9 @@ import { isGalleryCategory } from './gallery-types';
 
 const ADMIN_PATH_PREFIX = `${ADMIN_INTERNAL_PATH}/`;
 
+// Admin routes that should be accessed directly (not rewritten)
+const ADMIN_ROUTES = ['/dashboard', '/gallery', '/uploads', '/admin'];
+
 function shouldBypass(pathname: string): boolean {
   return (
     pathname.startsWith('/_next') ||
@@ -17,7 +20,8 @@ function shouldBypass(pathname: string): boolean {
     pathname.startsWith('/favicon-') ||
     pathname.startsWith('/icon-') ||
     pathname.startsWith('/apple-touch-icon') ||
-    pathname.startsWith('/assets')
+    pathname.startsWith('/assets') ||
+    ADMIN_ROUTES.some(route => pathname === route || pathname.startsWith(`${route}/`))
   );
 }
 

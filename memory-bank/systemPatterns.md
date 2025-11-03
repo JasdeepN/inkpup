@@ -12,6 +12,7 @@
 - Use data/business.json as the single source of truth for business copy, metadata, and structured data components.
 - Call listGalleryImages().asPromise() when asynchronous iteration is required while preserving the legacy synchronous result object.
 - Run Jest from the terminal with `npx jest --forceExit` (and additional flags as needed) to avoid hung processes.
+- Cloudflare analytics fetcher requests <=24h windows in sequence and caps historical lookback when the API reports retention limits, ensuring dashboards degrade gracefully.
 
 
 ## Centralized metadata management
@@ -93,3 +94,54 @@ When using GitHub environment secrets (scoped to dev/production) in reusable wor
 - Workflow pattern: secrets declared at workflow_call level, passed to steps via env: ADMIN_PORTAL_PASSWORD: ${{ secrets.ADMIN_PORTAL_PASSWORD }}
 - Safe sourcing: set +u; source .credentials; set -u
 - Safe writing: printf 'SECRET=%q\n' "${SECRET}" >> file
+
+
+## Task Breakdown and Management
+
+Create a comprehensive prompt file that breaks down tasks into actionable steps, utilizing memory management and project management principles. Each step should be saved with a #todo tag for tracking progress.
+
+### Examples
+
+- Creating a project plan with defined milestones and tasks
+- Breaking down a coding task into smaller functions with clear objectives
+
+
+## Task Breakdown with Actionable Steps
+
+Create a comprehensive prompt file that breaks down tasks into actionable steps, utilizing memory management and project management principles. Each step should be saved with a #todo tag for easy tracking and execution.
+
+### Examples
+
+- Creating a project plan with defined milestones and tasks
+- Breaking down a coding task into smaller, manageable functions
+
+
+## Memory Management Enhancement
+
+Ensure that prompts save data to the designated memory management files instead of the prompt file. This enhances data organization and retrieval efficiency.
+
+### Examples
+
+- Saving user preferences to memory management files instead of the main prompt file.
+- Storing session data in memory management for better performance.
+
+
+
+## #MemoryManagement
+
+Emphasizes the importance of memory management in coding practices, advocating for small, concise tasks and constant context updates to enhance efficiency and performance.
+
+### Examples
+
+- Optimizing data structures to reduce memory usage
+- Implementing garbage collection techniques
+- Using memory pools for resource management
+
+
+Emphasizes the importance of memory management in coding practices, ensuring efficient use of resources and preventing memory leaks.
+
+### Examples
+
+- Using smart pointers in C++ to manage dynamic memory allocation.
+- Implementing garbage collection in Java to automatically reclaim memory.
+- Optimizing data structures to minimize memory usage.

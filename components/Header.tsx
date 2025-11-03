@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { logoutAction } from '../lib/admin-actions';
 
 export default function Header() {
   const [open, setOpen] = useState(false);
@@ -31,23 +32,45 @@ export default function Header() {
   }, [dark]);
 
   const pathname = usePathname();
-  const isAdmin = pathname?.startsWith('/admin');
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    // Check if the current host is an admin host (e.g., admin.inkpup.com)
+    const adminHostPattern = /^admin\./i;
+    const isAdminHost = typeof window !== 'undefined' && adminHostPattern.test(window.location.hostname);
+    setIsAdmin(isAdminHost || Boolean(pathname && pathname.startsWith('/admin')));
+  }, [pathname]);
 
   return (
     <header className="site-header">
       <div className="container site-header__inner">
         <div className="site-header__brand">
-          <Link href="/" className="text-2xl font-bold" data-testid="site-logo">InkPup</Link>
+          <Link href="/" className="text-2xl font-bold flex items-baseline gap-2" data-testid="site-logo">
+            InkPup
+            {isAdmin && (
+              <sup className="ml-1 text-xs font-semibold text-pink-400 align-super" aria-label="Admin console" title="Admin console">ADMIN</sup>
+            )}
+          </Link>
           <nav className="primary-nav hidden md:flex" aria-label="Primary">
-            <Link href="/portfolio" data-testid="nav-portfolio">Portfolio</Link>
-            <Link href="/contact" data-testid="nav-contact">Contact</Link>
-            <Link href="/about" data-testid="nav-about">About</Link>
+            {isAdmin ? (
+              <>
+                <Link href="/dashboard" data-testid="nav-admin-dashboard">Dashboard</Link>
+                <Link href="/gallery" data-testid="nav-admin-gallery">Gallery</Link>
+                <Link href="/uploads" data-testid="nav-admin-uploads">Uploads</Link>
+              </>
+            ) : (
+              <>
+                <Link href="/portfolio" data-testid="nav-portfolio">Portfolio</Link>
+                <Link href="/contact" data-testid="nav-contact">Contact</Link>
+                <Link href="/about" data-testid="nav-about">About</Link>
+              </>
+            )}
           </nav>
         </div>
 
         <div className="header-actions">
           {isAdmin ? (
-            <form action="?status=logout" method="POST">
+            <form action={logoutAction}>
               <button type="submit" name="logout" className="btn btn--secondary" data-testid="nav-logout">Sign out</button>
             </form>
           ) : (
@@ -79,15 +102,22 @@ export default function Header() {
         aria-label="Mobile"
       >
         <div className="container mobile-nav__inner py-4">
-          <Link href="/portfolio" ref={firstLinkRef} data-testid="mobile-portfolio">Portfolio</Link>
-          <Link href="/contact" data-testid="mobile-contact">Contact</Link>
-          <Link href="/about" data-testid="mobile-about">About</Link>
           {isAdmin ? (
-            <form action="?status=logout" method="POST" className="mt-2">
-              <button type="submit" name="logout" className="btn btn--secondary w-full" data-testid="mobile-logout">Sign out</button>
-            </form>
+            <>
+              <Link href="/dashboard" ref={firstLinkRef} data-testid="mobile-admin-dashboard">Dashboard</Link>
+              <Link href="/gallery" data-testid="mobile-admin-gallery">Gallery</Link>
+              <Link href="/uploads" data-testid="mobile-admin-uploads">Uploads</Link>
+              <form action={logoutAction} className="mt-2">
+                <button type="submit" name="logout" className="btn btn--secondary w-full" data-testid="mobile-logout">Sign out</button>
+              </form>
+            </>
           ) : (
-            <Link href="/contact" className="btn btn--primary mt-2" data-testid="mobile-book">Book</Link>
+            <>
+              <Link href="/portfolio" ref={firstLinkRef} data-testid="mobile-portfolio">Portfolio</Link>
+              <Link href="/contact" data-testid="mobile-contact">Contact</Link>
+              <Link href="/about" data-testid="mobile-about">About</Link>
+              <Link href="/contact" className="btn btn--primary mt-2" data-testid="mobile-book">Book</Link>
+            </>
           )}
         </div>
       </nav>

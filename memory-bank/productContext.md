@@ -19,3 +19,86 @@ InkPup Tattoos runs a Cloudflare-hosted Next.js App Router site that showcases t
 - Sharp-driven image optimization with fallbacks when the module is absent.
 - Jest + Testing Library and Playwright for unit, integration, and end-to-end coverage.
 - ESLint 9, PostCSS, and Tailwind configuration for linting and styling workflows.
+
+
+## Project Description
+
+This project is a web application that emphasizes optimal memory management practices to enhance performance and reduce resource consumption.
+
+
+
+This project is aimed at optimizing memory management in applications, ensuring efficient use of resources and improving performance.
+
+
+
+This project involves memory management for saving prompts and related data.
+
+
+
+Create a comprehensive prompt file to break down tasks into actionable steps with todos for each step.
+
+
+
+## Architecture
+
+The project follows a modular architecture with a focus on efficient memory management. Each module is designed to handle specific tasks while minimizing memory usage.
+
+
+
+The project follows a modular architecture with a focus on memory management and efficient resource utilization. Each module is designed to handle specific tasks while minimizing memory overhead.
+
+
+
+The architecture includes a memory management system that handles the storage and retrieval of prompts and other data.
+
+
+
+Utilizes a structured approach to task management and memory storage.
+
+
+
+## Technologies
+
+- JavaScript
+- HTML
+- CSS
+- REST APIs
+
+
+
+- JavaScript
+- Node.js
+- Express
+
+
+
+- JavaScript
+- Node.js
+
+
+
+- Markdown
+- Task Management Tools
+
+
+
+## Libraries and Dependencies
+
+- React
+- Node.js
+- Express
+- MongoDB
+
+
+
+- memory.js
+- resource-manager
+
+
+
+- memory-management-lib
+
+
+
+- Memory Management Libraries
+

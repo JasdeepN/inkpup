@@ -1,6 +1,6 @@
 import GalleryView from '../../components/GalleryView';
 import { listGalleryImages } from '../../lib/r2-server';
-import type { GalleryCategory } from '../../lib/gallery-types';
+import type { GalleryCategory, GalleryItem } from '../../lib/gallery-types';
 import { createPageMetadata } from '../../lib/site-metadata';
 
 export async function generateMetadata() {
@@ -11,6 +11,11 @@ export async function generateMetadata() {
 }
 
 const DEFAULT_CATEGORY: GalleryCategory = 'healed';
+const EXCLUDED_CATEGORIES: GalleryCategory[] = ['hero'];
+
+function filterExcludedCategories(items: GalleryItem[]): GalleryItem[] {
+  return items.filter(item => !EXCLUDED_CATEGORIES.includes(item.category));
+}
 
 export default async function PortfolioPage() {
   const legacyResult = listGalleryImages(DEFAULT_CATEGORY);
@@ -27,7 +32,7 @@ export default async function PortfolioPage() {
       <GalleryView
         initialCategory={DEFAULT_CATEGORY}
         initialData={{
-          items: resolved.items,
+          items: filterExcludedCategories(resolved.items),
           fallback: resolved.isFallback,
           fallbackReason: resolved.fallbackReason,
           usedBundledFallback: resolved.usedBundledFallback,
@@ -37,3 +42,4 @@ export default async function PortfolioPage() {
     </section>
   );
 }
+

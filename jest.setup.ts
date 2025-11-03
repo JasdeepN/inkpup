@@ -1,10 +1,73 @@
 import '@testing-library/jest-dom';
+import { ReadableStream, TransformStream, WritableStream } from 'stream/web';
+import { MessageChannel, MessagePort } from 'worker_threads';
+import { TextDecoder, TextEncoder } from 'util';
 import React from 'react';
 import { act as domAct } from 'react-dom/test-utils';
 
 type ReactModule = typeof import('react');
 
 const reactNamespace = React as ReactModule & { default?: ReactModule };
+
+const globalScope = globalThis as typeof globalThis & {
+  TextDecoder?: typeof TextDecoder;
+  TextEncoder?: typeof TextEncoder;
+  Headers?: typeof import('undici').Headers;
+  Request?: typeof import('undici').Request;
+  Response?: typeof import('undici').Response;
+  fetch?: typeof import('undici').fetch;
+  ReadableStream?: typeof ReadableStream;
+  WritableStream?: typeof WritableStream;
+  TransformStream?: typeof TransformStream;
+  MessageChannel?: typeof MessageChannel;
+  MessagePort?: typeof MessagePort;
+};
+
+if (typeof globalScope.TextEncoder === 'undefined') {
+  globalScope.TextEncoder = TextEncoder;
+}
+
+if (typeof globalScope.TextDecoder === 'undefined') {
+  globalScope.TextDecoder = TextDecoder;
+}
+
+if (typeof globalScope.ReadableStream === 'undefined') {
+  globalScope.ReadableStream = ReadableStream;
+}
+
+if (typeof globalScope.WritableStream === 'undefined') {
+  globalScope.WritableStream = WritableStream;
+}
+
+if (typeof globalScope.TransformStream === 'undefined') {
+  globalScope.TransformStream = TransformStream;
+}
+
+if (typeof globalScope.MessageChannel === 'undefined') {
+  globalScope.MessageChannel = MessageChannel;
+}
+
+if (typeof globalScope.MessagePort === 'undefined') {
+  globalScope.MessagePort = MessagePort as unknown as typeof globalScope.MessagePort;
+}
+
+const { Headers, Request, Response, fetch: undiciFetch } = require('undici') as typeof import('undici');
+
+if (typeof globalScope.fetch === 'undefined') {
+  globalScope.fetch = undiciFetch;
+}
+
+if (typeof globalScope.Headers === 'undefined') {
+  globalScope.Headers = Headers;
+}
+
+if (typeof globalScope.Request === 'undefined') {
+  globalScope.Request = Request;
+}
+
+if (typeof globalScope.Response === 'undefined') {
+  globalScope.Response = Response;
+}
 
 if (process.env.JEST_WORKER_ID !== undefined) {
   const actImpl = typeof reactNamespace.act === 'function' ? reactNamespace.act : domAct;

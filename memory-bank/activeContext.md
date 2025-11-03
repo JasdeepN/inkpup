@@ -2,7 +2,8 @@
 
 ## Current Goals
 
-- Admin portal deployment completed successfully. Environment secrets (ADMIN_PORTAL_PASSWORD, ADMIN_SESSION_SECRET) are properly configured and deployed. Admin webhook receiver is live at /api/admin/reciever. Next: test admin login and webhook integration in deployed environment.
+- Verify the admin dashboard with live Cloudflare analytics data after the chunked fetch rewrite.
+- Polish the dashboard layout and copy once metrics render correctly in dev.
 
 ## Current Blockers
 

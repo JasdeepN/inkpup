@@ -222,13 +222,16 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
 
   const fallbackResult = (reason: GalleryFallbackReason): GalleryFetchResult => {
     const items = bundledFallbackAllowed ? buildFallbackItems(category) : [];
-    console.warn('[r2server] returning fallback gallery items', {
-      category,
-      reason,
-      bundledFallbackAllowed,
-      credentialStatus,
-      itemsCount: items.length,
-    });
+    if (process.env.DEBUG === 'true') {
+      // eslint-disable-next-line no-console
+      console.warn('[r2server] returning fallback gallery items', {
+        category,
+        reason,
+        bundledFallbackAllowed,
+        credentialStatus,
+        itemsCount: items.length,
+      });
+    }
     return {
       items,
       isFallback: true,
@@ -239,10 +242,13 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
   };
 
   if (!hasR2Credentials()) {
-    console.warn('[r2server] missing R2 credentials when fetching gallery items', {
-      category,
-      credentialStatus,
-    });
+    if (process.env.DEBUG === 'true') {
+      // eslint-disable-next-line no-console
+      console.warn('[r2server] missing R2 credentials when fetching gallery items', {
+        category,
+        credentialStatus,
+      });
+    }
     return fallbackResult('missing_credentials');
   }
   // Trim leading/trailing slashes from the category to form the R2 prefix.
@@ -264,13 +270,16 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
         // Call the binding.list API as used in Workers: { prefix, limit, cursor }
         const bindingResult = await binding.list({ prefix: `${prefix}/`, limit: 1000, cursor: undefined });
         const objects = bindingResult?.objects ?? [];
+        if (process.env.DEBUG === 'true') {
+        // eslint-disable-next-line no-console
         console.info('[r2server] r2 binding list()', {
           category,
           prefix,
           objects: objects.length,
-          source: probe.source,
-          contextSymbolPresent: probe.contextSymbolPresent,
-        });
+            source: probe.source,
+        contextSymbolPresent: probe.contextSymbolPresent,
+      });
+    }
         const images: GalleryItem[] = objects
           .filter((o: any) => o?.key && !String(o.key).endsWith('/'))
           .map((o: any) => ({
@@ -294,11 +303,14 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
         });
 
         if (images.length === 0) {
-          console.warn('[r2server] r2 binding returned no gallery objects', {
-            category,
-            prefix,
-            source: probe.source,
-          });
+          if (process.env.DEBUG === 'true') {
+            // eslint-disable-next-line no-console
+            console.warn('[r2server] r2 binding returned no gallery objects', {
+              category,
+              prefix,
+              source: probe.source,
+            });
+          }
         }
         return {
           items: images,
@@ -308,12 +320,18 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
         };
       } catch (err) {
         // If binding call fails, fall through to S3 client path but log for diagnostics
-        console.warn('[r2server] r2 binding list() failed', err);
+        if (process.env.DEBUG === 'true') {
+          // eslint-disable-next-line no-console
+          console.warn('[r2server] r2 binding list() failed', err);
+        }
       }
     }
   } catch (err) {
     // Log probe errors for diagnostics and continue to S3 path
-    console.warn('[r2server] probeR2Binding failed', err);
+    if (process.env.DEBUG === 'true') {
+      // eslint-disable-next-line no-console
+      console.warn('[r2server] probeR2Binding failed', err);
+    }
   }
 
   // Prefer a synchronous client creation if available to make the call path
@@ -331,7 +349,10 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
     } catch (error) {
       // Log the error and return a fallback result so callers can continue in CI/test environments.
       // Keep the fallback behavior to avoid hard failures when R2 is not configured.
-      console.error('[r2server] client initialization failed while listing gallery images', error);
+      if (process.env.DEBUG === 'true') {
+        // eslint-disable-next-line no-console
+        console.error('[r2server] client initialization failed while listing gallery images', error);
+      }
       return fallbackResult('client_initialization_failed');
     }
   }
@@ -340,11 +361,14 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
 
   try {
     const images = await fetchGalleryImagesFromR2(clientInstance as S3Client, prefix, category);
-    console.info('[r2server] r2 s3 client fetched gallery objects', {
-      category,
-      prefix,
-      count: images.length,
-    });
+    if (process.env.DEBUG === 'true') {
+      // eslint-disable-next-line no-console
+      console.info('[r2server] r2 s3 client fetched gallery objects', {
+        category,
+        prefix,
+        count: images.length,
+      });
+    }
     return {
       items: images,
       isFallback: false,
@@ -353,7 +377,10 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
     };
   } catch (error) {
     // Log fetch errors and return a fallback result.
-    console.error('[r2server] failed to fetch gallery images from R2', error);
+    if (process.env.DEBUG === 'true') {
+      // eslint-disable-next-line no-console
+      console.error('[r2server] failed to fetch gallery images from R2', error);
+    }
     return fallbackResult('r2_fetch_failed');
   }
 }

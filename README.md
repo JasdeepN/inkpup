@@ -2,17 +2,15 @@
 
 This repository contains a Next.js App Router scaffold for a tattoo studio website intended for the GTA/Toronto area.
 
-What I added
-- Minimal Next.js scaffold (App Router) with `app/layout.tsx`, `app/head.tsx`, and a homepage.
-- `components/Meta.tsx` and `components/LocalBusinessJsonLd.tsx` for SEO and structured data.
-- `next.config.js`, `next-sitemap.config.js`, and `public/robots.txt`.
+## Admin Portal Refactor (2025-10-26)
 
-Assumptions
-- Business Instagram: `https://www.instagram.com/inkpup.tattoos/` — used as the social handle and link.
-- Business name assumed: "InkPup Tattoos" (please update `components/LocalBusinessJsonLd.tsx` with exact business info: address, phone, hours, geo coords).
-- Replace `your-domain.example` in `next-sitemap.config.js` and `public/robots.txt` with the production domain before deploying (use `https://www.inkpup.ca`).
+The admin portal has been refactored for modularity and maintainability:
+- **Modular Components:** `components/admin/JobSummary.tsx` and `components/admin/UploadForm.tsx` are now reusable, well-tested components used across dashboard, uploads, and gallery admin pages.
+- **Improved Navigation:** Admin navigation is consistent and includes an ADMIN badge for clarity.
+- **Expanded Tests:** All admin components are covered by Jest and React Testing Library tests. See `components/admin/README.md` for details.
+- **Documentation:** Admin component usage and props are documented in `components/admin/README.md`.
 
-Getting started
+## Getting started
 1. Install dependencies:
 ```bash
 npm install
@@ -27,7 +25,7 @@ npm run build
 npm run start
 ```
 
-Cloudflare Workers notes
+## Cloudflare Workers notes
 - Build and deploy with the `@opennextjs/cloudflare` adapter (`npm run opennext:build` / `npm run opennext:deploy`) as documented in [OpenNext for Cloudflare – Get started](https://opennext.js.org/cloudflare/get-started).
 - Ensure `wrangler.toml` keeps the compatibility date at `2024-09-23` or later with `nodejs_compat` enabled so the Worker runtime matches the adapter requirements.
 - All environments serve media from the shared `https://r2.inkpup.ca` custom hostname. The workflows and `.env.example` set `R2_PUBLIC_HOSTNAME` to this URL so dev, staging, and production resolve to the same bucket. If you need to fall back to the raw R2 endpoint for debugging, override `R2_PUBLIC_HOSTNAME` locally and revert after testing.
@@ -36,6 +34,7 @@ Cloudflare Workers notes
 
 For a focused local setup walkthrough (Next-only vs Wrangler dev, bindings, and env credentials), see: `docs/local-cloudflare-dev.md`.
 - Optional: set `CF_WEB_ANALYTICS_TOKEN` (or the build-time `NEXT_PUBLIC_CF_WEB_ANALYTICS_TOKEN`) to embed the Cloudflare Web Analytics beacon manually. If you enable this path, disable the automatic injection toggle in the Cloudflare dashboard to avoid duplicate scripts or stale SRI hashes. The value comes from **Web Analytics → Manage site → JS Snippet**. Add each hostname you plan to serve (for example `inkpup.ca` and `dev.inkpup.ca`) so the beacon request passes the CORS/hostname validation step documented in [Cloudflare Web Analytics FAQ → Errors](https://developers.cloudflare.com/web-analytics/faq/#when-i-add-the-beacon-to-my-website-and-load-the-webpage-i-see-an-error-that-includes-is-not-allowed-by-access-control-allow-origin-cors-what-is-happening).
+- Admin dashboard analytics: set `CLOUDFLARE_ANALYTICS_TOKEN` (API token with **Account Analytics:Read** and **Zone.Zone:Read** scopes) and `CLOUDFLARE_ZONE_ID` to surface request/visit metrics via the GraphQL Analytics API. Optional overrides: `CLOUDFLARE_ANALYTICS_ENDPOINT` (defaults to `https://api.cloudflare.com/client/v4/graphql`) and `CLOUDFLARE_ANALYTICS_CACHE_MS` (default 300000 ms). On development machines without credentials the dashboard gracefully hides the Cloudflare stats cards.
 
 Cloudflare deployment (GitHub Actions)
 
@@ -86,7 +85,7 @@ Error 7003 means the request could not be routed to the targeted resource—most
 Update business data
 - Edit `data/business.json` with exact address, phone, email, website domain before deploying. The layout uses this file to populate LocalBusiness JSON-LD.
 
-End-to-end tests (Playwright)
+## End-to-end tests (Playwright)
 
 This project includes Playwright e2e tests that cover the gallery experience (category switching, error states, modal interactions) in addition to navigation, skip links, and mobile menu behavior.
 
@@ -114,7 +113,6 @@ PLAYWRIGHT_BASE_URL=http://localhost:3002 npx playwright test
 
 The tests are located under `tests/e2e/` and the Playwright config is `playwright.config.ts`.
 
-
 ## Local GitHub Actions cache for `act`
 
 Running `act` repeatedly can be slow if the Docker runner images have to be re-downloaded each time. This project bundles a helper script, inspired by the [official `act` image catalog](https://github.com/nektos/act/blob/master/IMAGES.md), that pulls `ghcr.io/catthehacker/ubuntu:act-latest`, stores a compressed archive locally, and can reload it on demand.
@@ -132,53 +130,3 @@ npm run act:cache:prune
 ```
 
 By default the archives are written to `~/.cache/act-images`. You can override the location or image list by setting `ACT_IMAGE_CACHE_DIR` and `ACT_IMAGE_CACHE_IMAGES` (space-delimited) before executing the script. After warming the cache, you can run `act` with `--pull=false` or rely on the cached layers for much faster local CI loops.
-
-## Admin portal
-
-A password-protected gallery portal is available for managing Cloudflare R2 assets. Configure the following environment variables (see `.env.example`):
-
-- `ADMIN_PORTAL_HOSTS`: Comma-separated hostnames that should serve the portal. Defaults to `admin.inkpup.com`, `dev.admin.inkpup.com`, and local hostnames outside production.
-- `ADMIN_PORTAL_PASSWORD`: Portal password required to sign in.
-- `ADMIN_SESSION_SECRET`: Secret used to sign session cookies (rotate on compromise).
-- Optional overrides: `ADMIN_SESSION_COOKIE_NAME`, `ADMIN_SESSION_TTL_HOURS`, and `R2_MAX_IMAGE_WIDTH` (defaults to 1800px).
-
-Uploads are optimized with Sharp (auto-rotation, max width, WebP output) before being pushed to R2 with long-lived cache headers. The portal lists existing gallery assets, provides direct links, and supports deletion. R2 credentials (`R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and, when using temporary credentials, `R2_SESSION_TOKEN`) must be present for mutations; otherwise, the UI falls back to read-only mode.
-
-### Admin webhook (job notifications)
-
-This project includes an admin webhook receiver at `/api/admin/reciever` that accepts signed POST notifications from the upload worker (or any sender) to inform the site about job lifecycle events (queued, failed, succeeded, dead-lettered).
-
-Configuration:
-
-- `ADMIN_WEBHOOK_URL` — The full public URL where your deployment exposes the receiver (for example `https://devapp.lan/api/admin/reciever`) or a relative path on the same host. When empty, webhook sending is disabled.
-- `ADMIN_WEBHOOK_SECRET` — High-entropy secret used to sign payloads. Store this in a secure secrets manager (do NOT commit to source control).
-
-Signature/format:
-
-- Payloads are JSON. Example event types: `job_queued`, `job_failed`, `job_succeeded`, `job_dead_lettered`.
-- Signature header: `x-hub-signature-256: sha256=<hex>` where `<hex>` is the HMAC-SHA256 hex digest of the JSON payload using `ADMIN_WEBHOOK_SECRET`.
-- Timestamp header: `x-hub-timestamp` (epoch ms). The receiver enforces a small tolerance window (default ±5 minutes).
-
-Testing locally:
-
-- A helper script is included at `.tmp/test-webhook.cjs` to send a correctly-signed POST to the local dev server. From the repo root:
-
-```bash
-node ./.tmp/test-webhook.cjs
-```
-
-- On success the receiver responds with `200` and revalidates `/admin` so the portal reflects updated job state.
-
-Security note:
-
-- Rotate `ADMIN_WEBHOOK_SECRET` immediately if it is ever exposed. Use a secret store (GitHub Actions secrets, Cloudflare secret bindings, etc.) to provision it in production.
-
-## Attribution
-
-This project uses the "Wolf" icon from Flaticon for the site favicon. The icon is provided by the author Freepik and is free to use with attribution.
-
-Required attribution:
-
-"Wolf icon by Freepik from www.flaticon.com"
-
-See `ATTRIBUTION.md` for details and usage instructions.
