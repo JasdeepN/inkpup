@@ -47,6 +47,7 @@ if (typeof globalScope.TransformStream === 'undefined') {
 }
 
 if (typeof globalScope.MessageChannel === 'undefined') {
+  // @ts-expect-error - Type incompatibility between Node worker_threads and global MessageChannel
   globalScope.MessageChannel = MessageChannel;
 }
 
@@ -68,18 +69,22 @@ reactNamespace = React;
 const { Headers, Request, Response, fetch: undiciFetch } = require('undici') as typeof import('undici');
 
 if (typeof globalScope.fetch === 'undefined') {
+  // @ts-expect-error - Type incompatibility between undici fetch and global fetch
   globalScope.fetch = undiciFetch;
 }
 
 if (typeof globalScope.Headers === 'undefined') {
+  // @ts-expect-error - Type incompatibility between undici Headers and global Headers
   globalScope.Headers = Headers;
 }
 
 if (typeof globalScope.Request === 'undefined') {
+  // @ts-expect-error - Type incompatibility between undici Request and global Request
   globalScope.Request = Request;
 }
 
 if (typeof globalScope.Response === 'undefined') {
+  // @ts-expect-error - Type incompatibility between undici Response and global Response
   globalScope.Response = Response;
 }
 
