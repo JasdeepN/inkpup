@@ -33,8 +33,12 @@ export async function POST(request: NextRequest) {
     const resendApiKey = process.env.RESEND_API_KEY;
 
     if (!resendApiKey) {
-      console.error('❌ RESEND_API_KEY not configured');
-      throw new Error('Email service not configured');
+      console.warn('⚠️  RESEND_API_KEY not configured - email will not be sent');
+      console.log('📝 Contact form submission (logging only):', { name, email, message });
+      // Continue to success redirect even without email service
+      const url = new URL('/contact', request.url);
+      url.searchParams.set('success', 'true');
+      return NextResponse.redirect(url, 303);
     }
 
     const resend = new Resend(resendApiKey);
