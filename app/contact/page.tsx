@@ -4,8 +4,8 @@ import { isCalendlyBookingEnabled } from '../../lib/featureFlags';
 
 export default function ContactPage() {
   const searchParams = useSearchParams();
-  const success = searchParams.get('success');
-  const error = searchParams.get('error');
+  const success = searchParams?.get('success');
+  const error = searchParams?.get('error');
   const calendlyEnabled = isCalendlyBookingEnabled();
   
   return (

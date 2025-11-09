@@ -23,14 +23,17 @@ const globalScope = globalThis as typeof globalThis & {
 };
 
 if (typeof globalScope.TextEncoder === 'undefined') {
+  // @ts-expect-error - Type incompatibility between Node util and global TextEncoder
   globalScope.TextEncoder = TextEncoder;
 }
 
 if (typeof globalScope.TextDecoder === 'undefined') {
+  // @ts-expect-error - Type incompatibility between Node util and global TextDecoder
   globalScope.TextDecoder = TextDecoder;
 }
 
 if (typeof globalScope.ReadableStream === 'undefined') {
+  // @ts-expect-error - Type incompatibility between Node stream/web and global ReadableStream
   globalScope.ReadableStream = ReadableStream;
 }
 
@@ -39,6 +42,7 @@ if (typeof globalScope.WritableStream === 'undefined') {
 }
 
 if (typeof globalScope.TransformStream === 'undefined') {
+  // @ts-expect-error - Type incompatibility between Node stream/web and global TransformStream
   globalScope.TransformStream = TransformStream;
 }
 
