@@ -19,6 +19,7 @@ export default function HeroCarousel({
   const [isPlaying, setIsPlaying] = useState(true);
   const [isVisible, setIsVisible] = useState(true);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const intervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -38,8 +39,25 @@ export default function HeroCarousel({
     const id = window.setInterval(() => {
       setIndex((i) => (i + 1) % images.length);
     }, interval);
-    return () => window.clearInterval(id);
+    intervalRef.current = id;
+    return () => {
+      if (intervalRef.current) window.clearInterval(intervalRef.current);
+    };
   }, [isPlaying, isVisible, images.length, interval, prefersReducedMotion]);
+
+  const handleImageClick = () => {
+    if (images.length <= 1) return;
+    // Clear existing interval
+    if (intervalRef.current) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    // Advance to next image
+    setIndex((i) => (i + 1) % images.length);
+    // Restart autoplay by toggling isPlaying
+    setIsPlaying(false);
+    setTimeout(() => setIsPlaying(true), 50);
+  };
 
   // Controls intentionally silent: no keyboard or swipe handlers — autoplay only
 
@@ -55,7 +73,11 @@ export default function HeroCarousel({
       onMouseEnter={() => setIsPlaying(false)}
       onMouseLeave={() => setIsPlaying(true)}
     >
-      <div className="hero-carousel__viewport">
+      <div 
+        className="hero-carousel__viewport"
+        onClick={handleImageClick}
+        style={{ cursor: images.length > 1 ? 'pointer' : 'default' }}
+      >
         {images.map((img, i) => (
           <div
             key={img.key ?? img.src + i}

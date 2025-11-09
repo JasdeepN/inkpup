@@ -99,7 +99,7 @@ describe('upload and delete gallery images', () => {
     sendMock.mockReset();
   // Removed mockReset and mockImplementation calls for S3ClientMock
     sharpMock.mockClear();
-    process.env = { ...originalEnv };
+    process.env = { ...originalEnv, DEBUG: 'true' };
     fetchMock = buildFetchMock();
     (globalThis as Record<string, unknown>).fetch = fetchMock;
 

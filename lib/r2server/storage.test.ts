@@ -142,7 +142,7 @@ describe('storage module branch coverage', () => {
     (globalThis as any).S3ClientMock = undefined;
     (global as any).S3ClientMock = undefined;
 
-    process.env = { ...originalEnv, NODE_ENV: 'test' };
+    process.env = { ...originalEnv, NODE_ENV: 'test', DEBUG: 'true' };
 
     warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -530,6 +530,52 @@ describe('storage module branch coverage', () => {
     const metadata = instanceSend.mock.calls[0][0].input.Metadata;
     expect(metadata.alt.length).toBeLessThanOrEqual(256);
     expect(sharpDefaultMock).toHaveBeenCalled();
+  });
+
+  test('uploadGalleryImage respects client optimized payload without re-running sharp', async () => {
+    const instanceSend = jest.fn().mockResolvedValue({});
+    getClientMock.mockResolvedValue({ send: instanceSend });
+    const originalImplementation = sharpDefaultMock.getMockImplementation();
+    sharpDefaultMock.mockImplementation(() => {
+      throw new Error('sharp should not be called');
+    });
+
+    const mod = await import('./storage');
+
+    const buffer = Buffer.from('pre-optimized');
+
+    try {
+      const result = await mod.uploadGalleryImage({
+        category: 'flash',
+        originalFilename: 'pre-optimized.webp',
+        buffer,
+        clientOptimized: {
+          originalFilename: 'original.jpg',
+          originalContentType: 'image/jpeg',
+          width: 1400,
+          height: 900,
+          size: 321654,
+          contentType: 'image/webp',
+        },
+      });
+
+      expect(instanceSend).toHaveBeenCalledWith(
+        expect.objectContaining({
+          __type: 'PutObjectCommand',
+          input: expect.objectContaining({
+            Body: buffer,
+            ContentType: 'image/webp',
+          }),
+        })
+      );
+      expect(result.item.size).toBe(321654);
+    } finally {
+      if (originalImplementation) {
+        sharpDefaultMock.mockImplementation(originalImplementation);
+      } else {
+        sharpDefaultMock.mockImplementation(() => createSharpPipeline());
+      }
+    }
   });
 
   test('uploadGalleryImage falls back when sharp export is not callable', async () => {

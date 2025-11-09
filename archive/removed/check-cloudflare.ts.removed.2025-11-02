@@ -1,0 +1,13 @@
+import 'dotenv/config';
+
+const mod = await import('../lib/cloudflare-analytics.ts');
+
+mod.clearCloudflareAnalyticsCache();
+
+try {
+  const summary = await mod.getCloudflareAnalyticsSummary();
+  console.log(JSON.stringify(summary, null, 2));
+} catch (error) {
+  console.error('Error fetching summary', error);
+  process.exitCode = 1;
+}

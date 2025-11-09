@@ -24,6 +24,11 @@ export default function Header() {
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
+  // Close mobile menu when navigation occurs
+  const handleNavClick = () => {
+    setOpen(false);
+  };
+
   // Dark mode toggle
   const [dark, setDark] = useState(true);
   useEffect(() => {
@@ -104,19 +109,19 @@ export default function Header() {
         <div className="container mobile-nav__inner py-4">
           {isAdmin ? (
             <>
-              <Link href="/dashboard" ref={firstLinkRef} data-testid="mobile-admin-dashboard">Dashboard</Link>
-              <Link href="/gallery" data-testid="mobile-admin-gallery">Gallery</Link>
-              <Link href="/uploads" data-testid="mobile-admin-uploads">Uploads</Link>
+              <Link href="/dashboard" ref={firstLinkRef} onClick={handleNavClick} data-testid="mobile-admin-dashboard">Dashboard</Link>
+              <Link href="/gallery" onClick={handleNavClick} data-testid="mobile-admin-gallery">Gallery</Link>
+              <Link href="/uploads" onClick={handleNavClick} data-testid="mobile-admin-uploads">Uploads</Link>
               <form action={logoutAction} className="mt-2">
                 <button type="submit" name="logout" className="btn btn--secondary w-full" data-testid="mobile-logout">Sign out</button>
               </form>
             </>
           ) : (
             <>
-              <Link href="/portfolio" ref={firstLinkRef} data-testid="mobile-portfolio">Portfolio</Link>
-              <Link href="/contact" data-testid="mobile-contact">Contact</Link>
-              <Link href="/about" data-testid="mobile-about">About</Link>
-              <Link href="/contact" className="btn btn--primary mt-2" data-testid="mobile-book">Book</Link>
+              <Link href="/portfolio" ref={firstLinkRef} onClick={handleNavClick} data-testid="mobile-portfolio">Portfolio</Link>
+              <Link href="/contact" onClick={handleNavClick} data-testid="mobile-contact">Contact</Link>
+              <Link href="/about" onClick={handleNavClick} data-testid="mobile-about">About</Link>
+              <Link href="/contact" className="btn btn--primary mt-2" onClick={handleNavClick} data-testid="mobile-book">Book</Link>
             </>
           )}
         </div>

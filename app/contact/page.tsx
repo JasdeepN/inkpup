@@ -14,7 +14,7 @@ export default function ContactPage() {
     <section className="max-w-3xl mx-auto space-y-8">
       <div>
         <h2 className="text-2xl font-bold">Contact & Booking</h2>
-        <p className="text-gray-700">DM me on Insta or use the contact form below to send me an email directly.</p>
+        <p className="text-muted">DM me on Insta or use the contact form below to send me an email directly.</p>
         <div className="mt-4 flex justify-center sm:justify-start">
           <a
             href="https://ig.me/m/inkpup.tattoos"

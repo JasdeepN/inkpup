@@ -12,39 +12,39 @@ const config = {
   theme: {
     extend: {
       colors: {
-        // Semantic tokens for light/dark
+        // Semantic tokens using CSS variables
         bg: {
-          DEFAULT: '#0b1220', // dark background
+          DEFAULT: 'var(--bg)',
           light: '#fff',
           dark: '#0b1220',
         },
         surface: {
-          DEFAULT: '#171e2e', // card/surface
+          DEFAULT: 'var(--surface)',
           light: '#fff',
           dark: '#171e2e',
         },
         primary: {
-          DEFAULT: '#e6eef8', // main text
+          DEFAULT: 'var(--text)',
           light: '#111827',
           dark: '#e6eef8',
         },
         accent: {
-          DEFAULT: '#fb7185', // pink accent
+          DEFAULT: 'var(--brand-accent)',
           light: '#ef4444',
           dark: '#fb7185',
         },
         muted: {
-          DEFAULT: '#94a3b8',
+          DEFAULT: 'var(--muted)',
           light: '#6b7280',
           dark: '#94a3b8',
         },
         border: {
-          DEFAULT: '#232b3d',
+          DEFAULT: 'var(--border)',
           light: '#e5e7eb',
           dark: '#232b3d',
         },
         code: {
-          DEFAULT: '#1e293b',
+          DEFAULT: 'var(--surface-elevated)',
           light: '#f3f4f6',
           dark: '#1e293b',
         },

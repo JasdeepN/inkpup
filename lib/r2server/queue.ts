@@ -30,7 +30,68 @@ async function streamToBuffer(stream: any): Promise<Buffer> {
   });
 }
 
+function normalizePositiveInteger(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return Math.round(value);
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return Math.round(parsed);
+    }
+  }
+  return null;
+}
+
+function sanitizeClientOptimized(input: unknown): ClientOptimizedInfo | null {
+  if (!input || typeof input !== 'object') {
+    return null;
+  }
+
+  const value = input as Record<string, unknown>;
+  const sanitized: ClientOptimizedInfo = {};
+
+  if (typeof value.originalFilename === 'string' && value.originalFilename.trim().length) {
+    sanitized.originalFilename = value.originalFilename.trim();
+  }
+  if (typeof value.originalContentType === 'string' && value.originalContentType.trim().length) {
+    sanitized.originalContentType = value.originalContentType.trim();
+  }
+
+  const width = normalizePositiveInteger(value.width);
+  if (width !== null) {
+    sanitized.width = width;
+  }
+  const height = normalizePositiveInteger(value.height);
+  if (height !== null) {
+    sanitized.height = height;
+  }
+  const size = normalizePositiveInteger(value.size);
+  if (size !== null) {
+    sanitized.size = size;
+  }
+
+  if (typeof value.contentType === 'string' && value.contentType.trim().length) {
+    sanitized.contentType = value.contentType.trim();
+  }
+
+  if (!sanitized.contentType) {
+    sanitized.contentType = 'image/webp';
+  }
+
+  return sanitized;
+}
+
 type UploadJobStatus = 'queued' | 'scheduled' | 'dead_letter';
+
+export type ClientOptimizedInfo = {
+  originalFilename?: string;
+  originalContentType?: string;
+  width?: number | null;
+  height?: number | null;
+  size?: number | null;
+  contentType?: string;
+};
 
 export type UploadJobRecord = {
   jobId: string;
@@ -46,6 +107,7 @@ export type UploadJobRecord = {
   lastError?: string | null;
   createdAt: string;
   updatedAt: string;
+  clientOptimized?: ClientOptimizedInfo | null;
 };
 
 export type EnqueueUploadParams = {
@@ -56,6 +118,7 @@ export type EnqueueUploadParams = {
   caption?: string;
   contentType?: string;
   maxAttempts?: number;
+  clientOptimized?: ClientOptimizedInfo | null;
 };
 
 function computeNextAttemptDelay(attempt: number): number {
@@ -101,6 +164,7 @@ async function readJobRecord(client: S3ClientInstance, key: string): Promise<Upl
       lastError: parsed.lastError ?? null,
       createdAt: parsed.createdAt ?? nowIso(),
       updatedAt: parsed.updatedAt ?? nowIso(),
+      clientOptimized: sanitizeClientOptimized(parsed.clientOptimized) ?? undefined,
     } satisfies UploadJobRecord;
   } catch (error) {
     console.error('Failed to read upload job record', key, error);
@@ -125,7 +189,7 @@ async function cleanupSuccess(client: S3ClientInstance, jobKey: string, original
   }
 }
 
-export async function enqueueUploadJob({ category, originalFilename, buffer, alt, caption, contentType, maxAttempts }: EnqueueUploadParams) {
+export async function enqueueUploadJob({ category, originalFilename, buffer, alt, caption, contentType, maxAttempts, clientOptimized }: EnqueueUploadParams) {
   if (!hasR2Credentials()) {
     throw new Error('R2 credentials are required to enqueue upload jobs.');
   }
@@ -151,6 +215,8 @@ export async function enqueueUploadJob({ category, originalFilename, buffer, alt
     Metadata: Object.keys(metadata).length ? metadata : undefined,
   }));
 
+  const clientOptimizedInfo = sanitizeClientOptimized(clientOptimized);
+
   const jobKey = `${JOBS_PREFIX}${jobId}.json`;
   const createdAt = nowIso();
   const record: UploadJobRecord = {
@@ -167,6 +233,7 @@ export async function enqueueUploadJob({ category, originalFilename, buffer, alt
     lastError: null,
     createdAt,
     updatedAt: createdAt,
+    clientOptimized: clientOptimizedInfo ?? undefined,
   };
 
   await writeJson(client, jobKey, record);
@@ -288,6 +355,7 @@ export async function processPendingUploadJobs(options?: ProcessJobsOptions) {
           buffer: originalBuffer,
           alt: record.alt,
           caption: record.caption,
+          clientOptimized: record.clientOptimized ?? undefined,
         });
       } catch (error) {
         record.attempts += 1;

@@ -44,8 +44,8 @@
   font-weight: 600;
   font-size: 1rem;
   line-height: 1.2;
-  padding: 0.75rem 1.5rem;
-  min-height: 2.75rem;
+  padding: 0 1.5rem;
+  height: 48px;
   text-align: center;
   border: none;
   cursor: pointer;
@@ -63,6 +63,7 @@
   background: var(--brand-accent);
   color: #fff;
   box-shadow: 0 15px 30px rgba(251, 113, 133, 0.35);
+  height: 48px;
 }
 
 .btn--primary:hover,
@@ -104,7 +105,7 @@
   color: #fff;
   border: none;
   box-shadow: 0 16px 40px rgba(221, 42, 123, 0.45);
-  min-height: 3rem;
+  height: 48px;
 }
 
 .btn--instagram:hover,
@@ -172,22 +173,22 @@ body {
 /* dark theme overrides when .dark is present on <html> */
 html.dark {
   --bg: #0b1220; /* deep navy */
-  --text: #e6eef8; /* light text */
-  --muted: #94a3b8; /* muted text */
+  --text: #ffffff; /* pure white for maximum contrast */
+  --muted: #e2e8f0; /* very light muted text */
   --surface: #101a2c; /* surface for cards */
   --surface-elevated: #16243a;
   --border: rgba(148, 163, 184, 0.18);
-  --brand-primary: #e6eef8;
+  --brand-primary: #ffffff;
   --brand-accent: #fb7185; /* slightly softer pink */
   --header-bg: rgba(9, 16, 28, 0.85);
   --header-border: rgba(148, 163, 184, 0.16);
-  --header-text: #e6eef8;
-  --nav-link: #d9e2f2;
+  --header-text: #ffffff;
+  --nav-link: #f1f5f9;
   --nav-link-hover: #fb7185;
   --hero-bg: radial-gradient(circle at 12% 18%, rgba(29, 53, 90, 0.95) 0%, rgba(18, 32, 55, 0.92) 45%, rgba(10, 18, 32, 0.95) 100%);
   --hero-border: rgba(59, 130, 246, 0.25);
-  --hero-text: #f8fafc;
-  --hero-subtext: #9eaec9;
+  --hero-text: #ffffff;
+  --hero-subtext: #e2e8f0;
   --hero-overlay: radial-gradient(circle at 85% 15%, rgba(251, 113, 133, 0.25), transparent 55%),
                   radial-gradient(circle at 10% 85%, rgba(96, 165, 250, 0.18), transparent 50%);
 }
@@ -486,7 +487,13 @@ html.dark {
   height: auto;
   border-radius: 1.25rem;
   overflow: hidden;
-  min-height: 220px;
+  min-height: 600px;
+}
+
+@media (min-width: 768px) {
+  .hero-carousel__viewport {
+    min-height: 700px;
+  }
 }
 
 .hero-carousel__slide {
@@ -509,12 +516,12 @@ html.dark {
   position: relative;
   width: 100%;
   height: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 3 / 4;
 }
 
 @media (min-width: 768px) {
   .hero-carousel__slide-inner {
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 4 / 5;
   }
 }
 
@@ -1222,6 +1229,7 @@ html.dark .admin-dashboard__metrics div {
   height: 1.35rem;
   flex-shrink: 0;
   display: block;
+  margin-right: 0;
 }
 
 .site-footer__cta-text {

@@ -12,6 +12,7 @@ import * as probeModule from './probe';
 import { formatLabelFromKey, sanitizeFilename, buildFallbackItems } from './utils';
 import type { GalleryItem, GalleryCategory } from '../gallery-types';
 import { GALLERY_CATEGORIES, isGalleryCategory } from '../gallery-types';
+import type { ClientOptimizedInfo } from './queue';
 
 type SharpFactory = typeof import('sharp');
 
@@ -81,12 +82,14 @@ export async function uploadGalleryImage({
   buffer,
   alt,
   caption,
+  clientOptimized,
 }: {
   category: GalleryCategory;
   originalFilename: string;
   buffer: Buffer;
   alt?: string;
   caption?: string;
+  clientOptimized?: ClientOptimizedInfo;
 }): Promise<UploadGalleryImageResult> {
   if (!hasR2Credentials()) {
     throw new Error('R2 credentials are required to upload images.');
@@ -95,7 +98,16 @@ export async function uploadGalleryImage({
   const clientInstance = await getClient();
   const key = generateGalleryObjectKey(category, originalFilename);
 
-  const optimized = await createOptimizedImage(buffer);
+  let resolvedBuffer = buffer;
+  let resolvedSize: number;
+
+  if (clientOptimized) {
+    resolvedSize = clientOptimized.size ?? buffer.length;
+  } else {
+    const optimized = await createOptimizedImage(buffer);
+    resolvedBuffer = optimized.buffer;
+    resolvedSize = optimized.info.size;
+  }
 
   const metadata: Record<string, string> = {};
   if (alt) metadata.alt = alt.slice(0, 256);
@@ -104,8 +116,8 @@ export async function uploadGalleryImage({
   const putParams: PutObjectCommandInput = {
     Bucket: bucket,
     Key: key,
-    Body: optimized.buffer,
-    ContentType: OPTIMIZED_CONTENT_TYPE,
+    Body: resolvedBuffer,
+    ContentType: clientOptimized?.contentType ?? OPTIMIZED_CONTENT_TYPE,
     CacheControl: CACHE_CONTROL_IMMUTABLE,
     Metadata: Object.keys(metadata).length ? metadata : undefined,
   };
@@ -121,7 +133,7 @@ export async function uploadGalleryImage({
     alt: alt || formatLabelFromKey(key, category),
     caption,
     category,
-    size: optimized.info.size,
+    size: resolvedSize,
     lastModified: new Date().toISOString(),
     key,
   };
@@ -262,14 +274,21 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
   const prefix = trimSlashes(String(category));
 
   // First, probe for a Cloudflare R2 binding (e.g., during Workers or when a test injects a mock)
+  // Skip binding if R2_FORCE_S3 is set to true
+  const shouldUseBinding = process.env.R2_FORCE_S3 !== 'true';
+  console.log('[r2server] binding check:', { shouldUseBinding, R2_FORCE_S3: process.env.R2_FORCE_S3 });
+  
+  if (shouldUseBinding) {
   try {
     const probe = (typeof probeModule.probeR2BindingSync === 'function') ? probeModule.probeR2BindingSync() : await probeModule.probeR2Binding();
+    console.log('[r2server] probe result:', { hasBinding: !!probe.binding, source: probe.source, forceS3: process.env.R2_FORCE_S3 });
     if (probe.binding && typeof (probe.binding as any).list === 'function') {
       try {
         const binding = probe.binding as any;
         // Call the binding.list API as used in Workers: { prefix, limit, cursor }
         const bindingResult = await binding.list({ prefix: `${prefix}/`, limit: 1000, cursor: undefined });
         const objects = bindingResult?.objects ?? [];
+        console.log('[r2server] binding.list result:', { prefix: `${prefix}/`, objectsCount: objects.length });
         if (process.env.DEBUG === 'true') {
         // eslint-disable-next-line no-console
         console.info('[r2server] r2 binding list()', {
@@ -332,6 +351,9 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
       // eslint-disable-next-line no-console
       console.warn('[r2server] probeR2Binding failed', err);
     }
+  }
+  } else {
+    console.log('[r2server] Skipping binding probe due to R2_FORCE_S3=true, using S3 client');
   }
 
   // Prefer a synchronous client creation if available to make the call path

@@ -2,12 +2,11 @@ import '@testing-library/jest-dom';
 import { ReadableStream, TransformStream, WritableStream } from 'stream/web';
 import { MessageChannel, MessagePort } from 'worker_threads';
 import { TextDecoder, TextEncoder } from 'util';
-import React from 'react';
 import { act as domAct } from 'react-dom/test-utils';
 
 type ReactModule = typeof import('react');
 
-const reactNamespace = React as ReactModule & { default?: ReactModule };
+let reactNamespace: ReactModule & { default?: ReactModule };
 
 const globalScope = globalThis as typeof globalThis & {
   TextDecoder?: typeof TextDecoder;
@@ -50,6 +49,17 @@ if (typeof globalScope.MessageChannel === 'undefined') {
 if (typeof globalScope.MessagePort === 'undefined') {
   globalScope.MessagePort = MessagePort as unknown as typeof globalScope.MessagePort;
 }
+
+if (typeof globalScope.MessageChannel === 'function') {
+  globalScope.MessageChannel = undefined as unknown as typeof globalScope.MessageChannel;
+}
+
+if (typeof globalScope.MessagePort === 'function') {
+  globalScope.MessagePort = undefined as unknown as typeof globalScope.MessagePort;
+}
+
+const React = require('react') as ReactModule & { default?: ReactModule };
+reactNamespace = React;
 
 const { Headers, Request, Response, fetch: undiciFetch } = require('undici') as typeof import('undici');
 
