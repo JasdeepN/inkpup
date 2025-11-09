@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export const runtime = 'edge';
+// Note: Removed 'edge' runtime declaration - OpenNext handles edge deployment automatically
+// when deploying to Cloudflare Workers
 
 export async function POST(request: NextRequest) {
   try {
