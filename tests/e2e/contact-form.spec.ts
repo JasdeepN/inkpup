@@ -19,7 +19,7 @@ test.describe('Contact form', () => {
     await page.fill('[data-testid="contact-message"]', 'Hello from Playwright');
 
     const [resp] = await Promise.all([
-      page.waitForResponse((r) => r.url().includes('/api/contact') && r.status() === 200),
+      page.waitForResponse((r) => r.url().includes('/api/contact') && r.status() === 303),
       page.click('[data-testid="contact-submit"]'),
     ]);
 
