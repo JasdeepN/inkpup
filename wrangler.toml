@@ -14,10 +14,6 @@ binding = "ASSETS"
 binding = "R2_BUCKET"
 bucket_name = "inkpup"
 
-send_email = [
-  { type = "send_email", name = "SEND_EMAIL", allowed_destination_addresses = ["*"] }
-]
-
 [[env.dev.r2_buckets]]
 binding = "R2_BUCKET"
 bucket_name = "dev-bucket"
