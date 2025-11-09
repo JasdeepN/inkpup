@@ -1,7 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Note: Removed 'edge' runtime declaration - OpenNext handles edge deployment automatically
-// when deploying to Cloudflare Workers
+// Using Cloudflare Email Workers native send_email binding
+// Free tier: 100k Workers requests/day, no external service dependencies
+
+interface CloudflareEnv {
+  SEND_EMAIL?: {
+    send: (message: {
+      to: Array<{ email: string; name?: string }>;
+      from: { email: string; name?: string };
+      subject: string;
+      text?: string;
+      html?: string;
+      reply_to?: string;
+    }) => Promise<void>;
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,66 +40,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const contactEmail = process.env.CONTACT_EMAIL || 'contact@inkpup.ca';
+    const contactEmail = process.env.CONTACT_EMAIL || 'test@inkpup.ca';
     
-    // Try to send via MailChannels, but don't fail if it doesn't work
+    // Get Cloudflare email binding from environment
+    const env = process.env as unknown as CloudflareEnv;
+    
     try {
-      const emailResponse = await fetch('https://api.mailchannels.net/tx/v1/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          personalizations: [
-            {
-              to: [{ email: contactEmail, name: 'InkPup Tattoos' }],
-              dkim_domain: 'inkpup.ca',
-              dkim_selector: 'mailchannels',
-            },
-          ],
-          from: {
-            email: 'noreply@inkpup.ca',
-            name: 'InkPup Contact Form',
-          },
-          reply_to: {
-            email: email,
-            name: name,
-          },
-          subject: `New Contact Form Submission from ${name}`,
-          content: [
-            {
-              type: 'text/plain',
-              value: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
-            },
-            {
-              type: 'text/html',
-              value: `
-                <h2>New Contact Form Submission</h2>
-                <p><strong>Name:</strong> ${name}</p>
-                <p><strong>Email:</strong> ${email}</p>
-                <p><strong>Message:</strong></p>
-                <p>${message.replace(/\n/g, '<br>')}</p>
-              `,
-            },
-          ],
-        }),
+      if (!env.SEND_EMAIL) {
+        throw new Error('SEND_EMAIL binding not configured - check wrangler.toml');
+      }
+
+      await env.SEND_EMAIL.send({
+        to: [{ email: contactEmail }],
+        from: { email: 'noreply@inkpup.ca', name: 'InkPup Contact Form' },
+        reply_to: email,
+        subject: `New Contact Form Submission from ${name}`,
+        text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
+        html: `
+          <h2>New Contact Form Submission</h2>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Message:</strong></p>
+          <p>${message.replace(/\n/g, '<br>')}</p>
+        `,
       });
 
-      if (!emailResponse.ok) {
-        const errorText = await emailResponse.text();
-        console.error('❌ MailChannels API Error:', {
-          status: emailResponse.status,
-          statusText: emailResponse.statusText,
-          response: errorText,
-        });
-        console.log('📝 Contact form submission saved (email delivery failed):', { name, email, message });
-      } else {
-        const responseData = await emailResponse.json();
-        console.log('✅ Email sent successfully via MailChannels:', responseData);
-      }
+      console.log('✅ Email sent successfully via Cloudflare Email Workers:', { name, email });
     } catch (emailError) {
-      console.error('Email send error:', emailError);
-      console.log('Contact form submission (logging):', { name, email, message });
+      console.error('❌ Email send error:', emailError);
+      console.log('📝 Contact form submission (logging only):', { name, email, message });
     }
 
     // Always redirect with success - the message is logged even if email fails
