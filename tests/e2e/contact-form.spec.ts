@@ -24,6 +24,6 @@ test.describe('Contact form', () => {
     ]);
 
     // Verify success message is shown
-    await expect(page.locator('text=Thanks for reaching out')).toBeVisible();
+    await expect(page.locator('text=Message sent successfully')).toBeVisible();
   });
 });
