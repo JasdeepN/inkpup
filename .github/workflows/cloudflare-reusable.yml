@@ -27,6 +27,10 @@ on:
         required: true
       ADMIN_SESSION_SECRET:
         required: true
+      RESEND_API_KEY:
+        required: true
+      CONTACT_EMAIL:
+        required: true
 
 jobs:
   derive-r2-credentials:
@@ -121,6 +125,8 @@ jobs:
           ADMIN_PORTAL_HOSTS: ${{ vars.ADMIN_PORTAL_HOSTS }}
           ADMIN_PORTAL_PASSWORD: ${{ secrets.ADMIN_PORTAL_PASSWORD }}
           ADMIN_SESSION_SECRET: ${{ secrets.ADMIN_SESSION_SECRET }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
           R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
@@ -140,6 +146,8 @@ jobs:
             echo "ADMIN_PORTAL_HOSTS=${ADMIN_PORTAL_HOSTS:-}"
             printf 'ADMIN_PORTAL_PASSWORD=%q\n' "${ADMIN_PORTAL_PASSWORD:-}"
             printf 'ADMIN_SESSION_SECRET=%q\n' "${ADMIN_SESSION_SECRET:-}"
+            printf 'RESEND_API_KEY=%q\n' "${RESEND_API_KEY:-}"
+            printf 'CONTACT_EMAIL=%q\n' "${CONTACT_EMAIL:-}"
             echo "CF_ACCOUNT_ID=$CF_ACCOUNT_ID"
             echo "CF_ZONE_ID=$CF_ZONE_ID"
             echo "CLOUDFLARE_ACCOUNT_ID=${CLOUDFLARE_ACCOUNT_ID:-$CF_ACCOUNT_ID}"
@@ -180,6 +188,8 @@ jobs:
         env:
           ADMIN_PORTAL_PASSWORD: ${{ secrets.ADMIN_PORTAL_PASSWORD }}
           ADMIN_SESSION_SECRET: ${{ secrets.ADMIN_SESSION_SECRET }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
         shell: bash
         run: |
           set -euo pipefail
