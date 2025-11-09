@@ -1,11 +1,33 @@
 "use client";
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { isCalendlyBookingEnabled } from '../../lib/featureFlags';
 
-export default function ContactPage() {
+function ContactFormAlerts() {
   const searchParams = useSearchParams();
   const success = searchParams?.get('success');
   const error = searchParams?.get('error');
+
+  if (success) {
+    return (
+      <div className="admin-alert admin-alert--success p-4 rounded-lg">
+        ✓ Message sent successfully! I&apos;ll get back to you soon.
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="admin-alert admin-alert--error p-4 rounded-lg">
+        ✗ Failed to send message. Please try again or DM me on Instagram.
+      </div>
+    );
+  }
+
+  return null;
+}
+
+export default function ContactPage() {
   const calendlyEnabled = isCalendlyBookingEnabled();
   
   return (
@@ -38,17 +60,9 @@ export default function ContactPage() {
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Contact Form</h3>
         
-        {success && (
-          <div className="admin-alert admin-alert--success p-4 rounded-lg">
-            ✓ Message sent successfully! I&apos;ll get back to you soon.
-          </div>
-        )}
-        
-        {error && (
-          <div className="admin-alert admin-alert--error p-4 rounded-lg">
-            ✗ Failed to send message. Please try again or DM me on Instagram.
-          </div>
-        )}
+        <Suspense fallback={null}>
+          <ContactFormAlerts />
+        </Suspense>
         
         <form method="post" action="/api/contact" className="grid gap-3 w-full">
           <label className="flex flex-col text-sm">
