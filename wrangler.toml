@@ -18,15 +18,9 @@ bucket_name = "inkpup"
 binding = "R2_BUCKET"
 bucket_name = "dev-bucket"
 
-[[env.dev.send_email]]
-name = "SEND_EMAIL"
-
 [[env.production.r2_buckets]]
 binding = "R2_BUCKET"
 bucket_name = "${R2_BUCKET}"
-
-[[env.production.send_email]]
-name = "SEND_EMAIL"
 
 [env.dev]
 name = "inkpup-dev"
@@ -46,6 +40,7 @@ ADMIN_PORTAL_HOSTS = "${ADMIN_PORTAL_HOSTS}"
 ADMIN_PORTAL_PASSWORD = "${ADMIN_PORTAL_PASSWORD}"
 ADMIN_SESSION_SECRET = "${ADMIN_SESSION_SECRET}"
 CONTACT_EMAIL = "${CONTACT_EMAIL}"
+RESEND_API_KEY = "${RESEND_API_KEY}"
 
 [env.production]
 name = "inkpup"
@@ -65,3 +60,4 @@ ADMIN_PORTAL_HOSTS = "${ADMIN_PORTAL_HOSTS}"
 ADMIN_PORTAL_PASSWORD = "${ADMIN_PORTAL_PASSWORD}"
 ADMIN_SESSION_SECRET = "${ADMIN_SESSION_SECRET}"
 CONTACT_EMAIL = "${CONTACT_EMAIL}"
+RESEND_API_KEY = "${RESEND_API_KEY}"

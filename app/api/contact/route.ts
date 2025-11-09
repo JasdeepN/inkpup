@@ -1,20 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Resend } from 'resend';
 
-// Using Cloudflare Email Workers native send_email binding
-// Free tier: 100k Workers requests/day, no external service dependencies
-
-interface CloudflareEnv {
-  SEND_EMAIL?: {
-    send: (message: {
-      to: Array<{ email: string; name?: string }>;
-      from: { email: string; name?: string };
-      subject: string;
-      text?: string;
-      html?: string;
-      reply_to?: string;
-    }) => Promise<void>;
-  };
-}
+// Using Resend Email API
+// Free tier: 3,000 emails/month, 100 emails/day
+// No external account setup needed beyond API key
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,19 +30,20 @@ export async function POST(request: NextRequest) {
     }
 
     const contactEmail = process.env.CONTACT_EMAIL || 'test@inkpup.ca';
-    
-    // Get Cloudflare email binding from environment
-    const env = process.env as unknown as CloudflareEnv;
-    
-    try {
-      if (!env.SEND_EMAIL) {
-        throw new Error('SEND_EMAIL binding not configured - check wrangler.toml');
-      }
+    const resendApiKey = process.env.RESEND_API_KEY;
 
-      await env.SEND_EMAIL.send({
-        to: [{ email: contactEmail }],
-        from: { email: 'noreply@inkpup.ca', name: 'InkPup Contact Form' },
-        reply_to: email,
+    if (!resendApiKey) {
+      console.error('❌ RESEND_API_KEY not configured');
+      throw new Error('Email service not configured');
+    }
+
+    const resend = new Resend(resendApiKey);
+
+    try {
+      const { data, error } = await resend.emails.send({
+        from: 'InkPup Contact Form <noreply@mail.inkpup.ca>',
+        to: [contactEmail],
+        replyTo: email,
         subject: `New Contact Form Submission from ${name}`,
         text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
         html: `
@@ -65,10 +55,16 @@ export async function POST(request: NextRequest) {
         `,
       });
 
-      console.log('✅ Email sent successfully via Cloudflare Email Workers:', { name, email });
+      if (error) {
+        console.error('❌ Resend API error:', error);
+        throw error;
+      }
+
+      console.log('✅ Email sent successfully via Resend:', { id: data?.id, name, email });
     } catch (emailError) {
       console.error('❌ Email send error:', emailError);
       console.log('📝 Contact form submission (logging only):', { name, email, message });
+      // Continue to redirect even if email fails
     }
 
     // Always redirect with success - the message is logged even if email fails
