@@ -74,10 +74,15 @@ export async function POST(request: NextRequest) {
 
       if (!emailResponse.ok) {
         const errorText = await emailResponse.text();
-        console.error('MailChannels error:', errorText);
-        console.log('Contact form submission (email failed, logging instead):', { name, email, message });
+        console.error('❌ MailChannels API Error:', {
+          status: emailResponse.status,
+          statusText: emailResponse.statusText,
+          response: errorText,
+        });
+        console.log('📝 Contact form submission saved (email delivery failed):', { name, email, message });
       } else {
-        console.log('✓ Email sent successfully via MailChannels');
+        const responseData = await emailResponse.json();
+        console.log('✅ Email sent successfully via MailChannels:', responseData);
       }
     } catch (emailError) {
       console.error('Email send error:', emailError);
