@@ -21,7 +21,6 @@ bucket_name = "dev-bucket"
 [[env.dev.send_email]]
 type = "send_email"
 name = "SEND_EMAIL"
-allowed_destination_addresses = ["*"]
 
 [[env.production.r2_buckets]]
 binding = "R2_BUCKET"
@@ -30,7 +29,6 @@ bucket_name = "${R2_BUCKET}"
 [[env.production.send_email]]
 type = "send_email"
 name = "SEND_EMAIL"
-allowed_destination_addresses = ["*"]
 
 [env.dev]
 name = "inkpup-dev"
