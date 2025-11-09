@@ -1,15 +1,13 @@
+"use client";
+import { useSearchParams } from 'next/navigation';
 import { isCalendlyBookingEnabled } from '../../lib/featureFlags';
-import { createPageMetadata } from '../../lib/site-metadata';
-
-export async function generateMetadata() {
-  return createPageMetadata({
-    title: `Contact — InkPup Tattoos`,
-    description: `Get in touch with InkPup Tattoos for bookings, consults, and questions.`,
-  });
-}
 
 export default function ContactPage() {
+  const searchParams = useSearchParams();
+  const success = searchParams.get('success');
+  const error = searchParams.get('error');
   const calendlyEnabled = isCalendlyBookingEnabled();
+  
   return (
     <section className="max-w-3xl mx-auto space-y-8">
       <div>
@@ -39,18 +37,48 @@ export default function ContactPage() {
 
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Contact Form</h3>
-        <form method="post" action="/api/contact" className="grid gap-3 max-w-md mx-auto">
+        
+        {success && (
+          <div className="admin-alert admin-alert--success p-4 rounded-lg">
+            ✓ Message sent successfully! I'll get back to you soon.
+          </div>
+        )}
+        
+        {error && (
+          <div className="admin-alert admin-alert--error p-4 rounded-lg">
+            ✗ Failed to send message. Please try again or DM me on Instagram.
+          </div>
+        )}
+        
+        <form method="post" action="/api/contact" className="grid gap-3 w-full">
           <label className="flex flex-col text-sm">
             <span>Name</span>
-            <input name="name" data-testid="contact-name" required className="mt-1 p-2 border rounded" />
+            <input 
+              name="name" 
+              data-testid="contact-name" 
+              required 
+              className="mt-1 p-2 border rounded bg-surface text-primary" 
+            />
           </label>
           <label className="flex flex-col text-sm">
             <span>Email</span>
-            <input name="email" data-testid="contact-email" type="email" required className="mt-1 p-2 border rounded" />
+            <input 
+              name="email" 
+              data-testid="contact-email" 
+              type="email" 
+              required 
+              className="mt-1 p-2 border rounded bg-surface text-primary" 
+            />
           </label>
           <label className="flex flex-col text-sm">
             <span>Message</span>
-            <textarea name="message" data-testid="contact-message" rows={6} required className="mt-1 p-2 border rounded" />
+            <textarea 
+              name="message" 
+              data-testid="contact-message" 
+              rows={6} 
+              required 
+              className="mt-1 p-2 border rounded bg-surface text-primary" 
+            />
           </label>
           <button type="submit" data-testid="contact-submit" className="btn btn--primary">Send</button>
         </form>
