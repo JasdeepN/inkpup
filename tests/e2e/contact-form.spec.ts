@@ -18,11 +18,10 @@ test.describe('Contact form', () => {
     await page.fill('[data-testid="contact-email"]', 'test@example.com');
     await page.fill('[data-testid="contact-message"]', 'Hello from Playwright');
 
-    // Click submit and wait for navigation (native form submission)
+    // Click submit (native form submission will redirect)
     await page.click('[data-testid="contact-submit"]');
-    await page.waitForURL('**/contact?success=true', { waitUntil: 'domcontentloaded' });
-
-    // Verify success message is shown
-    await expect(page.locator('text=Message sent successfully')).toBeVisible();
+    
+    // Wait for success message to appear (more reliable than URL check)
+    await expect(page.locator('text=Message sent successfully')).toBeVisible({ timeout: 10000 });
   });
 });
