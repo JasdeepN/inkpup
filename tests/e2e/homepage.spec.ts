@@ -7,7 +7,7 @@ test.describe('Homepage experience', () => {
     await expect(page.getByTestId('hero-title')).toContainText(/tattoos/i);
     await expect(page.getByTestId('hero-subtitle')).toContainText(/toronto/i);
     await expect(page.getByTestId('hero-book')).toBeVisible();
-    await expect(page.getByTestId('hero-portfolio')).toBeVisible();
+    await expect(page.getByTestId('hero-instagram')).toBeVisible();
     await expect(page.locator('header')).toBeVisible();
   });
 

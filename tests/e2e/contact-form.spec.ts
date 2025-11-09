@@ -18,11 +18,12 @@ test.describe('Contact form', () => {
     await page.fill('[data-testid="contact-email"]', 'test@example.com');
     await page.fill('[data-testid="contact-message"]', 'Hello from Playwright');
 
-    const [resp] = await Promise.all([
-      page.waitForResponse((r) => r.url().includes('/api/contact') && r.status() === 303),
+    await Promise.all([
+      page.waitForURL('**/contact?success=true'),
       page.click('[data-testid="contact-submit"]'),
     ]);
 
-    expect(resp).toBeTruthy();
+    // Verify success message is shown
+    await expect(page.locator('text=Thanks for reaching out')).toBeVisible();
   });
 });
