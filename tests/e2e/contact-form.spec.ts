@@ -18,10 +18,9 @@ test.describe('Contact form', () => {
     await page.fill('[data-testid="contact-email"]', 'test@example.com');
     await page.fill('[data-testid="contact-message"]', 'Hello from Playwright');
 
-    await Promise.all([
-      page.waitForURL('**/contact?success=true'),
-      page.click('[data-testid="contact-submit"]'),
-    ]);
+    // Click submit and wait for navigation (native form submission)
+    await page.click('[data-testid="contact-submit"]');
+    await page.waitForURL('**/contact?success=true', { waitUntil: 'domcontentloaded' });
 
     // Verify success message is shown
     await expect(page.locator('text=Message sent successfully')).toBeVisible();
