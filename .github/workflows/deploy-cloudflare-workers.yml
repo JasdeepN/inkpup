@@ -1,0 +1,124 @@
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches: [ master, dev ]
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip tests and deploy directly'
+        required: false
+        default: false
+        type: boolean
+
+
+
+jobs:
+  validate:
+    name: Lint & unit tests
+    if: ${{ github.event_name == 'push' || !inputs.skip_tests }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.14'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps --silent
+      - name: Lint
+        run: npm run lint
+        working-directory: ./
+      - name: Test with coverage thresholds
+        env:
+          CI: true
+        run: npm test
+
+  playwright-e2e:
+    name: Playwright end-to-end tests
+    if: ${{ github.event_name == 'push' || !inputs.skip_tests }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      PLAYWRIGHT_BASE_URL: http://localhost:3002
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.14'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-browsers-${{ runner.os }}-
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps --silent
+      - name: Build
+        run: npm run build
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      - name: Run Playwright tests
+        id: playwright
+        run: npx playwright test
+      - name: Check for Playwright traces
+        if: always()
+        id: check_traces
+        run: |
+          set -e
+          shopt -s globstar || true
+          if compgen -G "test-results/**/trace.zip" >/dev/null 2>&1; then
+            echo "has_traces=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_traces=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+      - name: Upload Playwright JUnit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-junit
+          path: test-results/junit-results.xml
+      - name: Upload Playwright traces
+        if: ${{ steps.playwright.outcome == 'failure' && steps.check_traces.outputs.has_traces == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/**/trace.zip
+
+  deploy:
+    name: Deploy to Cloudflare Workers
+    needs:
+      - validate
+      - playwright-e2e
+    if: ${{ always() && (github.event_name == 'push' || inputs.skip_tests || (needs.validate.result == 'success' && needs.playwright-e2e.result == 'success')) }}
+    uses: ./.github/workflows/cloudflare-reusable.yml
+    with:
+      environment: ${{ github.ref == 'refs/heads/master' && 'production' || 'dev' }}
+      branch: ${{ github.ref_name }}
+      custom_domain_config: ${{ github.ref == 'refs/heads/master' }}
+    secrets:
+      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+      R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      ADMIN_PORTAL_PASSWORD: ${{ secrets.ADMIN_PORTAL_PASSWORD }}
+      ADMIN_SESSION_SECRET: ${{ secrets.ADMIN_SESSION_SECRET }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
