@@ -4,12 +4,19 @@ on:
   push:
     branches: [ master, dev ]
   workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip tests and deploy directly'
+        required: false
+        default: false
+        type: boolean
 
 
 
 jobs:
   validate:
     name: Lint & unit tests
+    if: ${{ github.event_name == 'push' || !inputs.skip_tests }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -32,6 +39,7 @@ jobs:
 
   playwright-e2e:
     name: Playwright end-to-end tests
+    if: ${{ github.event_name == 'push' || !inputs.skip_tests }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -98,6 +106,7 @@ jobs:
     needs:
       - validate
       - playwright-e2e
+    if: ${{ always() && (github.event_name == 'push' || inputs.skip_tests || (needs.validate.result == 'success' && needs.playwright-e2e.result == 'success')) }}
     uses: ./.github/workflows/cloudflare-reusable.yml
     with:
       environment: ${{ github.ref == 'refs/heads/master' && 'production' || 'dev' }}
