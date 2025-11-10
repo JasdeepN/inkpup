@@ -210,6 +210,8 @@ jobs:
             echo "ADMIN_PORTAL_HOSTS=${ADMIN_PORTAL_HOSTS:-}"
             echo "ADMIN_PORTAL_PASSWORD=${ADMIN_PORTAL_PASSWORD:-}"
             echo "ADMIN_SESSION_SECRET=${ADMIN_SESSION_SECRET:-}"
+            echo "RESEND_API_KEY=${RESEND_API_KEY:-}"
+            echo "CONTACT_EMAIL=${CONTACT_EMAIL:-}"
             echo "CF_API_TOKEN=${R2_API_TOKEN:-}"
             echo "CLOUDFLARE_API_TOKEN=${R2_API_TOKEN:-}"
             echo "CF_ACCOUNT_ID=${CF_ACCOUNT_ID:-}"
@@ -262,6 +264,8 @@ jobs:
         env:
           ADMIN_PORTAL_PASSWORD: ${{ secrets.ADMIN_PORTAL_PASSWORD }}
           ADMIN_SESSION_SECRET: ${{ secrets.ADMIN_SESSION_SECRET }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
         shell: bash
         run: |
           set -euo pipefail
@@ -282,6 +286,8 @@ jobs:
             echo "ADMIN_PORTAL_HOSTS=${ADMIN_PORTAL_HOSTS:-}"
             echo "ADMIN_PORTAL_PASSWORD=${ADMIN_PORTAL_PASSWORD:-}"
             echo "ADMIN_SESSION_SECRET=${ADMIN_SESSION_SECRET:-}"
+            echo "RESEND_API_KEY=${RESEND_API_KEY:-}"
+            echo "CONTACT_EMAIL=${CONTACT_EMAIL:-}"
             echo "CF_API_TOKEN=${R2_API_TOKEN:-}"
             echo "CLOUDFLARE_API_TOKEN=${R2_API_TOKEN:-}"
             echo "CF_ACCOUNT_ID=${CF_ACCOUNT_ID:-}"
@@ -338,6 +344,8 @@ jobs:
         env:
           ADMIN_PORTAL_PASSWORD: ${{ secrets.ADMIN_PORTAL_PASSWORD }}
           ADMIN_SESSION_SECRET: ${{ secrets.ADMIN_SESSION_SECRET }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
         shell: bash
         run: |
           set -euo pipefail
@@ -358,6 +366,8 @@ jobs:
             echo "ADMIN_PORTAL_HOSTS=${ADMIN_PORTAL_HOSTS:-}"
             echo "ADMIN_PORTAL_PASSWORD=${ADMIN_PORTAL_PASSWORD:-}"
             echo "ADMIN_SESSION_SECRET=${ADMIN_SESSION_SECRET:-}"
+            echo "RESEND_API_KEY=${RESEND_API_KEY:-}"
+            echo "CONTACT_EMAIL=${CONTACT_EMAIL:-}"
             echo "CF_API_TOKEN=${R2_API_TOKEN:-}"
             echo "CLOUDFLARE_API_TOKEN=${R2_API_TOKEN:-}"
             echo "CF_ACCOUNT_ID=${CF_ACCOUNT_ID:-}"

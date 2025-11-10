@@ -145,3 +145,36 @@ Emphasizes the importance of memory management in coding practices, ensuring eff
 - Using smart pointers in C++ to manage dynamic memory allocation.
 - Implementing garbage collection in Java to automatically reclaim memory.
 - Optimizing data structures to minimize memory usage.
+
+
+## Adding Environment Variables to Cloudflare Workers Deployment
+
+When adding a new environment variable to Cloudflare Workers deployments, you MUST update 5 locations in the workflow files:
+
+1. **wrangler.toml** - Add to both `[env.dev.vars]` and `[env.production.vars]` sections with `${VAR_NAME}` placeholders
+2. **.github/workflows/cloudflare-reusable.yml** - Add to `secrets:` input definition (required: true/false)
+3. **.github/workflows/deploy-cloudflare-workers.yml** - Add to `secrets:` pass-through to reusable workflow
+4. **.github/workflows/cloudflare-reusable.yml** - Add to "Append all environment variables to credentials file" step in `derive-r2-credentials` job
+5. **.github/workflows/cloudflare-reusable.yml** - Add to ALL THREE "Export credentials to environment" steps:
+   - Build job (line ~210)
+   - Prepare job (line ~285)  
+   - Deploy job (line ~362)
+6. **.github/workflows/cloudflare-reusable.yml** - Add to `envsubst` variable list in "Render Wrangler config" step (deploy job)
+
+**CRITICAL**: The variables must be exported to $GITHUB_ENV in all three jobs, and included in the envsubst command, otherwise they will be blank in the deployed worker.
+
+**Pattern to add to export blocks:**
+```bash
+echo "VAR_NAME=${VAR_NAME:-}"
+```
+
+**Pattern for envsubst:**
+```bash
+envsubst '${EXISTING_VARS} ${NEW_VAR}' < wrangler.toml > wrangler.resolved.toml
+```
+
+### Examples
+
+- RESEND_API_KEY and CONTACT_EMAIL added for Resend email integration (November 2025)
+- ADMIN_PORTAL_PASSWORD and ADMIN_SESSION_SECRET for admin authentication
+- R2 credentials (R2_API_TOKEN, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY)
