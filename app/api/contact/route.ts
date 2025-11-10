@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const contactEmail = process.env.CONTACT_EMAIL || 'test@inkpup.ca';
+    const contactEmail = process.env.CONTACT_EMAIL || 'jasdeepn4@gmail.com';
     const resendApiKey = process.env.RESEND_API_KEY;
 
     if (!resendApiKey) {
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     try {
       const { data, error } = await resend.emails.send({
-        from: 'InkPup Contact Form <noreply@mail.inkpup.ca>',
+        from: 'InkPup Contact Form <contact@mail.inkpup.ca>',
         to: [contactEmail],
         replyTo: email,
         subject: `New Contact Form Submission from ${name}`,
