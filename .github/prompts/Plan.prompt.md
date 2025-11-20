@@ -1,5 +1,10 @@
 # Task Breakdown and Action Plan Prompt
 
+**⚠️ CRITICAL: THIS FILE IS READ-ONLY ⚠️**
+**DO NOT MODIFY THIS PROMPT FILE. It is a template for agent workflows.**
+**All work, plans, and context must be saved to memory-bank/, NOT here.**
+
+
 ## Instructions
 
 Use this prompt to break down any complex task into actionable steps, assign #todos for each, and utilize available tools for tracking and execution. Each step should be clear, specific, and saved to #MemoryManagement for progress tracking.
@@ -72,8 +77,8 @@ For each step, specify which tools or functions to use (e.g., code generation, u
 **Memory Management Actions:**
 - Use `#MemoryManagement updateProgress` to track task status
 - Use `#MemoryManagement logDecision` for important choices
-- Use `#MemoryManagement updateActiveContext` to set current focus
-- Use `#MemoryManagement addSystemPattern` for reusable patterns
+- Use `#MemoryManagement updateContext` to set current focus
+- Use `#MemoryManagement updateSystemPatterns` for reusable patterns
 
 **Do NOT modify this prompt file** - it is a template for creating plans, not for storing them.
 
@@ -121,7 +126,7 @@ Plan for periodic reviews and adjust steps as needed based on feedback or new in
 - Save plan: `#MemoryManagement updateProjectBrief`
 - Track progress: `#MemoryManagement updateProgress`
 - Log decisions: `#MemoryManagement logDecision`
-- Update context: `#MemoryManagement updateActiveContext`
+- Update context: `#MemoryManagement updateContext`
 
 ---
 

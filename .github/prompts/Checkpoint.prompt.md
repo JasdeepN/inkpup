@@ -5,6 +5,11 @@ version: "1.0.0"
 
 # Memory Bank Checkpoint
 
+**⚠️ CRITICAL: THIS FILE IS READ-ONLY ⚠️**
+**DO NOT MODIFY THIS PROMPT FILE. It is a template for agent workflows.**
+**All work, plans, and context must be saved to memory-bank/, NOT here.**
+
+
 This prompt guides a comprehensive review and update of all memory bank files, captures recent progress, documents decisions, and generates a commit message summarizing the session.
 
 ## Instructions
@@ -32,29 +37,23 @@ Run this checkpoint at the end of a coding session or when significant work has 
 Update each memory file based on recent work:
 
 #### activeContext.md
-- Update **Current Goals** with active work in progress
+- Update **Current Goals** using `#MemoryManagement updateContext`
 - Update **Current Blockers** with any unresolved issues
 - Remove completed goals
 - Add new goals discovered during this session
 
 #### progress.md
-- Move completed items from "Doing" to "Done" with today's date
+- Move completed items using `#MemoryManagement updateProgress`
 - Update "Doing" with current in-progress work
 - Update "Next" with planned upcoming tasks
 - Keep entries concise and timestamped
 
 #### decisionLog.md
-- Add any architectural or implementation decisions made during this session
+- Add decisions using `#MemoryManagement logDecision`
 - Format: `| YYYY-MM-DD | Decision | Rationale |`
-- Include decisions about:
-  - Technology choices
-  - Architectural changes
-  - Build/deployment configuration
-  - Testing strategies
-  - Workflow improvements
 
 #### systemPatterns.md
-- Document new patterns discovered or established
+- Document new patterns using `#MemoryManagement updateSystemPatterns`
 - Update existing patterns if they evolved
 - Categories:
   - **Architectural Patterns**: High-level system design
@@ -62,7 +61,7 @@ Update each memory file based on recent work:
   - **Common Idioms**: Project-specific conventions
 
 #### productContext.md
-- Update if core features changed
+- Update using `#MemoryManagement updateProductContext` if core features changed
 - Add new libraries or technologies to Technical Stack
 - Update overview if project scope shifted
 

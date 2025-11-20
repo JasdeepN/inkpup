@@ -4,6 +4,11 @@ description: Startup prompt for new chat sessions
 
 # Startup Prompt
 
+**⚠️ CRITICAL: THIS FILE IS READ-ONLY ⚠️**
+**DO NOT MODIFY THIS PROMPT FILE. It is a template for agent workflows.**
+**All work, plans, and context must be saved to memory-bank/, NOT here.**
+
+
 [New Task Or Continuing Session?]
 
 ## Instructions for Every New Chat

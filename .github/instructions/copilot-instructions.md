@@ -1,24 +1,92 @@
+---
+applyTo: "**"
+---
 # Copilot instructions — Tattoo business website (Next.js + Cloudflare)
 
 
-**CHAT MODE INSTRUCTIONS ALWAYS TAKE PRIORITY**
+**AGENT INSTRUCTIONS ALWAYS TAKE PRIORITY**
+
+**CRITICAL: PROTECTED FILES - DO NOT MODIFY**
+- **NEVER modify, edit, update, or replace files in `.github/prompts/`**
+- **NEVER modify, edit, update, or replace files in `.github/agents/`**
+- **NEVER modify, edit, update, or replace files in `.github/instructions/`**
+- These files define agent behavior and workflows - they are READ-ONLY
+- If you believe changes are needed to these files, STOP and inform the user
+- Violation of this rule means the agent is malfunctioning
 
 Purpose
 - Provide explicit, actionable guidance for implementing a SEO-first Next.js website for a Toronto/GTA tattoo business and for any automated assistant (Copilot-style) working on this repository.
 
-Toolsets for Implementation (from Tools.toolsets.jsonc):
+**CRITICAL: Always Update Knowledge Before Acting**
+- **ASSUME your training data is outdated** - you lack current best practices and cutting-edge technology knowledge
+- **Before making ANY decision, recommendation, or implementation:**
+  1. **Deep introspection**: Identify what you need to know about the topic
+  2. **Web research**: Search all available web resources extensively (iterate as needed, take as long as required)
+  3. **Scan MCPs**: Use upstash/context7 for up-to-date library documentation
+  4. **Check codebase**: Use filesystem/git MCPs to scan current state (never assume code hasn't changed)
+  5. **Synthesize context**: Combine all findings before proceeding
+- **You must be knowledgeable about the topic before continuing** with your task
+- Use sequential-thinking MCP to reason through what knowledge gaps exist and how to fill them
 
-**Deep Thinking**
-- Use for structured thinking, problem solving, and action planning. Always prefer these tools for research, planning, and complex analysis.
+Available Agents (in .github/agents/):
 
-**Memory Management**
-- Use for managing and utilizing project memory, tracking progress, updating context, and logging decisions.
+**Memory-Deep-Thinking Mode** (`memory-deep-think.agent.md`)
+- Primary agent for complex reasoning, planning, and autonomous memory management
+- Uses sequential-thinking MCP for deep analysis and problem decomposition
+- Proactively maintains memory bank with tagged entries `[TYPE:YYYY-MM-DD]`
+- Leverages all MCPs extensively: filesystem, git, upstash/context7, fetch
+- Never deletes from memory files - only appends tagged entries
+- Automatically updates context, progress, and decisions throughout work
 
-**Web Research**
-- Use for light web research and information gathering only when Deep Thinking tools are not sufficient.
+**System Architect Mode** (`architect.agent.md`)
+- Design robust and scalable software systems
+- Make high-level architectural decisions
+- Maintain the project's memory bank and decision log
+- Use when architectural or design-level decisions are needed
 
-**Project Management**
-- Use for managing project briefs, tracking progress, updating system patterns, and overall project organization.
+**Code Expert Mode** (`code.agent.md`)
+- Implement features and write high-quality code
+- Follow established patterns and maintain code quality
+- Use for implementation tasks after planning is complete
+
+**Debug Mode** (`debug.agent.md`)
+- Troubleshoot issues, analyze errors, and fix bugs
+- Use when debugging or investigating problems
+
+**Ask Mode** (`ask.agent.md`)
+- Answer questions about the codebase, architecture, or decisions
+- Provide explanations and documentation
+- Use for informational queries
+
+Available Prompts (in .github/prompts/):
+- `Think.prompt.md` - Deep research protocol with multiple investigative paths
+- `Plan.prompt.md` - Task breakdown into actionable steps with #todos
+- `Execute.prompt.md` - Execute plans with constant memory updates
+- `Startup.prompt.md`, `Checkpoint.prompt.md`, `GH.prompt.md` - Workflow helpers
+
+Toolsets for Implementation:
+
+**Memory Management Tools** (use autonomously):
+- `showMemory`, `logDecision`, `updateContext`, `updateProgress`
+- `updateProductContext`, `updateSystemPatterns`, `updateProjectBrief`, `updateArchitect`
+- Always tag entries with `[TYPE:YYYY-MM-DD]` format
+- Never delete - only append to memory files
+
+**Sequential Thinking MCP** (use extensively for complex reasoning):
+- `sequential-thinking/*` - Multi-step reasoning, hypothesis generation, problem decomposition
+- Chain multiple thinking sessions for deep analysis
+
+**Filesystem MCP** (use extensively for context):
+- `filesystem/*` - Read files, scan directories, search codebase
+
+**Git MCP** (use to track changes):
+- `git/*` - Check status, view diffs, inspect history
+
+**Upstash Context7 MCP** (use for library docs):
+- `upstash/context7/*` - Fetch up-to-date library documentation
+
+**Fetch MCP** (use for external resources):
+- `fetch/*` - Retrieve web content and documentation
 
 High-level requirements (extract from user request)
 - Build a Next.js site optimized for SEO and social engagement.
@@ -71,6 +139,27 @@ Developer notes / constraints
 - Keep changes minimal and test-driven. Add unit tests for any business logic.
 - Do not auto-commit or push changes on behalf of the user.
 - When creating new files, follow the existing repo formatting and conventions (TypeScript/TSX preferred).
+
+Agent & Memory Workflow:
+1. **Always update knowledge FIRST** - Research web, MCPs, and codebase before any decision/recommendation
+2. **Start with Memory-Deep-Thinking agent** for planning and complex tasks
+3. **Use sequential-thinking MCP** for multi-step reasoning and problem decomposition
+4. **Autonomously update memory** after every significant change, decision, or progress
+5. **Tag all memory entries** with `[TYPE:YYYY-MM-DD]` format for efficient scanning
+6. **Read selectively** from memory using tags/timestamps (last 30 days default)
+7. **Switch agents** when appropriate (Architect for design, Code for implementation, Debug for troubleshooting)
+8. **Leverage all MCPs extensively**: filesystem, git, upstash/context7, fetch
+9. **Use prompts** for structured workflows (Think → Plan → Execute)
+10. **Never delete** from memory files - only append
+11. **Update todos** frequently and mark progress autonomously
+
+Knowledge Update Protocol (execute BEFORE making decisions):
+1. **Identify knowledge gaps**: What do you need to know? What assumptions might be outdated?
+2. **Web research**: Use websearch/fetch extensively - iterate until confident in understanding
+3. **Library documentation**: Use upstash/context7 MCP for current library APIs and best practices
+4. **Codebase scan**: Use filesystem/git MCPs to understand current implementation (never rely on assumptions)
+5. **Synthesize findings**: Use sequential-thinking to integrate all context before proceeding
+6. **Document learnings**: Log new knowledge to memory with `[LEARNING:YYYY-MM-DD]` tags
 
 Next steps this file expects an implementer to follow
 - Scaffold `app/layout.tsx`, `components/Meta.tsx`, and `components/LocalBusinessJsonLd.tsx`.
