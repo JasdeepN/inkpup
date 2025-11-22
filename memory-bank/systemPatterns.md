@@ -281,8 +281,153 @@ input:focus {
 }
 ```
 
-### Animation Enhancement Roadmap (Planned)
-- **Phase 2** (Intersection Observer, ~2KB): Scroll-triggered parallax, section reveals, counter animations, progressive stagger
+### Scroll-Triggered Animations (Phase 2)
+[PATTERN:2025-11-22]
+
+**Custom React Hooks for Scroll Effects:**
+
+#### useScrollReveal Hook
+```typescript
+import { useScrollReveal } from '@/lib/animations/useScrollReveal';
+
+// Basic usage
+const { isVisible, ref } = useScrollReveal();
+
+// With options
+const { isVisible, ref } = useScrollReveal({
+  threshold: 0.25,        // Trigger when 25% visible (default: 0.1)
+  rootMargin: '-50px',    // Trigger 50px before entering viewport
+  triggerOnce: true,      // Animate only once (default: false)
+  root: null,             // Viewport root (default: null for window)
+});
+```
+
+- **Purpose**: Detect when element enters viewport using Intersection Observer API
+- **Browser Support**: 97% (no polyfill needed)
+- **Returns**: `{ isVisible: boolean, ref: RefObject }`
+- **Performance**: Automatic cleanup on unmount
+- **Graceful Degradation**: Shows immediately if IntersectionObserver unavailable
+
+#### useReducedMotion Hook
+```typescript
+import { useReducedMotion } from '@/lib/animations/useReducedMotion';
+
+const prefersReducedMotion = useReducedMotion();
+
+// Conditionally apply animations
+if (!prefersReducedMotion) {
+  // Apply animation classes or trigger animations
+}
+```
+
+- **Purpose**: Detect user's motion preference for accessibility
+- **Returns**: `boolean` (true if user prefers reduced motion)
+- **Media Query**: `(prefers-reduced-motion: reduce)`
+- **Dynamic**: Updates when user changes system preferences
+
+#### useCountUp Hook
+```typescript
+import { useCountUp, COUNT_DURATIONS } from '@/lib/animations/useCountUp';
+
+const { displayValue, currentValue, isAnimating, ref } = useCountUp({
+  end: 1234,                          // Target number
+  start: 0,                           // Starting number (default: 0)
+  duration: COUNT_DURATIONS.NORMAL,   // FAST (1000ms), NORMAL (1500ms), SLOW (2000ms)
+  decimals: 0,                        // Decimal places
+  prefix: '$',                        // Optional prefix
+  suffix: 'K',                        // Optional suffix
+  threshold: 0.25,                    // Scroll reveal threshold
+});
+
+// Render
+return <span ref={ref}>{displayValue}</span>;
+```
+
+- **Purpose**: Animated number counting triggered on scroll into view
+- **Easing Functions**: `linear`, `easeOutQuad`, `easeOutCubic`, `easeOutQuart`
+- **Accessibility**: Respects `prefers-reduced-motion` (jumps to end immediately)
+- **Helper**: `formatLargeNumber(num, decimals)` - Formats with K/M/B suffixes
+
+#### RevealOnScroll Component
+```typescript
+import RevealOnScroll from '@/components/animations/RevealOnScroll';
+
+// Basic usage
+<RevealOnScroll>
+  <div>Content fades in on scroll</div>
+</RevealOnScroll>
+
+// With stagger timing
+<RevealOnScroll delay={100}>
+  <div>Delayed reveal (100ms)</div>
+</RevealOnScroll>
+
+// Custom threshold
+<RevealOnScroll threshold={0.5} triggerOnce>
+  <div>Reveals when 50% visible, animates once</div>
+</RevealOnScroll>
+```
+
+- **Purpose**: Wrapper component for scroll-triggered fade-in animations
+- **CSS Classes**: `.reveal-hidden` (opacity: 0, translateY: 30px), `.reveal-visible` (opacity: 1, translateY: 0)
+- **Props**: `delay`, `threshold`, `rootMargin`, `triggerOnce`, `className`, `children`
+- **Accessibility**: Skips animation if `prefers-reduced-motion` is enabled
+
+#### Stagger Utilities
+```typescript
+import { generateStaggerDelays, calculateStaggerDelay } from '@/lib/animations/stagger';
+
+// Generate array of delays for multiple items
+const delays = generateStaggerDelays(
+  5,      // Number of items
+  0,      // Base delay (ms)
+  100     // Increment per item (ms)
+);
+// Returns: [0, 100, 200, 300, 400]
+
+// Calculate single item delay
+const delay = calculateStaggerDelay(2, 0, 50); // Returns: 100ms
+
+// Use with RevealOnScroll
+items.map((item, idx) => (
+  <RevealOnScroll key={item.id} delay={delays[idx]}>
+    {/* Content */}
+  </RevealOnScroll>
+));
+```
+
+- **Purpose**: Calculate stagger timing for sequential animations
+- **Max Delay**: Capped at 1000ms to prevent excessive delays
+- **Constants**: `STAGGER.SHORT (50ms)`, `STAGGER.MEDIUM (100ms)`, `STAGGER.LONG (150ms)`
+
+#### Parallax Utilities (Future Use)
+```typescript
+import { calculateParallaxTransform, PARALLAX_SPEEDS, throttle } from '@/lib/animations/parallax';
+
+// Calculate parallax transform
+const transform = calculateParallaxTransform(scrollY, PARALLAX_SPEEDS.MEDIUM);
+// Returns: "translateY(90px)" for scrollY=300
+
+// Throttle scroll handler
+const handleScroll = throttle(() => {
+  const transform = calculateParallaxTransform(window.scrollY, PARALLAX_SPEEDS.SLOW);
+  element.style.transform = transform;
+}, 16); // 60fps limit
+```
+
+- **Speeds**: `SLOW (0.5)`, `MEDIUM (0.3)`, `FAST (0.15)`
+- **Throttling**: Limits execution to 60fps for performance
+- **Frame Scheduling**: `onNextFrame()` uses `requestAnimationFrame` with SSR fallback
+
+**Performance Considerations:**
+- Use `content-visibility: auto` for large lists/galleries (50+ items)
+- Threshold 0.1-0.25 for early reveal triggers better perceived performance
+- Stagger increments: 50ms for cards, 100-200ms for sections
+- Bundle cost: ~1-2KB for all scroll animation utilities
+
+### Animation Enhancement Roadmap
+- **Phase 1** (CSS-only, 0KB): ✅ Button press, input focus, card hovers, nav glow, theme transitions
+- **Phase 2** (Intersection Observer, ≤2KB): ✅ Scroll reveals, gallery stagger, counter animations, parallax utilities
 - **Phase 3** (View Transitions API, ~3KB): Page navigation morphing, modal expansion, image gallery transitions (86% browser support)
 - **Phase 4** (Advanced polish, ~5KB): Confetti effects, skeleton morphing, blur-up loading states (optional enhancement)
 
