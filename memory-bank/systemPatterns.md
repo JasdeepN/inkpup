@@ -178,3 +178,73 @@ envsubst '${EXISTING_VARS} ${NEW_VAR}' < wrangler.toml > wrangler.resolved.toml
 - RESEND_API_KEY and CONTACT_EMAIL added for Resend email integration (November 2025)
 - ADMIN_PORTAL_PASSWORD and ADMIN_SESSION_SECRET for admin authentication
 - R2 credentials (R2_API_TOKEN, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY)
+
+
+## Dual-pathway UX implementation strategy
+
+When implementing multi-segment service offerings (e.g., flash tattoos vs custom designs), prioritize functional completeness over polish: (1) Build navigation immediately after creating new pages to ensure discoverability, (2) Complete both pathways before adding enhancements, (3) Test user journeys end-to-end before optimization, (4) Consider leveraging existing forms (e.g., /contact with query params) for MVP before building specialized forms, (5) Defer homepage enhancements, analytics, and tests until core functionality is validated. Follow "narrow but deep" over "wide but shallow" - complete one full user journey before expanding features.
+
+### Examples
+
+- InkPup dual-pathway: Built Hero CTAs + ServiceExplainer + Flash page before realizing navigation was missing (blocker)
+- Lesson: Task 9 (navigation) should have been priority #2 after Task 1 (Hero)
+- Revised approach: Tasks 9 + 4 (navigation + custom page) = functional MVP in 45-60 min
+- Decision point pattern: Test if existing /contact form + query params sufficient before building specialized forms (Tasks 5-8)
+
+
+## Adaptive context-driven contact form
+
+Single /contact form adapts to booking scenarios using query params (design=<id> for flash, type=custom for consultations). Conditional required fields (placement, concept, placement_size) and dynamic email subject/body reduce need for multiple endpoints while keeping UX focused. Pattern favors extendability (add new booking types via param enumeration) and reduces maintenance overhead.
+
+### Examples
+
+- URL /contact?design=42 triggers Flash Booking form (hidden design_id, placement field required)
+- URL /contact?type=custom triggers Custom Consultation form (concept, placement_size required, budget optional)
+- Email subject logic: design_id -> 'Flash Booking Request', booking_type=custom -> 'Custom Consultation Request', else generic contact
+
+
+## Glassmorphism/Frosted Glass Containers
+
+[PATTERN:2025-11-20] Glassmorphism Design System - Frosted glass aesthetic with transparent backgrounds, backdrop-blur effects, and depth hierarchy. Use CSS variables (--surface-glass, --surface-glass-elevated, --border-glass) for consistent theming across light/dark modes. Apply backdrop-filter: blur(12px) with -webkit- prefix for Safari. Tailwind pattern: bg-white/10 dark:bg-white/8 backdrop-blur-lg border border-white/20 dark:border-white/18 shadow-lg. Enhance text readability with font-weight: 600 and text-shadow: 0 1px 2px rgba(0,0,0,0.1). Reference implementation: LoginForm, hero-path-card, PricingEstimator.
+
+### Examples
+
+- app/globals.scss: --surface-glass: rgba(255,255,255,0.1) in :root, rgba(255,255,255,0.08) in html.dark
+- app/globals.scss: .hero-path-card with backdrop-filter: blur(12px) and -webkit-backdrop-filter
+- components/PricingEstimator.tsx: bg-white/10 dark:bg-white/8 backdrop-blur-lg border-white/20
+- app/pricing/page.tsx: Info cards with glassmorphism shadow-lg treatment
+
+## Animation Architecture
+[PATTERN:2025-11-22]
+- **Core animations**: 7 keyframes defined in `app/styles/_animations.scss` (slideInDown, fadeIn, scaleIn, slideInUp, pulse-glow, admin-stat-skeleton, gallery-skeleton)
+- **Animation variables**: CSS custom properties in `_variables.scss` for timing (--animation-duration-fast/normal/slow: 200ms/300ms/500ms) and easing (--animation-ease-smooth/spring/bounce with cubic-bezier curves)
+- **Performance focus**: All animations use GPU-accelerated properties only (transform, opacity). Zero layout-triggering animations (width/height/top/left forbidden)
+- **Accessibility**: `@media (prefers-reduced-motion: reduce)` support with animation-duration: 0.01ms override
+- **Gallery stagger**: `.gallery-card` children animated with incremental delays (50ms increments, 9 children supported)
+- **No animation libraries**: Pure CSS approach, zero JavaScript animation frameworks (no Framer Motion, GSAP, react-spring)
+- **Browser targets**: 95%+ support, fallback-first approach for newer APIs like View Transitions
+- **Performance budget**: 60fps target (16.66ms frame budget), CSS <10KB increase limit
+
+### Animation Enhancement Opportunities (Research 2025-11-22)
+- **Phase 1** (CSS micro-interactions, 0KB): Button press states, input focus rings, success celebrations, card tilt effects, navigation hover transitions
+- **Phase 2** (Intersection Observer, ~2KB): Scroll-triggered parallax, section reveals, counter animations, progressive stagger
+- **Phase 3** (View Transitions API, ~3KB): Page navigation morphing, modal expansion, image gallery transitions (86% browser support)
+- **Phase 4** (Advanced polish, ~5KB): Confetti effects, skeleton morphing, blur-up loading states (optional enhancement)
+
+### Examples
+- Button hover: `transition: transform var(--animation-duration-fast) var(--animation-ease-spring)`
+- Gallery card: `animation: fadeIn var(--animation-duration-normal) var(--animation-ease-smooth) backwards`
+- Reduced motion: `* { animation-duration: 0.01ms !important; }`
+
+## Glassmorphism (Futuristic Style)
+[PATTERN:2025-11-20]
+- **Class**: `.glass-panel` (defined in `app/globals.scss`)
+- **Characteristics**:
+  - Background: Layered linear gradients with low opacity (white/5-20%).
+  - Filter: `backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-saturate)) contrast(var(--glass-contrast))`
+  - Border: `1px solid var(--border-glass)`
+  - Highlight: `::before` pseudo-element with `radial-gradient` and `mix-blend-mode: overlay`.
+  - Shadow: Deep, multi-layered box-shadows.
+  - Radius: `1.25rem` (default).
+- **Usage**: Apply `.glass-panel` to containers requiring the "futuristic glass" look.
+- **Buttons**: Use `.btn--glass` for glass-styled buttons (inherits from `.glass-panel` but with button-specific padding and radius).

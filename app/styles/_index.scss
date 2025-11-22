@@ -1,0 +1,15 @@
+// Main aggregator for all SCSS partials using @forward
+// This allows globals.scss to include everything with a single @use
+@forward './variables';
+@forward './animations';
+@forward './base';
+@forward './components';
+@forward './buttons';
+@forward './forms';
+@forward './layout';
+@forward './hero';
+@forward './gallery';
+@forward './admin';
+@forward './service-explainer';
+@forward './flash';
+@forward './custom';

@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3002';
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3001';
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -26,14 +26,14 @@ export default defineConfig({
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
   ],
   webServer: {
-    command: 'npm run dev -- --hostname 0.0.0.0 --port 3002',
+    command: 'npm run dev -- --hostname 127.0.0.1 --port 3001',
     url: BASE_URL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: process.env.PLAYWRIGHT_REUSE_SERVER !== undefined ? process.env.PLAYWRIGHT_REUSE_SERVER === 'true' : !process.env.CI,
     stdout: 'pipe',
     stderr: 'pipe',
     timeout: 120_000,
     env: {
-      PORT: '3002',
+      PORT: '3001',
       PLAYWRIGHT_BASE_URL: BASE_URL,
       DISABLE_ADMIN_LOCAL_FALLBACKS: 'true',
       ADMIN_PORTAL_HOSTS: '',

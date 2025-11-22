@@ -143,6 +143,8 @@ describe('storage module branch coverage', () => {
     (global as any).S3ClientMock = undefined;
 
     process.env = { ...originalEnv, NODE_ENV: 'test', DEBUG: 'true' };
+    // Ensure tests exercise binding path unless explicitly overridden; CI env may set R2_FORCE_S3=true.
+    process.env.R2_FORCE_S3 = 'false';
 
     warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});

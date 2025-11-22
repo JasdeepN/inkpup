@@ -23,6 +23,14 @@ InkPup Tattoos runs a Cloudflare-hosted Next.js App Router site that showcases t
 
 ## Project Description
 
+[PRODUCT:2025-11-19] Public marketing site now includes dual segmentation: /flash (pre-designed pieces with booking flow) & /custom-design (consultation process and pricing). Hero component integrates both pathways via two cards (Flash vs Custom) improving above-the-fold clarity. Adaptive /contact form handles both flash bookings and custom consultations through query parameters (design, type) with dynamic fields and email content.
+
+
+
+Hero now houses dual-path selection (Flash vs Custom) eliminating need for separate ServiceExplainer section. Homepage simpler, reduces scroll depth and improves conversion focus.
+
+
+
 This project is a web application that emphasizes optimal memory management practices to enhance performance and reduce resource consumption.
 
 
@@ -41,6 +49,14 @@ Create a comprehensive prompt file to break down tasks into actionable steps wit
 
 ## Architecture
 
+[ARCH:2025-11-19] Hero grid widened (1.25fr copy / 1fr media). Adaptive form pattern implemented: server route /api/contact parses optional design_id, booking_type, concept, placement_size, budget; builds dynamic subject/body; degrades gracefully if RESEND_API_KEY not present.
+
+
+
+Hero component expanded: left column contains two selectable cards (grid) with bullet lists + CTA; right column still hero image/carousel. Grid width adjusted in SCSS to 1.25fr/1fr for balanced layout.
+
+
+
 The project follows a modular architecture with a focus on efficient memory management. Each module is designed to handle specific tasks while minimizing memory usage.
 
 
@@ -58,6 +74,22 @@ Utilizes a structured approach to task management and memory storage.
 
 
 ## Technologies
+
+- Next.js 15 App Router
+- React 19
+- TypeScript
+- SCSS + Tailwind utilities
+- Resend API (email)
+- Cloudflare Workers/OpenNext
+- Cloudflare R2 storage
+
+
+
+- Next.js App Router
+- React 19
+- SCSS
+
+
 
 - JavaScript
 - HTML
@@ -83,6 +115,21 @@ Utilizes a structured approach to task management and memory storage.
 
 
 ## Libraries and Dependencies
+
+- next
+- react
+- @resend/client
+- @testing-library/react
+- jest
+- playwright
+- tailwindcss
+
+
+
+- @testing-library/react
+- jest
+
+
 
 - React
 - Node.js

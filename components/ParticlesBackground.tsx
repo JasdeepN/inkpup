@@ -40,7 +40,7 @@ export default function ParticlesBackground() {
       const { saveData, effectiveType } = checkConnection();
       if (saveData) return true;
       if (effectiveType && /2g|slow-2g/.test(String(effectiveType))) return true;
-      if (window.innerWidth < 640) return true; // mobile small screens: disable
+      // if (window.innerWidth < 640) return true; // mobile small screens: disable
       return false;
     };
 

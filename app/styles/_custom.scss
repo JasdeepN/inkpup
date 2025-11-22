@@ -1,0 +1,258 @@
+@use './components' as *;
+
+/* Custom Design Page Styles */
+.custom-page {
+  min-height: 100vh;
+}
+
+.custom-hero {
+  padding: 3rem 0 2rem;
+  text-align: center;
+}
+
+.custom-hero__title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+
+.custom-hero__subtitle {
+  font-size: 1.25rem;
+  color: var(--muted);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.custom-process {
+  padding: 3rem 0;
+}
+
+.custom-process__title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 2.5rem;
+  text-align: center;
+  color: var(--text);
+}
+
+.custom-process__steps {
+  display: grid;
+  gap: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .custom-process__steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .custom-process__steps {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.custom-step {
+  @extend .glass-panel;
+  padding: 2rem;
+}
+
+.custom-step:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.custom-step__number {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6, #d946ef);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.custom-step__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--text);
+}
+
+.custom-step__text {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0;
+}
+
+.custom-pricing {
+  padding: 3rem 0;
+  /* background: var(--surface-elevated); removed for glass */
+}
+
+.custom-pricing__title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 2.5rem;
+  text-align: center;
+  color: var(--text);
+}
+
+.custom-pricing__cards {
+  display: grid;
+  gap: 2rem;
+  max-width: 800px;
+  margin: 0 auto 2rem;
+}
+
+@media (min-width: 768px) {
+  .custom-pricing__cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.custom-pricing__card {
+  @extend .glass-panel;
+  padding: 2rem;
+  border-color: rgba(139, 92, 246, 0.2);
+  text-align: center;
+}
+
+.custom-pricing__card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+
+.custom-pricing__amount {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #8b5cf6, #d946ef);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+}
+
+.custom-pricing__card-text {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0;
+}
+
+.custom-pricing__note {
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--muted);
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.custom-showcase {
+  padding: 3rem 0;
+}
+
+.custom-showcase__title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  color: var(--text);
+}
+
+.custom-showcase__subtitle {
+  font-size: 1.125rem;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.custom-showcase__grid {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  margin-bottom: 2.5rem;
+}
+
+.custom-showcase__item {
+  position: relative;
+  overflow: hidden;
+  @extend .glass-panel;
+  padding: 0; /* reset padding for image */
+}
+
+.custom-showcase__item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.2);
+}
+
+.custom-showcase__image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background: transparent;
+}
+
+.custom-showcase__caption {
+  padding: 1rem 1.25rem;
+  background: transparent;
+  font-size: 0.95rem;
+  color: var(--text);
+  margin: 0;
+}
+
+.custom-showcase__cta {
+  text-align: center;
+}
+
+.custom-cta-section {
+  padding: 4rem 0;
+  /* background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(217, 70, 239, 0.05)); removed for glass */
+}
+
+.custom-cta {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.custom-cta__title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+
+.custom-cta__text {
+  font-size: 1.125rem;
+  color: var(--muted);
+  margin-bottom: 2rem;
+}
+
+.custom-cta__note {
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin-top: 1.5rem;
+}
+
+.custom-cta__link {
+  color: #8b5cf6;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.custom-cta__link:hover {
+  color: #d946ef;
+}

@@ -8,7 +8,7 @@ export default function LoginForm() {
 
   return (
     <div className="h-screen flex items-center justify-center px-4">
-      <div className="max-w-sm w-full space-y-4 p-6 bg-white/10 backdrop-blur-md rounded-lg shadow-xl border border-white/20">
+      <div className="max-w-sm w-full space-y-4 p-6 glass-panel">
         <div>
           <h2 className="text-center text-2xl font-bold text-white">
             Admin Portal

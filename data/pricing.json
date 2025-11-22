@@ -1,0 +1,91 @@
+{
+  "hourlyRateTypical": { "min": 150, "max": 200, "note": "Toronto custom typical for quality artists; sleeves often multi-session." },
+  "sizeCategories": [
+    {
+      "id": "micro",
+      "label": "Micro / Tiny (≤1\" or ≤2.5cm)",
+      "approxSurfaceSqInMax": 2,
+      "typicalHours": 0.5,
+        "flatRateRangeCAD": [100, 200],
+      "description": "Simple linework / minimal symbol"
+    },
+    {
+      "id": "small",
+      "label": "Small (1–3\" longest side)",
+      "approxSurfaceSqInRange": [2, 9],
+      "typicalHoursRange": [0.75, 2],
+        "flatRateRangeCAD": [150, 300],
+      "description": "Linework or small shaded; fine line detail adds time"
+    },
+    {
+      "id": "small_detailed",
+      "label": "Small Detailed (2–4\" high detail)",
+      "typicalHoursRange": [1.5, 3],
+        "flatRateRangeCAD": [300, 450],
+      "description": "Mini portrait / intricate color or illustrative"
+    },
+    {
+      "id": "medium",
+      "label": "Medium (4–6\")",
+      "typicalHoursRange": [3, 5],
+      "sessionCountRange": [1, 2],
+        "estimateRangeCAD": [500, 800],
+      "description": "Forearm piece, mid-sized black & grey or simple color"
+    },
+    {
+      "id": "large_single",
+      "label": "Large Single Session (6–8\")",
+      "typicalHoursRange": [5, 7],
+      "sessionCount": 1,
+        "estimateRangeCAD": [800, 1200],
+      "description": "Larger calf/upper arm piece; may go multi-session if realism"
+    },
+    {
+      "id": "half_sleeve",
+      "label": "Half Sleeve / Large Multi-session",
+      "typicalHoursRange": [10, 18],
+      "sessionCountRange": [2, 4],
+        "estimateRangeCAD": [1200, 2000],
+      "description": "Complex composition upper or lower arm"
+    },
+    {
+      "id": "sleeve_or_back",
+      "label": "Full Sleeve / Back Section / Large Project",
+      "typicalHoursRange": [20, 35],
+      "sessionCountRange": [4, 8],
+        "estimateRangeCAD": [2000, 3500],
+      "description": "Extensive multi-session color realism or illustrative"
+    },
+    {
+      "id": "major_project",
+      "label": "Full Back / Multi-area Realism Project",
+      "typicalHoursRange": [35, 60],
+      "sessionCountRange": [8, 12],
+        "estimateRangeCAD": [3500, 6000],
+      "description": "Large-scale multi-session custom concept"
+    }
+  ],
+  "complexityMultipliers": [
+    { "id": "minimal_line", "label": "Minimal linework", "multiplier": 1.0 },
+    { "id": "fine_line", "label": "Fine line detailed", "multiplier": 1.1 },
+    { "id": "black_grey_shaded", "label": "Black & Grey shaded", "multiplier": 1.15 },
+    { "id": "color_simple", "label": "Color (simple palette)", "multiplier": 1.2 },
+    { "id": "color_complex", "label": "Color (complex multi-palette)", "multiplier": 1.3 },
+    { "id": "realism_portrait", "label": "Realism / Portrait", "multiplier": 1.4 }
+  ],
+  "colorProfiles": [
+    { "id": "monochrome_black_grey", "label": "Black & Grey / Monochrome", "multiplier": 1.0, "description": "Baseline pricing for black ink work" },
+    { "id": "limited_palette", "label": "Limited Color Palette", "multiplier": 1.12, "description": "Selective spot color or simple 2-3 color accents" },
+    { "id": "full_color", "label": "Full Color", "multiplier": 1.25, "description": "Multi-color composition with blending and saturation" },
+    { "id": "hyper_color_realism", "label": "Hyper-Realistic Color", "multiplier": 1.35, "description": "High-saturation layered realism with extensive color depth" }
+  ],
+  "citationSources": [
+    { "url": "https://46tattoo.com/blogs/news/how-much-do-tattoos-cost-toronto", "notes": "Custom $150–200/hr; flat rates for small/flash based on size/complexity." },
+    { "url": "https://piranhatattoo.ca/how-much-do-tattoos-cost-in-canada-different-area-type-guide/", "notes": "Small 2x2 $50–250; Medium portrait $150–450; Large sleeves start $500 up to $4000 full back; Toronto hourly $175–190/hr; $100 minimum." },
+    { "url": "https://www.hontattoo.com/post/understanding-tattoo-size-and-price-in-toronto", "notes": "Half sleeve 10–18 hours; small tattoos per-piece pricing; large priced by hour ($80–$500/h range)." },
+    { "url": "https://adrenalinetoronto.com/tattoo-cost-rates-prices/", "notes": "Hourly $175–190 typical; $100 min for small pieces." },
+    { "url": "https://piranhatattoo.ca/how-much-do-portrait-tattoos-cost-in-toronto/", "notes": "Color portraits add 20–30% time/cost over black & grey; full-color up to $1200+ vs black & grey $300–600." },
+    { "url": "https://piranhatattoo.ca/how-much-do-full-arm-tattoos-cost-in-toronto/", "notes": "Full sleeve color $4k–$10k+ vs black & grey $3k–$7k; color requires more layering/blending time." },
+    { "url": "https://piranhatattoo.ca/black-white-vs-colour-does-it-impact-the-price/", "notes": "Color not always premium but multi-layer vibrant work adds 15–35% time depending on palette complexity." }
+  ]
+}

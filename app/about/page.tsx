@@ -31,7 +31,7 @@ export default function AboutPage() {
         </ul>
       </div>
 
-      <div className="grid gap-4 rounded border border-[var(--border)] bg-[var(--surface)] p-6 shadow">
+      <div className="glass-panel p-6">
         <h3 className="text-xl font-semibold">Studio details</h3>
         <dl className="grid gap-3 text-muted">
           <div>

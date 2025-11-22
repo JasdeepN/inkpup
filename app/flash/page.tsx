@@ -1,0 +1,97 @@
+import { Metadata } from 'next';
+import Link from 'next/link';
+import SmartImage from '../../components/SmartImage';
+import gallery from '../../data/gallery';
+import { createPageMetadata } from '../../lib/site-metadata';
+
+export async function generateMetadata(): Promise<Metadata> {
+  return createPageMetadata({
+    title: 'Flash Tattoos — Ready-to-Ink Designs',
+    description: 'Browse our available flash tattoo designs. Pre-designed artwork, quick booking, affordable pricing, and same-week availability in Toronto GTA.',
+  });
+}
+
+export default function FlashPage() {
+  // Filter for flash and available designs
+  const flashDesigns = gallery.filter(
+    item => item.category === 'flash' || item.category === 'available'
+  );
+
+  return (
+    <div className="flash-page">
+      <section className="flash-hero">
+        <div className="container">
+          <h1 className="flash-hero__title">Flash Tattoos</h1>
+          <p className="flash-hero__subtitle">
+            Ready-to-ink designs. Quick booking, affordable pricing.
+          </p>
+          
+          <div className="flash-pricing">
+            <h2 className="flash-pricing__title">Pricing</h2>
+            <p className="flash-pricing__text">
+              Flash designs: <strong>$150–$300</strong>
+            </p>
+            <p className="flash-pricing__note">
+              Final price depends on size and placement. Most flash pieces can be booked within 1 week.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="flash-gallery-section">
+        <div className="container">
+          <h2 className="flash-gallery__heading">Available Flash Designs</h2>
+          
+          {flashDesigns.length === 0 ? (
+            <p className="flash-gallery__empty">
+              No flash designs available at this time. Check back soon or{' '}
+              <Link href="/custom-design">request a custom design</Link>.
+            </p>
+          ) : (
+            <div className="flash-gallery">
+              {flashDesigns.map((design) => (
+                <div key={design.id} className="flash-card">
+                  <div className="flash-card__image">
+                    <SmartImage
+                      src={design.src}
+                      alt={design.alt}
+                      fill
+                      className="object-cover"
+                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    />
+                  </div>
+                  
+                  <div className="flash-card__content">
+                    <h3 className="flash-card__title">{design.alt}</h3>
+                    <p className="flash-card__id">Design ID: {design.id}</p>
+                    
+                    <Link 
+                      href={`/contact?design=${design.id}`}
+                      className="btn btn--flash flash-card__cta"
+                    >
+                      Book This Design
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="flash-cta-section">
+        <div className="container">
+          <div className="flash-cta">
+            <h2 className="flash-cta__title">Don&apos;t See What You&apos;re Looking For?</h2>
+            <p className="flash-cta__text">
+              We also create custom one-of-a-kind tattoos designed specifically for you.
+            </p>
+            <Link href="/custom-design" className="btn btn--custom">
+              Request Custom Design
+            </Link>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}

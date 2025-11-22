@@ -1,0 +1,75 @@
+@use './components' as *;
+
+/* Service Explainer Section */
+.service-explainer {
+  padding: 4rem 0;
+  /* background: var(--surface); removed for glass */
+}
+
+.service-explainer__heading {
+  text-align: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 3rem;
+  color: var(--text);
+}
+
+.service-explainer__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.service-explainer__card {
+  @extend .glass-panel;
+  padding: 2.5rem 2rem;
+  text-align: center;
+}
+
+.service-explainer__card:hover {
+  transform: translateY(-4px);
+}
+
+.service-explainer__card--flash:hover {
+  box-shadow: 0 20px 40px rgba(255, 107, 53, 0.25);
+  border-color: rgba(255, 107, 53, 0.3);
+}
+
+.service-explainer__card--custom:hover {
+  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.25);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.service-explainer__icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.service-explainer__title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+
+.service-explainer__subtitle {
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 1.5rem;
+}
+
+.service-explainer__benefits {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem 0;
+  text-align: left;
+}
+
+.service-explainer__benefits li {
+  padding: 0.75rem 0;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.5;
+}

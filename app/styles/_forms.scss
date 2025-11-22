@@ -1,0 +1,31 @@
+// Form input, textarea, select transitions & focus states extracted from globals.scss
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="url"],
+input[type="password"],
+input[type="search"],
+textarea,
+select {
+  transition: border-color var(--animation-duration-fast) ease,
+              box-shadow var(--animation-duration-fast) ease,
+              transform var(--animation-duration-fast) var(--animation-ease-smooth);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1),
+              0 4px 12px rgba(239, 68, 68, 0.15);
+  transform: translateY(-1px);
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 2px;
+}

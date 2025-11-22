@@ -65,7 +65,10 @@ export default function Header() {
               </>
             ) : (
               <>
+                <Link href="/flash" data-testid="nav-flash">Flash Available</Link>
+                <Link href="/custom-design" data-testid="nav-custom">Custom Work</Link>
                 <Link href="/portfolio" data-testid="nav-portfolio">Portfolio</Link>
+                <Link href="/pricing" data-testid="nav-pricing">Pricing</Link>
                 <Link href="/contact" data-testid="nav-contact">Contact</Link>
                 <Link href="/about" data-testid="nav-about">About</Link>
               </>
@@ -118,7 +121,10 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Link href="/portfolio" ref={firstLinkRef} onClick={handleNavClick} data-testid="mobile-portfolio">Portfolio</Link>
+              <Link href="/flash" ref={firstLinkRef} onClick={handleNavClick} data-testid="mobile-flash">Flash Available</Link>
+              <Link href="/custom-design" onClick={handleNavClick} data-testid="mobile-custom">Custom Work</Link>
+              <Link href="/portfolio" onClick={handleNavClick} data-testid="mobile-portfolio">Portfolio</Link>
+              <Link href="/pricing" onClick={handleNavClick} data-testid="mobile-pricing">Pricing</Link>
               <Link href="/contact" onClick={handleNavClick} data-testid="mobile-contact">Contact</Link>
               <Link href="/about" onClick={handleNavClick} data-testid="mobile-about">About</Link>
               <Link href="/contact" className="btn btn--primary mt-2" onClick={handleNavClick} data-testid="mobile-book">Book</Link>

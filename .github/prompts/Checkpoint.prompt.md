@@ -1,6 +1,5 @@
 ---
 description: Comprehensive memory bank checkpoint and update workflow
-version: "1.0.0"
 ---
 
 # Memory Bank Checkpoint

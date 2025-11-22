@@ -1,0 +1,24 @@
+// Reusable component-level foundational styles
+// Glass panel base used by hero cards, buttons (.btn--glass), flash/custom cards, etc.
+
+.glass-panel {
+  background: var(--glass-panel-bg);
+  backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-saturate)) contrast(var(--glass-contrast));
+  -webkit-backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-saturate)) contrast(var(--glass-contrast));
+  border: 1px solid var(--glass-panel-border);
+  border-radius: 1.25rem;
+  box-shadow: 0 10px 42px -12px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35);
+  position: relative;
+  transition: transform 0.35s cubic-bezier(.2,.9,.2,1), box-shadow 0.35s cubic-bezier(.2,.9,.2,1), border-color 0.35s cubic-bezier(.2,.9,.2,1);
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 18% 15%, var(--glass-highlight), rgba(255,255,255,0) 60%);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  opacity: 0.55;
+}

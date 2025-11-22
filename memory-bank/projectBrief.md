@@ -1,4 +1,4 @@
-# Memory Management in Coding Practices
+# Dual-Path Hero Consolidation
 
 ## Purpose
 Provide InkPup Tattoos with a Cloudflare-native web presence that combines the public marketing site and the internal gallery tooling while staying aligned with the studio brand.
@@ -9,6 +9,10 @@ Provide InkPup Tattoos with a Cloudflare-native web presence that combines the p
 - Developers responsible for the Cloudflare Workers deployment pipeline and storage automation.
 
 ## Project Summary
+
+Merged separate ServiceExplainer section into the hero to surface both Flash and Custom pathways immediately, reducing scroll friction and clarifying user choices.
+
+
 
 This project emphasizes the importance of memory management in coding practices, ensuring that tasks are manageable and context is regularly updated.
 
@@ -32,6 +36,12 @@ Create a structured prompt file that outlines a task and breaks it down into act
 Next.js App Router marketing and admin experience for InkPup Tattoos, deployed to Cloudflare Workers via OpenNext with Cloudflare R2-backed media and automated infrastructure scripts.
 
 ## Goals
+
+- Improve first-impression clarity
+- Reduce bounce by surfacing both paths above fold
+- Maintain hero image prominence
+
+
 
 - Implement efficient memory management practices
 - Keep tasks small and concise
@@ -66,6 +76,12 @@ Next.js App Router marketing and admin experience for InkPup Tattoos, deployed t
 
 ## Constraints
 
+- Preserve existing hero image dimensions
+- Maintain mobile accessibility
+- Avoid breaking existing CTA flows
+
+
+
 - Focus on memory management
 
 
@@ -92,6 +108,11 @@ Next.js App Router marketing and admin experience for InkPup Tattoos, deployed t
 - Repository tests run under Jest and Playwright; CLI-driven Jest usage must include the --forceExit flag to avoid hung processes.
 
 ## Stakeholders
+
+- Studio owner
+- Potential clients (flash seekers, custom seekers)
+
+
 
 - Project Managers
 - Developers

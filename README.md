@@ -107,8 +107,14 @@ npm run dev
 3. In another terminal, run the tests (set the base URL if your dev server uses a different port):
 
 ```bash
-# if your dev server runs on :3002
-PLAYWRIGHT_BASE_URL=http://localhost:3002 npx playwright test
+# if your dev server runs on :3001 (recommended for integrated testing)
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:3001 npx playwright test
+```
+
+To start an isolated dev server for integrated testing on port 3001 (no interference with your UAT server on port 3002):
+
+```bash
+npm run dev:test
 ```
 
 The tests are located under `tests/e2e/` and the Playwright config is `playwright.config.ts`.

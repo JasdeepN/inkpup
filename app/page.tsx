@@ -21,9 +21,6 @@ export default async function Home() {
   const heroImages = await getHeroImages();
 
   return (
-    <>
-      <Hero heroImages={heroImages} />
-    
-    </>
+    <Hero heroImages={heroImages} />
   );
 }

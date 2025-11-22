@@ -25,7 +25,8 @@
     "trace-braces": "node scripts/trace-braces.js lib/r2-server.ts",
     "check-list": "npx ts-node scripts/check-listGallery.ts",
     "process-jobs": "npx tsx -r dotenv/config scripts/process-upload-jobs.ts",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "dev:test": "cross-env DISABLE_ADMIN_LOCAL_FALLBACKS=true ADMIN_PORTAL_HOSTS='' PORT=3001 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3001 next dev"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.653.0",
