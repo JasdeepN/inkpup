@@ -1,7 +1,7 @@
 name = "inkpup"
 compatibility_date = "2025-10-07"
 main = ".open-next/worker.js"
-account_id = "${CLOUDFLARE_ACCOUNT_ID}"
+account_id = "3fa0a5663d51ae5473029f71cc97fa7d"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = false
 logpush = true
@@ -9,6 +9,16 @@ logpush = true
 [assets]
 directory = ".open-next/assets"
 binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "inkpup-db"
+database_id = "fb58122f-db2f-4152-8a7a-fbfc2150d520"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "4ef6330025cc495dbdc098db32c3e6f4"
+preview_id = "5dbe0ac9a630423ca4edc74280088fb3"
 
 [[r2_buckets]]
 binding = "R2_BUCKET"

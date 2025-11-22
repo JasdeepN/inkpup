@@ -1,4 +1,6 @@
 import pricingData from '../data/pricing.json';
+import { getD1Binding, getSizeCategories, getStyles, getColorProfiles } from './db/d1';
+import type { SizeCategory as D1SizeCategory, Style as D1Style, ColorProfile as D1ColorProfile } from '../types/cloudflare';
 
 export type SizeCategory = {
   id: string;
@@ -26,6 +28,90 @@ export interface PricingDataShape {
 }
 
 export const pricing: PricingDataShape = pricingData as PricingDataShape;
+
+/**
+ * Feature flag to enable/disable D1 pricing data
+ * Set to 'true' to query D1, 'false' to use JSON fallback
+ */
+const ENABLE_D1_PRICING = process.env.ENABLE_D1_PRICING === 'true' || process.env.NODE_ENV === 'production';
+
+/**
+ * Convert D1 SizeCategory to legacy format for compatibility
+ */
+function convertD1SizeCategory(d1Size: D1SizeCategory): SizeCategory {
+  return {
+    id: d1Size.id,
+    label: d1Size.label,
+    flatRateRangeCAD: [d1Size.min_price, d1Size.max_price],
+    description: d1Size.description || undefined,
+  };
+}
+
+/**
+ * Convert D1 Style to legacy format
+ */
+function convertD1Style(d1Style: D1Style): Style {
+  return {
+    id: d1Style.id,
+    label: d1Style.label,
+    multiplier: d1Style.multiplier,
+    description: d1Style.description || undefined,
+  };
+}
+
+/**
+ * Convert D1 ColorProfile to legacy format
+ */
+function convertD1ColorProfile(d1Color: D1ColorProfile): ColorProfile {
+  return {
+    id: d1Color.id,
+    label: d1Color.label,
+    multiplier: d1Color.multiplier,
+    description: d1Color.description || undefined,
+  };
+}
+
+/**
+ * Get pricing data from D1 or fall back to JSON
+ * This function tries D1 first (if enabled), then falls back to JSON data
+ */
+export async function getPricingData(): Promise<PricingDataShape> {
+  // If D1 disabled or unavailable, return JSON data immediately
+  if (!ENABLE_D1_PRICING) {
+    return pricing;
+  }
+
+  const db = getD1Binding();
+  if (!db) {
+    console.warn('[Pricing] D1 binding not available, falling back to JSON data');
+    return pricing;
+  }
+
+  try {
+    // Query D1 for all pricing data in parallel
+    const [d1Sizes, d1Styles, d1Colors] = await Promise.all([
+      getSizeCategories(db),
+      getStyles(db),
+      getColorProfiles(db),
+    ]);
+
+    // Convert D1 data to legacy format
+    const sizeCategories = d1Sizes.map(convertD1SizeCategory);
+    const styles = d1Styles.map(convertD1Style);
+    const colorProfiles = d1Colors.map(convertD1ColorProfile);
+
+    return {
+      hourlyRateTypical: pricing.hourlyRateTypical, // Keep from JSON (not in DB yet)
+      sizeCategories,
+      complexityMultipliers: pricing.complexityMultipliers, // Legacy fallback
+      styles,
+      colorProfiles,
+    };
+  } catch (error) {
+    console.error('[Pricing] Error fetching from D1, falling back to JSON:', error);
+    return pricing;
+  }
+}
 
 /**
  * Estimate a CAD price range for a tattoo given a size category, complexity multiplier, and optional color profile.
