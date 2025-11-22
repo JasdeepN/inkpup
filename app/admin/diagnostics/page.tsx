@@ -7,7 +7,7 @@ import { isAdminHost } from '../../../lib/admin-hosts';
 import { verifySessionToken, getSessionCookieOptions } from '../../../lib/admin-auth';
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { getPricingData } from '../../../lib/pricing';
+import { pricing } from '../../../lib/pricing';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -23,47 +23,48 @@ interface ServiceHealth {
 async function checkD1Health(): Promise<ServiceHealth> {
   const start = performance.now();
   try {
-    const data = await getPricingData();
+    // Currently pricing data comes from JSON import
+    // TODO: When D1 integration is complete, check actual D1 connection here
+    const data = pricing;
     const responseTime = Math.round(performance.now() - start);
     
     const hasData = data.sizeCategories.length > 0 && 
-                    data.styles.length > 0 && 
                     data.colorProfiles.length > 0;
     
     if (!hasData) {
       return {
-        name: 'Cloudflare D1 Database',
+        name: 'Pricing Data',
         status: 'degraded',
-        message: 'Database accessible but missing data',
+        message: 'Data accessible but incomplete',
         responseTime,
         details: {
           sizeCategories: data.sizeCategories.length,
-          styles: data.styles.length,
+          styles: (data as any).styles?.length || data.complexityMultipliers?.length || 0,
           colorProfiles: data.colorProfiles.length,
         }
       };
     }
 
-    const source = process.env.ENABLE_D1_PRICING === 'true' ? 'D1' : 'JSON Fallback';
+    const source = 'JSON (D1 migration pending)';
     
     return {
-      name: 'Cloudflare D1 Database',
+      name: 'Pricing Data',
       status: 'healthy',
-      message: `Connected successfully (using ${source})`,
+      message: `Loaded successfully (${source})`,
       responseTime,
       details: {
         source,
         sizeCategories: data.sizeCategories.length,
-        styles: data.styles.length,
+        styles: (data as any).styles?.length || data.complexityMultipliers?.length || 0,
         colorProfiles: data.colorProfiles.length,
       }
     };
   } catch (error) {
     const responseTime = Math.round(performance.now() - start);
     return {
-      name: 'Cloudflare D1 Database',
+      name: 'Pricing Data',
       status: 'error',
-      message: error instanceof Error ? error.message : 'Connection failed',
+      message: error instanceof Error ? error.message : 'Failed to load',
       responseTime,
     };
   }
@@ -201,14 +202,14 @@ export default async function DiagnosticsPage() {
   }
 
   // Run all health checks in parallel
-  const [d1Health, r2Health, kvHealth, emailHealth] = await Promise.all([
+  const [pricingHealth, r2Health, kvHealth, emailHealth] = await Promise.all([
     checkD1Health(),
     checkR2Health(),
     checkKVHealth(),
     checkEmailHealth(),
   ]);
 
-  const services = [d1Health, r2Health, kvHealth, emailHealth];
+  const services = [pricingHealth, r2Health, kvHealth, emailHealth];
   const allHealthy = services.every(s => s.status === 'healthy');
   const hasErrors = services.some(s => s.status === 'error');
 
