@@ -101,6 +101,7 @@
               box-shadow var(--animation-duration-normal) var(--animation-ease-smooth),
               border var(--animation-duration-normal) ease;
   animation: fadeIn 0.6s var(--animation-ease-smooth) backwards;
+  perspective: var(--card-perspective);
 }
 
 /* Stagger animation for gallery items */
@@ -115,10 +116,11 @@
 .gallery-card:nth-child(9) { animation-delay: 400ms; }
 
 .gallery-card:hover {
-  transform: translateY(-6px) scale(1.02);
+  transform: translateY(-6px) scale(1.02) rotateX(2deg) rotateY(-2deg);
   box-shadow: 0 30px 60px rgba(5, 12, 28, 0.35),
               0 0 0 1px rgba(239, 68, 68, 0.2);
   border-color: rgba(239, 68, 68, 0.3);
+  transition-duration: var(--animation-duration-fast);
 }
 
 .gallery-card__inner {

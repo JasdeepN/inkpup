@@ -58,15 +58,16 @@
 .site-header__brand a:hover, .site-header__brand a:focus-visible { color: var(--nav-link-hover); }
 
 .primary-nav { gap: 1.25rem; font-size: 0.95rem; letter-spacing: 0.015em; }
-.primary-nav a { color: var(--nav-link); transition: color var(--animation-duration-fast) ease; position: relative; padding-bottom: 4px; }
-.primary-nav a::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px; background: var(--brand-accent); transition: width var(--animation-duration-normal) var(--animation-ease-smooth); }
-.primary-nav a:hover, .primary-nav a:focus-visible { color: var(--nav-link-hover); }
-.primary-nav a:hover::after, .primary-nav a:focus-visible::after { width: 100%; }
+.primary-nav a { color: var(--nav-link); transition: color var(--animation-duration-fast) ease, transform var(--animation-duration-fast) var(--animation-ease-spring); position: relative; padding-bottom: 4px; }
+.primary-nav a::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px; background: var(--brand-accent); transition: width var(--animation-duration-normal) var(--animation-ease-smooth); transform-origin: left; }
+.primary-nav a:hover, .primary-nav a:focus-visible { color: var(--nav-link-hover); transform: translateY(-1px); }
+.primary-nav a:hover::after, .primary-nav a:focus-visible::after { width: 100%; animation: navGlowTrail var(--animation-duration-normal) var(--animation-ease-smooth); }
 
 .header-actions { display: flex; align-items: center; gap: 0.75rem; }
 
-.header-toggle { padding: 0.45rem 0.65rem; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-elevated); color: var(--header-text); transition: background 0.2s ease, border 0.2s ease, color 0.2s ease; }
+.header-toggle { padding: 0.45rem 0.65rem; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-elevated); color: var(--header-text); transition: background 0.2s ease, border 0.2s ease, color 0.2s ease, transform 0.2s ease; }
 .header-toggle:hover, .header-toggle:focus-visible { border-color: var(--nav-link-hover); color: var(--nav-link-hover); }
+.header-toggle:active { animation: themeTransition var(--animation-duration-slow) var(--animation-ease-smooth); }
 
 .theme-toggle { display: inline-flex; align-items: center; justify-content: center; width: 3rem; height: 3rem; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-elevated); color: var(--header-text); font-size: 1.1rem; transition: background 0.2s ease, color 0.2s ease, border 0.2s ease, transform 0.2s ease; }
 .theme-toggle:hover, .theme-toggle:focus-visible { border-color: var(--nav-link-hover); color: var(--nav-link-hover); transform: translateY(-1px); }

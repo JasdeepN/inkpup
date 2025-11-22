@@ -31,8 +31,7 @@
   }
 
   &:active:not(:disabled) {
-    transform: scale(0.98);
-    transition-duration: var(--animation-duration-fast);
+    animation: buttonPress var(--animation-duration-fast) var(--animation-ease-spring);
   }
 }
 
@@ -48,7 +47,7 @@
   transform: translateY(-2px) scale(1.02);
   box-shadow: 0 20px 40px rgba(251, 113, 133, 0.5), 
               0 0 0 0 rgba(239, 68, 68, 0.4);
-  animation: pulse-glow 2s infinite;
+  animation: buttonGlowPulse 1.5s ease-in-out infinite;
 }
 
 .btn--secondary {

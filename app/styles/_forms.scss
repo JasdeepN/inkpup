@@ -18,9 +18,14 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--brand-accent);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1),
-              0 4px 12px rgba(239, 68, 68, 0.15);
+  animation: inputFocusGlow var(--animation-duration-normal) var(--animation-ease-smooth) forwards;
   transform: translateY(-1px);
+}
+
+input:invalid:not(:focus):not(:placeholder-shown),
+textarea:invalid:not(:focus):not(:placeholder-shown) {
+  border-color: #ef4444;
+  animation: inputShake var(--animation-duration-normal) ease-in-out;
 }
 
 input:focus-visible,

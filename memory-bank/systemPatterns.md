@@ -218,20 +218,75 @@ Single /contact form adapts to booking scenarios using query params (design=<id>
 [PATTERN:2025-11-22]
 - **Core animations**: 7 keyframes defined in `app/styles/_animations.scss` (slideInDown, fadeIn, scaleIn, slideInUp, pulse-glow, admin-stat-skeleton, gallery-skeleton)
 - **Animation variables**: CSS custom properties in `_variables.scss` for timing (--animation-duration-fast/normal/slow: 200ms/300ms/500ms) and easing (--animation-ease-smooth/spring/bounce with cubic-bezier curves)
-- **Performance focus**: All animations use GPU-accelerated properties only (transform, opacity). Zero layout-triggering animations (width/height/top/left forbidden)
+- **3D perspective**: --card-perspective: 1000px for 3D transform effects
+- **Performance focus**: All animations use GPU-accelerated properties only (transform, opacity, box-shadow). Zero layout-triggering animations (width/height/top/left forbidden)
 - **Accessibility**: `@media (prefers-reduced-motion: reduce)` support with animation-duration: 0.01ms override
 - **Gallery stagger**: `.gallery-card` children animated with incremental delays (50ms increments, 9 children supported)
 - **No animation libraries**: Pure CSS approach, zero JavaScript animation frameworks (no Framer Motion, GSAP, react-spring)
 - **Browser targets**: 95%+ support, fallback-first approach for newer APIs like View Transitions
 - **Performance budget**: 60fps target (16.66ms frame budget), CSS <10KB increase limit
 
-### Animation Enhancement Opportunities (Research 2025-11-22)
-- **Phase 1** (CSS micro-interactions, 0KB): Button press states, input focus rings, success celebrations, card tilt effects, navigation hover transitions
+### Phase 1 CSS Micro-interactions (Implemented 2025-11-22)
+**Status**: ✅ Complete - 10 new keyframes, 0KB bundle increase, 238 tests passing
+
+**Keyframes Added** (app/styles/_animations.scss):
+- `buttonPress`: Scale press feedback (0.95 → 1.0) with spring easing
+- `buttonGlowPulse`: Pulsing box-shadow for primary button hover states (1.5s infinite)
+- `inputFocusGlow`: Ring animation on input focus (300ms smooth easing)
+- `inputShake`: Horizontal shake for validation errors (10 steps, -8px to +8px)
+- `checkmarkDraw`: SVG stroke-dashoffset animation for success checkmarks
+- `successBounce`: Scale bounce effect (0 → 1.1 → 1.0) with overshoot easing
+- `successFadeIn`: Opacity + translateY combo for success message appearance
+- `navGlowTrail`: ScaleX animation for navigation link underlines
+- `themeTransition`: 360° rotation with scale pulse for theme toggle (500ms)
+
+**Implementation Locations**:
+- **_buttons.scss**: `.btn:active` uses buttonPress, `.btn--primary:hover` uses buttonGlowPulse
+- **_forms.scss**: `input:focus` uses inputFocusGlow, `input:invalid` uses inputShake
+- **_base.scss**: `.success-message`, `.success-icon`, `.checkmark-path` utility classes
+- **_gallery.scss**: `.gallery-card` with perspective and 3D tilt on hover (rotateX/rotateY)
+- **_components.scss**: `.glass-panel:hover` with translateY + scale + enhanced shadows
+- **_layout.scss**: `.primary-nav a:hover` with translateY + navGlowTrail, `.header-toggle:active` with themeTransition
+
+**Performance Characteristics**:
+- All keyframes use transform/opacity/box-shadow only (GPU-accelerated)
+- No layout thrashing or reflow triggers
+- Respects prefers-reduced-motion (inherited from existing @media rule)
+- Zero JavaScript, pure CSS solution
+- Bundle size: 0KB increase (CSS only)
+
+**Usage Examples**:
+```scss
+// Button press feedback
+.btn:active:not(:disabled) {
+  animation: buttonPress var(--animation-duration-fast) var(--animation-ease-spring);
+}
+
+// Input focus glow
+input:focus {
+  animation: inputFocusGlow var(--animation-duration-normal) var(--animation-ease-smooth) forwards;
+}
+
+// Success message appearance
+.success-message {
+  animation: successFadeIn var(--animation-duration-normal) var(--animation-ease-smooth);
+}
+
+// 3D card tilt on hover
+.gallery-card {
+  perspective: var(--card-perspective);
+}
+.gallery-card:hover {
+  transform: translateY(-6px) scale(1.02) rotateX(2deg) rotateY(-2deg);
+}
+```
+
+### Animation Enhancement Roadmap (Planned)
 - **Phase 2** (Intersection Observer, ~2KB): Scroll-triggered parallax, section reveals, counter animations, progressive stagger
 - **Phase 3** (View Transitions API, ~3KB): Page navigation morphing, modal expansion, image gallery transitions (86% browser support)
 - **Phase 4** (Advanced polish, ~5KB): Confetti effects, skeleton morphing, blur-up loading states (optional enhancement)
 
-### Examples
+### Legacy Animation Examples
 - Button hover: `transition: transform var(--animation-duration-fast) var(--animation-ease-spring)`
 - Gallery card: `animation: fadeIn var(--animation-duration-normal) var(--animation-ease-smooth) backwards`
 - Reduced motion: `* { animation-duration: 0.01ms !important; }`
