@@ -55,6 +55,7 @@
 - [PROGRESS:2025-11-22] ✅ Created pricing tables schema (size_categories, styles, color_profiles) with migrations 001 and 002
 - [PROGRESS:2025-11-22] ✅ Seeded D1 with 8 size categories, 16 styles, 5 color profiles from pricing.json
 - [PROGRESS:2025-11-22] Started Phase 1: Pricing Data Migration - Created D1 client wrapper (lib/db/d1.ts) and updated pricing.ts with fallback logic
+- [PROGRESS:2025-11-22] ✅ Committed Phase 0 & Phase 1 POC setup (commit: f5d3bf4) - D1 bindings, schema, seed data, client wrapper, feature flag, test page
 - [PROGRESS:2025-11-22] Created ALL phase implementation plans:
   - Phase 1: 41 tasks, CSS-only micro-interactions, 0KB bundle cost
   - Phase 2: 47 tasks, Intersection Observer scroll effects, ≤2KB bundle
