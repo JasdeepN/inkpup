@@ -3,6 +3,36 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { act } from 'react';
 
+// Mock window.matchMedia for useReducedMotion hook
+const mockMatchMedia = (matches: boolean) => ({
+  matches,
+  media: '(prefers-reduced-motion: reduce)',
+  onchange: null,
+  addListener: jest.fn(),
+  removeListener: jest.fn(),
+  addEventListener: jest.fn(),
+  removeEventListener: jest.fn(),
+  dispatchEvent: jest.fn(),
+});
+
+// Setup mocks before each test (not just once)
+beforeEach(() => {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    configurable: true,
+    value: jest.fn().mockImplementation((query) => mockMatchMedia(false)),
+  });
+  
+  // Mock IntersectionObserver for useScrollReveal hook
+  global.IntersectionObserver = class IntersectionObserver {
+    constructor() {}
+    disconnect() {}
+    observe() {}
+    takeRecords() { return []; }
+    unobserve() {}
+  } as unknown as typeof IntersectionObserver;
+});
+
 // Mock feature flag module so we can toggle captions on/off in tests
 jest.mock('../lib/featureFlags', () => ({
   isGalleryCaptionsEnabled: jest.fn(),

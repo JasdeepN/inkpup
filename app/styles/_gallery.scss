@@ -102,6 +102,10 @@
               border var(--animation-duration-normal) ease;
   animation: fadeIn 0.6s var(--animation-ease-smooth) backwards;
   perspective: var(--card-perspective);
+  
+  /* Performance optimization for large galleries (50+ items) */
+  content-visibility: auto;
+  contain-intrinsic-size: 0 450px; /* Estimated card height for layout hints */
 }
 
 /* Stagger animation for gallery items */

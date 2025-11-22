@@ -61,6 +61,20 @@
   - All animations GPU-accelerated (transform/opacity/box-shadow only)
   - Build successful, 238 tests passing, 0KB bundle increase
   - Execution time: ~1 hour (faster than estimated 4-6 hours)
+  - BUGFIX: Fixed pricing estimator blur on hover by adding .glass-panel--interactive modifier class
+- [PROGRESS:2025-11-22] ✅ PARTIAL: Animation Phase 2 - Intersection Observer Scroll Effects (Components A + C + E complete)
+  - Component A: Created lib/animations/ foundation with 4 files (types, constants, useScrollReveal, useReducedMotion)
+  - Component C: Created RevealOnScroll component and stagger utilities
+  - Component E: Enhanced Gallery component with scroll reveal stagger (50ms increment per card)
+  - Added reveal-hidden/reveal-visible CSS classes to _animations.scss
+  - Applied RevealOnScroll to About page with stagger delays
+  - Applied RevealOnScroll to Gallery with threshold 0.1 for early reveal
+  - Added content-visibility optimization to gallery cards for 50+ item performance
+  - Created parallax utilities (lib/animations/parallax.ts) for future hero enhancement
+  - 269 tests passing (+13 new animation tests: parallax 13 tests), build successful
+  - Bundle size impact: +1KB total (103KB gallery, 106KB about, within ≤2KB budget)
+  - Test infrastructure: Added IntersectionObserver and matchMedia mocks to 4 test files
+  - Remaining: Components B (Parallax - optional, utils ready), D (Counters), F (Documentation)
 
 ## Doing
 

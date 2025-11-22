@@ -3,6 +3,34 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import PortfolioPage from './page';
 
+// Mock window.matchMedia for useReducedMotion hook
+const mockMatchMedia = (matches: boolean) => ({
+  matches,
+  media: '(prefers-reduced-motion: reduce)',
+  onchange: null,
+  addListener: jest.fn(),
+  removeListener: jest.fn(),
+  addEventListener: jest.fn(),
+  removeEventListener: jest.fn(),
+  dispatchEvent: jest.fn(),
+});
+
+beforeAll(() => {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: jest.fn().mockImplementation((query) => mockMatchMedia(false)),
+  });
+  
+  // Mock IntersectionObserver for useScrollReveal hook
+  global.IntersectionObserver = class IntersectionObserver {
+    constructor() {}
+    disconnect() {}
+    observe() {}
+    takeRecords() { return []; }
+    unobserve() {}
+  } as unknown as typeof IntersectionObserver;
+});
+
 jest.mock('../../lib/r2-server', () => ({
   listGalleryImages: jest.fn().mockResolvedValue({
     items: [

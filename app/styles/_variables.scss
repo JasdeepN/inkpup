@@ -52,6 +52,11 @@
   /* 3D transform perspective */
   --card-perspective: 1000px;
   --animation-stagger-delay: 50ms;
+  
+  /* Parallax scroll speeds */
+  --parallax-speed-slow: 0.5;
+  --parallax-speed-medium: 0.3;
+  --parallax-speed-fast: 0.15;
 }
 
 html.dark {

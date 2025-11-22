@@ -4,6 +4,34 @@ import userEvent from '@testing-library/user-event';
 import Gallery from './Gallery';
 import type { GalleryItem } from '../lib/gallery-types';
 
+// Mock window.matchMedia for useReducedMotion hook
+const mockMatchMedia = (matches: boolean) => ({
+  matches,
+  media: '(prefers-reduced-motion: reduce)',
+  onchange: null,
+  addListener: jest.fn(),
+  removeListener: jest.fn(),
+  addEventListener: jest.fn(),
+  removeEventListener: jest.fn(),
+  dispatchEvent: jest.fn(),
+});
+
+beforeEach(() => {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: jest.fn().mockImplementation((query) => mockMatchMedia(false)),
+  });
+  
+  // Mock IntersectionObserver for useScrollReveal hook
+  global.IntersectionObserver = class IntersectionObserver {
+    constructor() {}
+    disconnect() {}
+    observe() {}
+    takeRecords() { return []; }
+    unobserve() {}
+  } as unknown as typeof IntersectionObserver;
+});
+
 const originalCaptionFlag = process.env.NEXT_PUBLIC_SHOW_GALLERY_CAPTIONS;
 
 afterEach(() => {
