@@ -11,8 +11,9 @@ describe('pricing estimator', () => {
   it('handles estimate range categories', () => {
     const mediumSimple = estimatePriceRange('medium', 'minimal_line');
     expect(mediumSimple).toEqual([500, 800]);
-    const mediumColor = estimatePriceRange('medium', 'color_complex');
-    expect(mediumColor).toEqual([650, 1040]); // 1.3x
+    // full_color multiplier 1.25
+    const mediumColor = estimatePriceRange('medium', 'minimal_line', 'full_color');
+    expect(mediumColor).toEqual([625, 1000]); // 1.25x
   });
 
   it('formats range with upper bound plus when very large', () => {
@@ -53,12 +54,12 @@ describe('pricing estimator', () => {
 
     it('handles limited palette with minimal uplift', () => {
       // small_detailed: flatRateRangeCAD [300, 450]
-      // fine_line: 1.1
+      // fine_line: 1.08 (updated)
       // limited_palette: 1.12
-      // Total: 1.1 * 1.12 = 1.232
+      // Total: 1.08 * 1.12 = 1.2096
       const range = estimatePriceRange('small_detailed', 'fine_line', 'limited_palette');
-      expect(range).toEqual([Math.round(300 * 1.232), Math.round(450 * 1.232)]);
-      expect(range).toEqual([370, 554]);
+      expect(range).toEqual([Math.round(300 * 1.2096), Math.round(450 * 1.2096)]);
+      expect(range).toEqual([363, 544]);
     });
 
     it('handles unknown color profile gracefully with fallback to 1.0', () => {

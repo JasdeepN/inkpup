@@ -425,6 +425,14 @@ const handleScroll = throttle(() => {
 - Stagger increments: 50ms for cards, 100-200ms for sections
 - Bundle cost: ~1-2KB for all scroll animation utilities
 
+## Pricing Estimator - Style vs Color Separation (2025-11-22)
+
+- **Data**: `data/pricing.json` now includes a `styles` array with descriptive labels and multipliers alongside `complexityMultipliers` for backward compatibility.
+- **UI**: The estimator exposes a `Style` select (populated from `pricing.styles`) and a `Color Type` toggle (Monochrome vs Color). The `Color Profile` select filters based on the chosen color type and defaults to typical values (e.g., `full_color` for color styles).
+- **Computation**: `estimatePriceRange(sizeId, styleId, colorProfileId)` multiplies the style multiplier and the color multiplier; if no style is found, the function falls back to legacy complexity multipliers.
+- **Accessibility**: The UI includes inline descriptions of the selected style, and defaults align to common practice (e.g., Watercolor → Color; Blackwork → Monochrome).
+- **Backward compatibility**: The estimator still accepts legacy complexity IDs to avoid breaking integrations.
+
 ### Animation Enhancement Roadmap
 - **Phase 1** (CSS-only, 0KB): ✅ Button press, input focus, card hovers, nav glow, theme transitions
 - **Phase 2** (Intersection Observer, ≤2KB): ✅ Scroll reveals, gallery stagger, counter animations, parallax utilities

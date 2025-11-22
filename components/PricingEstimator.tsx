@@ -1,16 +1,36 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { pricing, estimatePriceRange, formatRange } from '../lib/pricing';
 
 export default function PricingEstimator() {
   const [sizeId, setSizeId] = useState('');
-  const [complexityId, setComplexityId] = useState('');
+  const [styleId, setStyleId] = useState('');
+  const [colorType, setColorType] = useState<'monochrome' | 'color'>('monochrome');
   const [colorProfileId, setColorProfileId] = useState('monochrome_black_grey');
   
-  const range = sizeId && complexityId 
-    ? estimatePriceRange(sizeId, complexityId, colorProfileId)
+  const range = sizeId && styleId 
+    ? estimatePriceRange(sizeId, styleId, colorProfileId)
     : null;
+
+  // Ensure the colorProfile selection remains sensible with the chosen color type
+  useEffect(() => {
+    const monoIds = ['monochrome_black_grey', 'grey_wash'];
+    const colorIds = pricing.colorProfiles.map(cp => cp.id).filter(id => !monoIds.includes(id));
+    if (colorType === 'monochrome') {
+      if (!monoIds.includes(colorProfileId)) setColorProfileId(monoIds[0]);
+    } else {
+      if (!colorIds.includes(colorProfileId)) setColorProfileId(colorIds[0] || 'full_color');
+    }
+  }, [colorType, colorProfileId]);
+
+  // If the user picks a style that commonly defaults to Color or Monochrome, auto-select a reasonable colorType
+  useEffect(() => {
+    if (!styleId) return;
+    const prefersColor = new Set(['watercolor', 'traditional', 'neo_traditional', 'new_school', 'realism_portrait', 'japanese', 'illustrative']);
+    const defaultType = prefersColor.has(styleId) ? 'color' : 'monochrome';
+    if (defaultType !== colorType) setColorType(defaultType as 'monochrome' | 'color');
+  }, [styleId, colorType]);
 
   return (
     <div className="glass-panel glass-panel--interactive p-6 space-y-6">
@@ -29,7 +49,7 @@ export default function PricingEstimator() {
           <select
             value={sizeId}
             onChange={(e) => setSizeId(e.target.value)}
-            className="p-2 border rounded bg-white text-primary focus:ring-2 focus:ring-accent focus:outline-none"
+            className="mt-1 p-2 border rounded bg-surface text-primary"
             aria-describedby="size-help"
           >
             <option value="">Select size…</option>
@@ -45,43 +65,82 @@ export default function PricingEstimator() {
         </label>
 
         <label className="flex flex-col text-sm">
-          <span className="font-medium mb-1">Complexity & Style</span>
+          <span className="font-medium mb-1">Style</span>
           <select
-            value={complexityId}
-            onChange={(e) => setComplexityId(e.target.value)}
-            className="p-2 border rounded bg-white text-primary focus:ring-2 focus:ring-accent focus:outline-none"
-            aria-describedby="complexity-help"
+            value={styleId}
+            onChange={(e) => setStyleId(e.target.value)}
+            className="mt-1 p-2 border rounded bg-surface text-primary"
+            aria-describedby="style-help"
           >
-            <option value="">Select complexity…</option>
-            {pricing.complexityMultipliers.map((comp) => (
-              <option key={comp.id} value={comp.id}>
-                {comp.label}
+            <option value="">Select style…</option>
+            {(pricing.styles || pricing.complexityMultipliers).map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
               </option>
             ))}
           </select>
-          <span id="complexity-help" className="text-xs text-muted mt-1">
-            Realism and portraits require advanced shading techniques
+          <span id="style-help" className="text-xs text-muted mt-1">
+            Pick the artistic style (e.g., Traditional, Realism, Watercolor)
           </span>
+          {styleId && (
+            <p className="text-xs text-muted mt-1">
+              {((pricing.styles || pricing.complexityMultipliers) as any).find((s: any) => s.id === styleId)?.description}
+            </p>
+          )}
         </label>
 
-        <label className="flex flex-col text-sm">
-          <span className="font-medium mb-1">Color Profile</span>
-          <select
-            value={colorProfileId}
-            onChange={(e) => setColorProfileId(e.target.value)}
-            className="p-2 border rounded bg-white text-primary focus:ring-2 focus:ring-accent focus:outline-none"
-            aria-describedby="color-help"
-          >
-            {pricing.colorProfiles.map((cp) => (
-              <option key={cp.id} value={cp.id}>
-                {cp.label}
-              </option>
-            ))}
-          </select>
-          <span id="color-help" className="text-xs text-muted mt-1">
-            Full color adds 20–30% due to layering and blending time
-          </span>
-        </label>
+        <div className="flex flex-col text-sm">
+          <span className="font-medium mb-1">Color Type</span>
+          <div className="mt-1 flex gap-3 items-center" role="radiogroup" aria-label="Color type">
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="radio"
+                name="color-type"
+                value="monochrome"
+                checked={colorType === 'monochrome'}
+                onChange={() => setColorType('monochrome')}
+                className="accent-accent"
+              />
+              <span>Monochrome</span>
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="radio"
+                name="color-type"
+                value="color"
+                checked={colorType === 'color'}
+                onChange={() => setColorType('color')}
+                className="accent-accent"
+              />
+              <span>Color</span>
+            </label>
+          </div>
+
+          <label className="flex flex-col mt-3">
+            <span className="font-medium mb-1">Color Profile</span>
+            <select
+              value={colorProfileId}
+              onChange={(e) => setColorProfileId(e.target.value)}
+              className="mt-1 p-2 border rounded bg-surface text-primary"
+              aria-describedby="color-help"
+            >
+              {pricing.colorProfiles
+                .filter((cp) => (
+                  colorType === 'monochrome'
+                    ? ['monochrome_black_grey', 'grey_wash'].includes(cp.id)
+                    : !['monochrome_black_grey', 'grey_wash'].includes(cp.id)
+                ))
+                .map((cp) => (
+                  <option key={cp.id} value={cp.id}>
+                    {cp.label}
+                  </option>
+                ))}
+            </select>
+            <span id="color-help" className="text-xs text-muted mt-1">
+              Full color adds 20–30% due to layering and blending time
+            </span>
+          </label>
+        </div>
       </fieldset>
 
       {range && (
