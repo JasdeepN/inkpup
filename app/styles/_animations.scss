@@ -168,6 +168,22 @@
 }
 
 /* ============================================
+   SCROLL REVEAL ANIMATIONS
+   ============================================ */
+
+.reveal-hidden {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity var(--animation-duration-slow) var(--animation-ease-smooth),
+              transform var(--animation-duration-slow) var(--animation-ease-smooth);
+}
+
+/* ============================================
    MOTION PREFERENCES
    ============================================ */
 

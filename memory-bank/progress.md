@@ -64,7 +64,10 @@
 
 ## Doing
 
-- Next: Decide whether to continue with Phase 2 (Intersection Observer) or stop here
+- [PROGRESS:2025-11-22] EXECUTING: Animation Phase 2 - Component A complete, moving to Component C (Section Reveals)
+- Execution workflow: Execute.prompt.md
+- Current step: Creating reveal CSS classes and RevealOnScroll component
+- Completed: useScrollReveal, useReducedMotion hooks with 9 passing tests (247 total)
 - Plan next partial extractions: hero, gallery, flash, custom, pricing, admin blocks
 
 ## Next

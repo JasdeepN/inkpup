@@ -13,7 +13,7 @@ export default function PricingEstimator() {
     : null;
 
   return (
-    <div className="glass-panel p-6 space-y-6">
+    <div className="glass-panel glass-panel--interactive p-6 space-y-6">
       <div className="space-y-2">
         <h3 className="text-xl font-semibold">Interactive Pricing Estimator</h3>
         <p className="text-sm text-muted">
