@@ -214,14 +214,15 @@ export default async function DiagnosticsPage() {
   const hasErrors = services.some(s => s.status === 'error');
 
   return (
-    <main className="container py-12 px-4">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div className="flex items-center justify-between">
+    <div className="admin-shell">
+      <section className="admin-dashboard__hero">
+        <div className="admin-card">
           <div>
-            <h1 className="text-3xl font-bold mb-2">System Diagnostics</h1>
-            <p className="text-muted">Infrastructure health and service status</p>
+            <p className="admin-dashboard__eyebrow">Infrastructure</p>
+            <h1>System Diagnostics</h1>
+            <p className="text-muted">Service health and performance monitoring</p>
           </div>
-          <div className="text-right">
+          <div className="mt-4">
             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
               allHealthy ? 'bg-green-500/20 text-green-600' :
               hasErrors ? 'bg-red-500/20 text-red-600' :
@@ -234,16 +235,17 @@ export default async function DiagnosticsPage() {
               }`} />
               <span className="font-semibold">
                 {allHealthy ? 'All Systems Operational' :
-                 hasErrors ? 'Service Degradation Detected' :
+                 hasErrors ? 'Service Degradation' :
                  'Partial Degradation'}
               </span>
             </div>
           </div>
         </div>
+      </section>
 
-        <div className="grid gap-6">
-          {services.map((service) => (
-            <div key={service.name} className="glass-panel p-6">
+      <div className="admin-dashboard__grid">
+        {services.map((service) => (
+          <div key={service.name} className="admin-card">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className={`w-4 h-4 rounded-full ${
@@ -271,7 +273,7 @@ export default async function DiagnosticsPage() {
               </div>
 
               {service.details && (
-                <div className="mt-4 p-4 bg-surface/50 rounded border border-border">
+                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded border border-gray-200 dark:border-gray-700">
                   <h3 className="text-sm font-semibold mb-2 text-muted">Details</h3>
                   <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                     {Object.entries(service.details).map(([key, value]) => (
@@ -285,10 +287,10 @@ export default async function DiagnosticsPage() {
               )}
             </div>
           ))}
-        </div>
+      </div>
 
-        <div className="glass-panel p-6">
-          <h2 className="text-xl font-semibold mb-4">Environment</h2>
+      <div className="admin-card">
+        <h2 className="text-xl font-semibold mb-4">Environment</h2>
           <dl className="grid grid-cols-3 gap-4 text-sm">
             <div>
               <dt className="text-muted mb-1">Runtime</dt>
@@ -306,7 +308,6 @@ export default async function DiagnosticsPage() {
             </div>
           </dl>
         </div>
-      </div>
-    </main>
+    </div>
   );
 }

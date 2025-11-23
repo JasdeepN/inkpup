@@ -330,6 +330,7 @@ export default async function AdminDashboardPage() {
           <ul className="admin-dashboard__quick-links">
             <li><Link href="/uploads">Upload gallery images</Link></li>
             <li><Link href="/gallery">Review gallery content</Link></li>
+            <li><Link href="/dashboard/diagnostics">System diagnostics</Link></li>
             <li><Link href="/api/admin/reciever">Webhook status</Link></li>
             <li><Link href="/contact">Incoming leads</Link></li>
           </ul>
