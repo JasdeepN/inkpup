@@ -214,7 +214,7 @@ export default async function DiagnosticsPage() {
   const hasErrors = services.some(s => s.status === 'error');
 
   return (
-    <div className="admin-shell">
+    <div className="admin-shell admin-shell--full-width">
       <section className="admin-dashboard__hero">
         <div className="admin-card">
           <div>
