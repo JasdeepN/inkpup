@@ -1,7 +1,7 @@
 import './globals.scss';
 import type { Metadata } from 'next';
 import Script from 'next/script';
-import Header from '../components/Header';
+import ConditionalHeader from '../components/ConditionalHeader';
 import LocalBusinessJsonLd from '../components/LocalBusinessJsonLd';
 import ParticlesBackground from '../components/ParticlesBackground';
 import business from '../data/business.json';
@@ -58,7 +58,7 @@ export default function RootLayout({ children }) {
         />
 
         <div id="app-root" className="site-content">
-          <Header />
+          <ConditionalHeader />
           <main id="content" className="py-6 container">
             {children}
           </main>
