@@ -1,6 +1,11 @@
 # Active Context
 
 ## Current Focus
+- [CONTEXT:2025-11-24] Database Migration (D1 + KV):
+  - Plan adopted: `memory-bank/plan-database-migration-2025-11-24.md`.
+  - Status: Phase 0 (Infra) and Phase 1 (Pricing POC) are implemented on `db-migration` branch.
+  - Immediate Goal: Merge `db-migration` into `dev` to establish the D1 foundation.
+  - Next: Proceed to Phase 2 (Gallery Metadata & KV Caching).
 - [CONTEXT:2025-11-24] UI Polish: Updated Header navigation.
   - Added `active` class to current page link for better wayfinding.
   - Fixed vertical alignment of nav links relative to brand by removing `padding-bottom` and adjusting underline position.

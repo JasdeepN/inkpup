@@ -95,6 +95,16 @@
 - [PROGRESS:2025-11-24] Component A.1 complete: Created lib/animations/viewTransitions.ts with feature detection, startViewTransition wrapper, transition name utilities, TypeScript augmentation
 - [PROGRESS:2025-11-24] Analyzed Phase 3 status: Component A complete. Component C partial (Open implemented, Close missing). Components B & E not started.
 
+## Database Migration (Branch: db-migration -> dev)
+- [PROGRESS:2025-11-24] Plan adopted: `memory-bank/plan-database-migration-2025-11-24.md`.
+- [PROGRESS:2025-11-22] Phase 0 (Infrastructure) Complete: D1/KV bindings added to wrangler.toml.
+- [PROGRESS:2025-11-22] Phase 1 (Pricing POC) Implemented on `db-migration`:
+  - Schema defined (`001_create_pricing_tables.sql`).
+  - D1 client wrapper (`lib/db/d1.ts`) created.
+  - Pricing logic updated with D1 support and JSON fallback (`lib/pricing.ts`).
+  - Test page created (`app/test-d1/page.tsx`).
+- [PROGRESS:2025-11-24] Ready to merge `db-migration` to `dev`.
+
 ## Next
 
 - Extract hero section to `app/styles/_hero.scss`
