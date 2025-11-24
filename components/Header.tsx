@@ -16,7 +16,7 @@ export default function Header() {
     else document.documentElement.classList.remove('dark');
   }, [dark]);
 
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
 
   return (
     <header className="sticky-header">
@@ -31,12 +31,22 @@ export default function Header() {
             aria-label="Primary"
             aria-hidden={mobileOpen ? 'true' : 'false'}
           >
-            <TransitionLink href="/flash" className="nav-link">Flash Available</TransitionLink>
-            <TransitionLink href="/custom-design" className="nav-link">Custom Work</TransitionLink>
-            <TransitionLink href="/portfolio" className="nav-link">Portfolio</TransitionLink>
-            <TransitionLink href="/pricing" className="nav-link">Pricing</TransitionLink>
-            <TransitionLink href="/contact" className="nav-link">Contact</TransitionLink>
-            <TransitionLink href="/about" className="nav-link">About</TransitionLink>
+            {[
+              { href: '/flash', label: 'Flash Available' },
+              { href: '/custom-design', label: 'Custom Work' },
+              { href: '/portfolio', label: 'Portfolio' },
+              { href: '/pricing', label: 'Pricing' },
+              { href: '/contact', label: 'Contact' },
+              { href: '/about', label: 'About' },
+            ].map(({ href, label }) => (
+              <TransitionLink
+                key={href}
+                href={href}
+                className={`nav-link ${pathname === href || (href !== '/' && pathname.startsWith(href)) ? 'active' : ''}`}
+              >
+                {label}
+              </TransitionLink>
+            ))}
           </nav>
           <div className="flex items-center gap-4 header-actions ml-auto">
             <TransitionLink href="/contact" className="btn btn--primary hidden md:inline-flex">

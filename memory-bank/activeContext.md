@@ -1,6 +1,9 @@
 # Active Context
 
 ## Current Focus
+- [CONTEXT:2025-11-24] UI Polish: Updated Header navigation.
+  - Added `active` class to current page link for better wayfinding.
+  - Fixed vertical alignment of nav links relative to brand by removing `padding-bottom` and adjusting underline position.
 - [CONTEXT:2025-11-24] ✅ COMPLETE: Animation Phase 3 - View Transitions API implementation
 - Implemented full View Transitions API support with progressive enhancement.
 - Key features: Page transitions (slide/fade), Gallery modal morphing, Theme toggle animation, Pricing estimator state transitions.

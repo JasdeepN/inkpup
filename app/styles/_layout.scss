@@ -172,7 +172,7 @@
 .admin-nav .nav-link {
   color: var(--nav-link);
   position: relative;
-  padding-bottom: 4px;
+  /* padding-bottom removed for alignment */
   font-size: 0.95rem;
   letter-spacing: 0.015em;
   transition: color var(--animation-duration-fast) ease,
@@ -182,7 +182,7 @@
 .admin-nav .nav-link::after {
   content: '';
   position: absolute;
-  bottom: 0;
+  bottom: -4px;
   left: 0;
   width: 0;
   height: 2px;
@@ -201,6 +201,14 @@
 .admin-nav .nav-link:focus-visible::after {
   width: 100%;
   animation: navGlowTrail var(--animation-duration-normal) var(--animation-ease-smooth);
+}
+
+.admin-nav .nav-link.active {
+  color: var(--nav-link-hover);
+}
+
+.admin-nav .nav-link.active::after {
+  width: 100%;
 }
 
 /* Dampened tap effect for accessibility (keyboard users) */
