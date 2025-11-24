@@ -3,6 +3,7 @@ import Link from 'next/link';
 import SmartImage from '../../components/SmartImage';
 import gallery from '../../data/gallery';
 import { createPageMetadata } from '../../lib/site-metadata';
+import RevealOnScroll from '../../components/animations/RevealOnScroll';
 
 export async function generateMetadata(): Promise<Metadata> {
   return createPageMetadata({
@@ -21,11 +22,14 @@ export default function FlashPage() {
     <div className="flash-page">
       <section className="flash-hero">
         <div className="container">
+          <RevealOnScroll>
           <h1 className="flash-hero__title">Flash Tattoos</h1>
           <p className="flash-hero__subtitle">
             Ready-to-ink designs. Quick booking, affordable pricing.
           </p>
+          </RevealOnScroll>
           
+          <RevealOnScroll delay={100}>
           <div className="flash-pricing">
             <h2 className="flash-pricing__title">Pricing</h2>
             <p className="flash-pricing__text">
@@ -35,19 +39,25 @@ export default function FlashPage() {
               Final price depends on size and placement. Most flash pieces can be booked within 1 week.
             </p>
           </div>
+          </RevealOnScroll>
         </div>
       </section>
 
       <section className="flash-gallery-section">
         <div className="container">
+          <RevealOnScroll delay={200}>
           <h2 className="flash-gallery__heading">Available Flash Designs</h2>
+          </RevealOnScroll>
           
           {flashDesigns.length === 0 ? (
+            <RevealOnScroll delay={250}>
             <p className="flash-gallery__empty">
               No flash designs available at this time. Check back soon or{' '}
               <Link href="/custom-design">request a custom design</Link>.
             </p>
+            </RevealOnScroll>
           ) : (
+            <RevealOnScroll delay={250}>
             <div className="flash-gallery">
               {flashDesigns.map((design) => (
                 <div key={design.id} className="flash-card">
@@ -75,10 +85,12 @@ export default function FlashPage() {
                 </div>
               ))}
             </div>
+            </RevealOnScroll>
           )}
         </div>
       </section>
 
+      <RevealOnScroll delay={300}>
       <section className="flash-cta-section">
         <div className="container">
           <div className="flash-cta">
@@ -92,6 +104,7 @@ export default function FlashPage() {
           </div>
         </div>
       </section>
+      </RevealOnScroll>
     </div>
   );
 }

@@ -56,6 +56,7 @@ export default function AboutPage() {
         </div>
       </RevealOnScroll>
 
+      <RevealOnScroll delay={250}>
       <div className="space-y-3">
         <h3 className="text-xl font-semibold">Ready when you are</h3>
         <p className="text-muted">
@@ -65,6 +66,7 @@ export default function AboutPage() {
         </p>
         <Link className="btn btn--primary" href="/contact" data-testid="about-book">Book a consultation</Link>
       </div>
+      </RevealOnScroll>
     </section>
   );
 }

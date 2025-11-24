@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import SmartImage from './SmartImage';
 import HeroCarousel, { CarouselImage } from './HeroCarousel';
+import RevealOnScroll from './animations/RevealOnScroll';
 
 type HeroImageProps = Readonly<{
   src: string;
@@ -31,6 +32,7 @@ export default function Hero({
           if you need full-bleed content. */}
         <div className="container">
         <div className="hero-copy">
+          <RevealOnScroll>
           <h1 className="hero-title text-3xl md:text-5xl" data-testid="hero-title">{title}</h1>
           {subtitle && (
             <p
@@ -40,7 +42,9 @@ export default function Hero({
               {subtitle}
             </p>
           )}
+          </RevealOnScroll>
           <div className="hero-paths" data-testid="hero-paths">
+            <RevealOnScroll delay={100}>
             <div className="hero-path-card hero-path-card--flash" data-testid="hero-path-flash">
               <div className="hero-path-card__icon" aria-hidden="true">⚡</div>
               <h2 className="hero-path-card__title">Flash Tattoos</h2>
@@ -51,6 +55,8 @@ export default function Hero({
               </ul>
               <Link href="/flash" className="btn btn--flash w-full" data-testid="hero-flash">Browse Flash</Link>
             </div>
+            </RevealOnScroll>
+            <RevealOnScroll delay={200}>
             <div className="hero-path-card hero-path-card--custom" data-testid="hero-path-custom">
               <div className="hero-path-card__icon" aria-hidden="true">✨</div>
               <h2 className="hero-path-card__title">Custom Designs</h2>
@@ -61,6 +67,7 @@ export default function Hero({
               </ul>
               <Link href="/custom-design" className="btn btn--custom w-full" data-testid="hero-custom">Request Custom Design</Link>
             </div>
+            </RevealOnScroll>
           </div>
         </div>
 

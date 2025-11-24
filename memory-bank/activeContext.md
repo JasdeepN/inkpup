@@ -1,12 +1,13 @@
 # Active Context
 
 ## Current Focus
+- [CONTEXT:2025-11-24] Cross-browser glassmorphism refinement completed for sticky navigation (reduced blur for particle clarity, Firefox-specific override, transparent wrapper). Monitoring visual consistency; potential future enhancement: optional particle overlay layer above nav for added depth without further blur reduction.
 - [CONTEXT:2025-11-22] ✅ COMPLETE: Animation Phase 2 - Intersection Observer Scroll Effects
 - All 6 components delivered: A (Foundation), C (Section Reveals), E (Gallery Stagger), D (Counters), F (Documentation), B (Parallax utilities for future use)
 - Status: Phase 2 execution complete, ready for Phase 3 planning or other priorities
-- Branch: dev-test
+- Branch: dev
 - Performance: 283 tests passing, About 106KB, Gallery 103KB, build successful
-- Next decision: Continue to Phase 3 (View Transitions API) or pause for production validation
+- Next decision: Evaluate timing for Phase 3 (View Transitions API) vs. additional particle visual polish
 - [CONTEXT:2025-11-22] Previously completed: Animation Phase 1 - CSS Micro-interactions (10 keyframes, 0KB bundle, ~1 hour)
 - [CONTEXT:2025-11-20] Completed unification of glassmorphism styles across the application.
 - Established `.glass-panel` and `.btn--glass` as the standard reusable classes for the "futuristic glass" aesthetic (Image 2).

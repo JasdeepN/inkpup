@@ -1,4 +1,4 @@
-# Progress (Updated: 2025-11-22)
+# Progress (Updated: 2025-11-24)
 
 ## Done
 
@@ -75,6 +75,11 @@
   - Bundle size: About 106KB, Gallery 103KB (within ≤2KB budget)
   - Test infrastructure: IntersectionObserver/matchMedia mocks in 4 test files
   - Build successful with TypeScript type safety maintained
+- [PROGRESS:2025-11-24] Reduced sticky-nav blur to 6px (Firefox 4px) preserving particle visibility while retaining glass aesthetic; implemented @supports(-moz-appearance: none) feature detection for targeted override.
+- [PROGRESS:2025-11-24] Added transparent .sticky-header wrapper to allow backdrop-filter to render underlying particle canvas correctly in Firefox.
+- [PROGRESS:2025-11-24] Removed NEXT_PUBLIC_FORCE_PARTICLES debug env variable to keep accessibility logic accurate (respect reduced motion / save-data).
+- [PROGRESS:2025-11-24] Parameterized nav glass panel via mixin call @include glass-panel(var(--glass-panel-bg), 6px) avoiding duplication while enabling tuning.
+- [PROGRESS:2025-11-24] Verified hero glass panels unaffected; build succeeded with SCSS changes (no regression in tests).
 
 ## Doing
 

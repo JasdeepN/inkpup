@@ -3,6 +3,7 @@ import Link from 'next/link';
 import SmartImage from '../../components/SmartImage';
 import gallery from '../../data/gallery';
 import { createPageMetadata } from '../../lib/site-metadata';
+import RevealOnScroll from '../../components/animations/RevealOnScroll';
 
 export async function generateMetadata(): Promise<Metadata> {
   return createPageMetadata({
@@ -21,18 +22,23 @@ export default function CustomDesignPage() {
     <div className="custom-page">
       <section className="custom-hero">
         <div className="container">
+          <RevealOnScroll>
           <h1 className="custom-hero__title">Custom Tattoo Design</h1>
           <p className="custom-hero__subtitle">
             Your vision, our expertise. Original art designed exclusively for you.
           </p>
+          </RevealOnScroll>
         </div>
       </section>
 
       <section className="custom-process">
         <div className="container">
+          <RevealOnScroll delay={100}>
           <h2 className="custom-process__title">How It Works</h2>
+          </RevealOnScroll>
           
           <div className="custom-process__steps">
+            <RevealOnScroll delay={150}>
             <div className="custom-step">
               <div className="custom-step__number">1</div>
               <h3 className="custom-step__title">Consultation</h3>
@@ -40,7 +46,9 @@ export default function CustomDesignPage() {
                  Share your concept, style preferences, placement, and reference images. We&apos;ll discuss your vision in detail.
               </p>
             </div>
+            </RevealOnScroll>
 
+            <RevealOnScroll delay={200}>
             <div className="custom-step">
               <div className="custom-step__number">2</div>
               <h3 className="custom-step__title">Design</h3>
@@ -48,7 +56,9 @@ export default function CustomDesignPage() {
                 We create original artwork tailored to your body, style, and story. Design deposit: $100 (applied to final price).
               </p>
             </div>
+            </RevealOnScroll>
 
+            <RevealOnScroll delay={250}>
             <div className="custom-step">
               <div className="custom-step__number">3</div>
               <h3 className="custom-step__title">Review & Revise</h3>
@@ -56,7 +66,9 @@ export default function CustomDesignPage() {
                  Review your custom design. We&apos;ll work together to refine until it&apos;s perfect—typically 1-2 revision rounds.
               </p>
             </div>
+            </RevealOnScroll>
 
+            <RevealOnScroll delay={300}>
             <div className="custom-step">
               <div className="custom-step__number">4</div>
               <h3 className="custom-step__title">Quote</h3>
@@ -64,7 +76,9 @@ export default function CustomDesignPage() {
                 Receive transparent pricing based on final design size, complexity, and estimated hours. No hidden fees.
               </p>
             </div>
+            </RevealOnScroll>
 
+            <RevealOnScroll delay={350}>
             <div className="custom-step">
               <div className="custom-step__number">5</div>
               <h3 className="custom-step__title">Book & Ink</h3>
@@ -72,10 +86,12 @@ export default function CustomDesignPage() {
                 Schedule your session (typically 2-4 weeks out). Bring your custom art to life with expert execution.
               </p>
             </div>
+            </RevealOnScroll>
           </div>
         </div>
       </section>
 
+      <RevealOnScroll delay={100}>
       <section className="custom-pricing">
         <div className="container">
           <h2 className="custom-pricing__title">Pricing Structure</h2>
@@ -109,8 +125,10 @@ export default function CustomDesignPage() {
           </div>
         </div>
       </section>
+      </RevealOnScroll>
 
       {customExamples.length > 0 && (
+        <RevealOnScroll delay={150}>
         <section className="custom-showcase">
           <div className="container">
             <h2 className="custom-showcase__title">Custom Work Gallery</h2>
@@ -142,8 +160,10 @@ export default function CustomDesignPage() {
             </div>
           </div>
         </section>
+        </RevealOnScroll>
       )}
 
+      <RevealOnScroll delay={200}>
       <section className="custom-cta-section">
         <div className="container">
           <div className="custom-cta">
@@ -160,6 +180,7 @@ export default function CustomDesignPage() {
           </div>
         </div>
       </section>
+      </RevealOnScroll>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 // Layout styles: header, navigation, mobile menu, footer, site content wrappers
+@use './components' as *;
 // Extracted from globals.scss
 
 /* Site content wrapper & particles background */
@@ -30,6 +31,43 @@
 .mobile-menu-open { overflow: hidden; }
 
 /* Header / Navigation */
+.nav-shell {
+  width: 100%;
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: clamp(1.25rem, 3vw, 1.75rem) clamp(1.25rem, 4vw, 2rem);
+}
+
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  /* Must be transparent so backdrop-filter on child nav can work */
+  background: transparent;
+}
+
+.sticky-nav {
+  /* Nav-specific lighter blur to keep particles visible while retaining glass look.
+     Reduced from hero default (10px/16px) to 6px. */
+  @include glass-panel(var(--glass-panel-bg), 6px);
+  padding: clamp(1rem, 2vw, 1.75rem);
+  background-clip: padding-box;
+  -webkit-background-clip: padding-box;
+}
+
+/* Firefox: further reduce blur (Firefox backdrop-filter can smear small bright particles).
+   Use feature detection for Firefox engine with -moz-appearance support. */
+@supports (-moz-appearance: none) {
+  .sticky-nav {
+    backdrop-filter: blur(4px) saturate(var(--glass-saturate)) contrast(var(--glass-contrast));
+    -webkit-backdrop-filter: blur(4px) saturate(var(--glass-saturate)) contrast(var(--glass-contrast));
+  }
+}
+
+/* `.sticky-nav` uses the `glass-panel` mixin which includes a ::before highlight
+   so we don't duplicate that here. */
+
 .site-header {
   position: sticky;
   top: 0;
@@ -102,4 +140,48 @@
 /* Mobile small-screen header adjustments */
 @media (max-width: 768px) {
   .site-header__inner { flex-wrap: wrap; gap: 0.5rem; }
+}
+
+/* ----------------------------------------------
+   Unified Navigation Hover Animation (admin & public)
+   Applies underline + subtle lift to all .nav-link items inside .admin-nav
+   Excludes brand link (.nav-brand)
+---------------------------------------------- */
+.admin-nav .nav-link {
+  color: var(--nav-link);
+  position: relative;
+  padding-bottom: 4px;
+  font-size: 0.95rem;
+  letter-spacing: 0.015em;
+  transition: color var(--animation-duration-fast) ease,
+              transform var(--animation-duration-fast) var(--animation-ease-spring);
+}
+
+.admin-nav .nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--brand-accent);
+  transition: width var(--animation-duration-normal) var(--animation-ease-smooth);
+  transform-origin: left;
+}
+
+.admin-nav .nav-link:hover,
+.admin-nav .nav-link:focus-visible {
+  color: var(--nav-link-hover);
+  transform: translateY(-1px);
+}
+
+.admin-nav .nav-link:hover::after,
+.admin-nav .nav-link:focus-visible::after {
+  width: 100%;
+  animation: navGlowTrail var(--animation-duration-normal) var(--animation-ease-smooth);
+}
+
+/* Dampened tap effect for accessibility (keyboard users) */
+.admin-nav .nav-link:active {
+  transform: translateY(0);
 }

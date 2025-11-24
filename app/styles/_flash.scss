@@ -25,7 +25,7 @@
 }
 
 .flash-pricing {
-  @extend .glass-panel;
+  @include glass-panel;
   padding: 2rem;
   max-width: 500px;
   margin: 0 auto;
@@ -77,7 +77,7 @@
 }
 
 .flash-card {
-  @extend .glass-panel;
+  @include glass-panel;
   overflow: hidden;
 }
 

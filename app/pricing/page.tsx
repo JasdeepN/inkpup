@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import PricingEstimator from '../../components/PricingEstimator';
 import LocalBusinessJsonLd from '../../components/LocalBusinessJsonLd';
+import RevealOnScroll from '../../components/animations/RevealOnScroll';
 
 export const metadata: Metadata = {
   title: 'Tattoo Pricing Toronto | Size, Complexity & Color Costs',
@@ -91,6 +92,7 @@ export default function PricingPage() {
       <LocalBusinessJsonLd />
 
       <article className="max-w-4xl mx-auto space-y-12 pb-12">
+        <RevealOnScroll>
         <header className="space-y-4 border-b pb-6">
           <h1 className="text-3xl md:text-4xl font-bold">
             Tattoo Pricing in Toronto
@@ -100,11 +102,15 @@ export default function PricingPage() {
             Understand how size, complexity, and color affect your investment.
           </p>
         </header>
+        </RevealOnScroll>
 
+        <RevealOnScroll delay={100}>
         <section>
           <PricingEstimator />
         </section>
+        </RevealOnScroll>
 
+        <RevealOnScroll delay={200}>
         <section id="pricing-factors" className="space-y-6">
           <h2 className="text-2xl font-bold">What Affects Tattoo Pricing?</h2>
           
@@ -153,7 +159,9 @@ export default function PricingPage() {
             </div>
           </div>
         </section>
+        </RevealOnScroll>
 
+        <RevealOnScroll delay={250}>
         <section className="space-y-6">
           <h2 className="text-2xl font-bold">Multi-Session Projects</h2>
           <p className="text-muted leading-relaxed">
@@ -166,7 +174,9 @@ export default function PricingPage() {
             <li><strong>Full Back:</strong> 35–60+ hours across 8–12 sessions</li>
           </ul>
         </section>
+        </RevealOnScroll>
 
+        <RevealOnScroll delay={300}>
         <section className="space-y-6">
           <h2 className="text-2xl font-bold">Why Estimates Vary</h2>
           <p className="text-muted leading-relaxed">
@@ -176,7 +186,9 @@ export default function PricingPage() {
             depend on a personalized consultation.
           </p>
         </section>
+        </RevealOnScroll>
 
+        <RevealOnScroll delay={350}>
         <section className="bg-accent/5 border border-accent/20 rounded-lg p-6 space-y-4">
           <h2 className="text-2xl font-bold">Ready to Get Started?</h2>
           <p className="text-muted leading-relaxed">
@@ -192,6 +204,7 @@ export default function PricingPage() {
             </a>
           </div>
         </section>
+        </RevealOnScroll>
 
         <section className="text-xs text-muted space-y-2 pt-6 border-t">
           <h3 className="font-semibold text-sm">Pricing Data Sources</h3>

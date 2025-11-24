@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 import { cookies, headers } from 'next/headers';
 import { isAdminEnabled, verifySessionToken, getSessionCookieOptions } from '../../lib/admin-auth';
 import { isAdminHost } from '../../lib/admin-hosts';
+import AdminNav from '../../components/admin/AdminNav';
 import type { ReactNode } from 'react';
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
@@ -20,5 +21,10 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   if (!authenticated) {
     redirect('/admin');
   }
-  return <>{children}</>;
+  return (
+    <>
+      <AdminNav />
+      {children}
+    </>
+  );
 }

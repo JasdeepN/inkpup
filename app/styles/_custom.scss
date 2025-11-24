@@ -56,7 +56,7 @@
 }
 
 .custom-step {
-  @extend .glass-panel;
+  @include glass-panel;
   padding: 2rem;
 }
 
@@ -121,7 +121,7 @@
 }
 
 .custom-pricing__card {
-  @extend .glass-panel;
+  @include glass-panel;
   padding: 2rem;
   border-color: rgba(139, 92, 246, 0.2);
   text-align: center;
@@ -189,7 +189,7 @@
 .custom-showcase__item {
   position: relative;
   overflow: hidden;
-  @extend .glass-panel;
+  @include glass-panel;
   padding: 0; /* reset padding for image */
 }
 

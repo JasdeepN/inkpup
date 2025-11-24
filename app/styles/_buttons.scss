@@ -67,7 +67,7 @@
 }
 
 .btn--glass {
-  @extend .glass-panel;
+  @include glass-panel;
   padding: 0 1.5rem;
   height: 48px;
   display: inline-flex;

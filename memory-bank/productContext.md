@@ -149,3 +149,5 @@ Utilizes a structured approach to task management and memory storage.
 
 - Memory Management Libraries
 
+[PRODUCT:2025-11-24] Cross-browser glassmorphism refinement implemented: adaptive blur for navigation (6px general / 4px Firefox) preserves particle background clarity while maintaining consistent hero aesthetic. Removed unused debug env variable to keep runtime behavior predictable.
+

@@ -60,7 +60,7 @@
 .hero-paths { display: grid; gap: 1.25rem; margin-top: 0.5rem; }
 @media (min-width: 640px) { .hero-paths { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
-.hero-path-card { @extend .glass-panel; padding: 1.25rem 1.25rem 1.35rem; display: flex; flex-direction: column; gap: 0.65rem; }
+.hero-path-card { @include glass-panel; padding: 1.25rem 1.25rem 1.35rem; display: flex; flex-direction: column; gap: 0.65rem; }
 .hero-path-card:hover, .hero-path-card:focus-within {
   transform: translateY(-4px);
   box-shadow: 0 16px 50px -10px rgba(0,0,0,0.65), 0 6px 22px rgba(0,0,0,0.4);

@@ -96,363 +96,204 @@ When using GitHub environment secrets (scoped to dev/production) in reusable wor
 - Safe writing: printf 'SECRET=%q\n' "${SECRET}" >> file
 
 
+## Scroll-Reveal Animations Site-Wide [ANIMATION:2025-11-23]
+
+Systematic implementation of scroll-triggered reveal animations across all public pages using Intersection Observer API for performance and accessibility.
+
+### Animation Architecture
+
+**Core Components:**
+- `RevealOnScroll` wrapper component (components/animations/RevealOnScroll.tsx)
+- `useScrollReveal` hook with Intersection Observer (lib/animations/useScrollReveal.ts)
+- `useReducedMotion` hook for accessibility (lib/animations/useReducedMotion.ts)
+- CSS animation classes: `reveal-hidden` → `reveal-visible` (app/styles/_animations.scss)
+
+**Animation System:**
+- **Effect**: translateY(30px) opacity(0) → translateY(0) opacity(1)
+- **Duration**: var(--animation-duration-slow) (~600ms)
+- **Easing**: var(--animation-ease-smooth) (cubic-bezier)
+- **Trigger**: 10% element visibility (THRESHOLD.EARLY)
+- **Trigger once**: Default true (no re-animation on scroll-up)
+- **Accessibility**: Auto-disabled for users with prefers-reduced-motion
+
+### Stagger Delay Pattern
+
+Consistent cascading animation timing across all pages:
+- **0ms**: Page title/hero heading (immediate reveal)
+- **100ms**: Primary subtitle or first content block
+- **150ms**: Secondary content section
+- **200ms**: Third content section or gallery
+- **250ms**: Additional cards/items
+- **300ms**: CTA sections
+- **350ms**: Footer or final content
+
+### Pages Implemented
+
+1. **Homepage (components/Hero.tsx)**
+   - Hero title & subtitle: 0ms
+   - Flash card: 100ms
+   - Custom card: 200ms
+
+2. **About Page (app/about/page.tsx)**
+   - Header: 0ms
+   - "What to expect": 100ms
+   - Studio details: 200ms
+   - Ready CTA: immediate (no reveal)
+
+3. **Portfolio Page (app/portfolio/page.tsx)**
+   - Intro (title + subtitle): 0ms
+   - Gallery grid: 100ms
+
+4. **Portfolio Detail (app/portfolio/[slug]/page.tsx)**
+   - Page title: 0ms
+   - Gallery: 100ms
+
+5. **Flash Page (app/flash/page.tsx)**
+   - Hero title/subtitle: 0ms
+   - Pricing info: 100ms
+   - Gallery heading: 200ms
+   - Gallery grid/empty state: 250ms
+   - Bottom CTA: 300ms
+
+6. **Custom Design Page (app/custom-design/page.tsx)**
+   - Hero section: 0ms
+   - "How It Works" title: 100ms
+   - Process steps 1-5: 150ms, 200ms, 250ms, 300ms, 350ms (staggered)
+   - Pricing section: 100ms
+   - Showcase gallery: 150ms
+   - Final CTA: 200ms
+
+7. **Pricing Page (app/pricing/page.tsx)**
+   - Header: 0ms
+   - Pricing estimator: 100ms
+   - "What Affects Pricing": 200ms
+   - Multi-session projects: 250ms
+   - Why estimates vary: 300ms
+   - Ready CTA: 350ms
+   - Data sources: immediate (no reveal)
+
+8. **Contact Page (app/contact/page.tsx)**
+   - Header & Instagram CTA: 0ms
+   - Calendly section: 100ms (conditional)
+   - Contact form: 150ms
+
+### Technical Implementation
+
+**Import pattern:**
+```tsx
+import RevealOnScroll from '../../components/animations/RevealOnScroll';
+```
+
+**Usage pattern:**
+```tsx
+<RevealOnScroll delay={100}>
+  <section>
+    {/* Content here */}
+  </section>
+</RevealOnScroll>
+```
+
+**Props available:**
+- `delay`: number (milliseconds, default 0)
+- `threshold`: number (0-1, default 0.1)
+- `rootMargin`: string (default '0px')
+- `triggerOnce`: boolean (default true)
+- `className`: string (additional CSS classes)
+
+### Performance Characteristics
+
+- **Bundle impact**: ~1KB per page using RevealOnScroll
+- **Runtime overhead**: Minimal (Intersection Observer is async/non-blocking)
+- **Browser support**: Graceful degradation (immediate show if unsupported)
+- **Accessibility**: Respects prefers-reduced-motion automatically
+- **SEO**: No impact (content in DOM, only CSS transform/opacity animated)
+
+### Best Practices
+
+1. **Consistent delays**: Use multiples of 50ms (50, 100, 150, 200...)
+2. **Maximum stagger**: Keep total cascade under 400ms for perceived performance
+3. **Group related content**: Wrap logical sections together
+4. **Title priority**: Always animate page titles first (0ms delay)
+5. **CTA timing**: Delay CTAs slightly (200-350ms) to draw attention after content
+6. **Avoid over-animation**: Don't wrap every individual element; group sections
+7. **Test with motion disabled**: Verify layout works without animations
+
+### Animation Constants Reference
+
+From lib/animations/constants.ts:
+- THRESHOLD.EARLY: 0.1 (10% visible)
+- THRESHOLD.QUARTER: 0.25
+- THRESHOLD.HALF: 0.5
+- STAGGER.FAST: 50ms
+- STAGGER.NORMAL: 100ms
+- STAGGER.SLOW: 150ms
+
+### Future Enhancement Opportunities
+
+- Stagger individual gallery items with map index delays
+- Add slide-from-side variants (RevealFromLeft, RevealFromRight)
+- Implement parallax scrolling for hero images
+- Add count-up animations for pricing numbers
+- Create reveal variants for different entry directions (up, down, left, right, scale)
+
+### Migration Notes
+
+When adding new pages:
+1. Import RevealOnScroll component
+2. Wrap page title with 0ms delay reveal
+3. Wrap major content sections with staggered delays (100ms increments)
+4. Test with reduced motion enabled
+5. Verify build completes without errors
+6. Check bundle size impact (should be minimal)
+
+
 ## Task Breakdown and Management
 
-Create a comprehensive prompt file that breaks down tasks into actionable steps, utilizing memory management and project management principles. Each step should be saved with a #todo tag for tracking progress.
+## Adaptive Glass Blur Pattern [PATTERN:2025-11-24]
 
-### Examples
+### Context
+Navigation glass panel needed to preserve luminous particle points. Original blur (10px light / 16px dark) diffused small particle pixels into a uniform haze in Firefox.
 
-- Creating a project plan with defined milestones and tasks
-- Breaking down a coding task into smaller functions with clear objectives
+### Pattern
+Use parameterized `@include glass-panel($bg, $blur)` to adjust blur per component instead of duplicating styles. For sensitive layered visuals (particles behind glass), reduce blur to 4px–6px while keeping saturation/contrast filters.
 
+### Firefox-Specific Adjustment
+Firefox implements backdrop-filter differently (heavier diffusion). Detect via `@supports (-moz-appearance: none)` rather than UA sniffing and apply a lower blur value only for affected elements.
 
-## Task Breakdown with Actionable Steps
-
-Create a comprehensive prompt file that breaks down tasks into actionable steps, utilizing memory management and project management principles. Each step should be saved with a #todo tag for easy tracking and execution.
-
-### Examples
-
-- Creating a project plan with defined milestones and tasks
-- Breaking down a coding task into smaller, manageable functions
-
-
-## Memory Management Enhancement
-
-Ensure that prompts save data to the designated memory management files instead of the prompt file. This enhances data organization and retrieval efficiency.
-
-### Examples
-
-- Saving user preferences to memory management files instead of the main prompt file.
-- Storing session data in memory management for better performance.
-
-
-
-## #MemoryManagement
-
-Emphasizes the importance of memory management in coding practices, advocating for small, concise tasks and constant context updates to enhance efficiency and performance.
-
-### Examples
-
-- Optimizing data structures to reduce memory usage
-- Implementing garbage collection techniques
-- Using memory pools for resource management
-
-
-Emphasizes the importance of memory management in coding practices, ensuring efficient use of resources and preventing memory leaks.
-
-### Examples
-
-- Using smart pointers in C++ to manage dynamic memory allocation.
-- Implementing garbage collection in Java to automatically reclaim memory.
-- Optimizing data structures to minimize memory usage.
-
-
-## Adding Environment Variables to Cloudflare Workers Deployment
-
-When adding a new environment variable to Cloudflare Workers deployments, you MUST update 5 locations in the workflow files:
-
-1. **wrangler.toml** - Add to both `[env.dev.vars]` and `[env.production.vars]` sections with `${VAR_NAME}` placeholders
-2. **.github/workflows/cloudflare-reusable.yml** - Add to `secrets:` input definition (required: true/false)
-3. **.github/workflows/deploy-cloudflare-workers.yml** - Add to `secrets:` pass-through to reusable workflow
-4. **.github/workflows/cloudflare-reusable.yml** - Add to "Append all environment variables to credentials file" step in `derive-r2-credentials` job
-5. **.github/workflows/cloudflare-reusable.yml** - Add to ALL THREE "Export credentials to environment" steps:
-   - Build job (line ~210)
-   - Prepare job (line ~285)  
-   - Deploy job (line ~362)
-6. **.github/workflows/cloudflare-reusable.yml** - Add to `envsubst` variable list in "Render Wrangler config" step (deploy job)
-
-**CRITICAL**: The variables must be exported to $GITHUB_ENV in all three jobs, and included in the envsubst command, otherwise they will be blank in the deployed worker.
-
-**Pattern to add to export blocks:**
-```bash
-echo "VAR_NAME=${VAR_NAME:-}"
-```
-
-**Pattern for envsubst:**
-```bash
-envsubst '${EXISTING_VARS} ${NEW_VAR}' < wrangler.toml > wrangler.resolved.toml
-```
-
-### Examples
-
-- RESEND_API_KEY and CONTACT_EMAIL added for Resend email integration (November 2025)
-- ADMIN_PORTAL_PASSWORD and ADMIN_SESSION_SECRET for admin authentication
-- R2 credentials (R2_API_TOKEN, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY)
-
-
-## Dual-pathway UX implementation strategy
-
-When implementing multi-segment service offerings (e.g., flash tattoos vs custom designs), prioritize functional completeness over polish: (1) Build navigation immediately after creating new pages to ensure discoverability, (2) Complete both pathways before adding enhancements, (3) Test user journeys end-to-end before optimization, (4) Consider leveraging existing forms (e.g., /contact with query params) for MVP before building specialized forms, (5) Defer homepage enhancements, analytics, and tests until core functionality is validated. Follow "narrow but deep" over "wide but shallow" - complete one full user journey before expanding features.
-
-### Examples
-
-- InkPup dual-pathway: Built Hero CTAs + ServiceExplainer + Flash page before realizing navigation was missing (blocker)
-- Lesson: Task 9 (navigation) should have been priority #2 after Task 1 (Hero)
-- Revised approach: Tasks 9 + 4 (navigation + custom page) = functional MVP in 45-60 min
-- Decision point pattern: Test if existing /contact form + query params sufficient before building specialized forms (Tasks 5-8)
-
-
-## Adaptive context-driven contact form
-
-Single /contact form adapts to booking scenarios using query params (design=<id> for flash, type=custom for consultations). Conditional required fields (placement, concept, placement_size) and dynamic email subject/body reduce need for multiple endpoints while keeping UX focused. Pattern favors extendability (add new booking types via param enumeration) and reduces maintenance overhead.
-
-### Examples
-
-- URL /contact?design=42 triggers Flash Booking form (hidden design_id, placement field required)
-- URL /contact?type=custom triggers Custom Consultation form (concept, placement_size required, budget optional)
-- Email subject logic: design_id -> 'Flash Booking Request', booking_type=custom -> 'Custom Consultation Request', else generic contact
-
-
-## Glassmorphism/Frosted Glass Containers
-
-[PATTERN:2025-11-20] Glassmorphism Design System - Frosted glass aesthetic with transparent backgrounds, backdrop-blur effects, and depth hierarchy. Use CSS variables (--surface-glass, --surface-glass-elevated, --border-glass) for consistent theming across light/dark modes. Apply backdrop-filter: blur(12px) with -webkit- prefix for Safari. Tailwind pattern: bg-white/10 dark:bg-white/8 backdrop-blur-lg border border-white/20 dark:border-white/18 shadow-lg. Enhance text readability with font-weight: 600 and text-shadow: 0 1px 2px rgba(0,0,0,0.1). Reference implementation: LoginForm, hero-path-card, PricingEstimator.
-
-### Examples
-
-- app/globals.scss: --surface-glass: rgba(255,255,255,0.1) in :root, rgba(255,255,255,0.08) in html.dark
-- app/globals.scss: .hero-path-card with backdrop-filter: blur(12px) and -webkit-backdrop-filter
-- components/PricingEstimator.tsx: bg-white/10 dark:bg-white/8 backdrop-blur-lg border-white/20
-- app/pricing/page.tsx: Info cards with glassmorphism shadow-lg treatment
-
-## Animation Architecture
-[PATTERN:2025-11-22]
-- **Core animations**: 7 keyframes defined in `app/styles/_animations.scss` (slideInDown, fadeIn, scaleIn, slideInUp, pulse-glow, admin-stat-skeleton, gallery-skeleton)
-- **Animation variables**: CSS custom properties in `_variables.scss` for timing (--animation-duration-fast/normal/slow: 200ms/300ms/500ms) and easing (--animation-ease-smooth/spring/bounce with cubic-bezier curves)
-- **3D perspective**: --card-perspective: 1000px for 3D transform effects
-- **Performance focus**: All animations use GPU-accelerated properties only (transform, opacity, box-shadow). Zero layout-triggering animations (width/height/top/left forbidden)
-- **Accessibility**: `@media (prefers-reduced-motion: reduce)` support with animation-duration: 0.01ms override
-- **Gallery stagger**: `.gallery-card` children animated with incremental delays (50ms increments, 9 children supported)
-- **No animation libraries**: Pure CSS approach, zero JavaScript animation frameworks (no Framer Motion, GSAP, react-spring)
-- **Browser targets**: 95%+ support, fallback-first approach for newer APIs like View Transitions
-- **Performance budget**: 60fps target (16.66ms frame budget), CSS <10KB increase limit
-
-### Phase 1 CSS Micro-interactions (Implemented 2025-11-22)
-**Status**: ✅ Complete - 10 new keyframes, 0KB bundle increase, 238 tests passing
-
-**Keyframes Added** (app/styles/_animations.scss):
-- `buttonPress`: Scale press feedback (0.95 → 1.0) with spring easing
-- `buttonGlowPulse`: Pulsing box-shadow for primary button hover states (1.5s infinite)
-- `inputFocusGlow`: Ring animation on input focus (300ms smooth easing)
-- `inputShake`: Horizontal shake for validation errors (10 steps, -8px to +8px)
-- `checkmarkDraw`: SVG stroke-dashoffset animation for success checkmarks
-- `successBounce`: Scale bounce effect (0 → 1.1 → 1.0) with overshoot easing
-- `successFadeIn`: Opacity + translateY combo for success message appearance
-- `navGlowTrail`: ScaleX animation for navigation link underlines
-- `themeTransition`: 360° rotation with scale pulse for theme toggle (500ms)
-
-**Implementation Locations**:
-- **_buttons.scss**: `.btn:active` uses buttonPress, `.btn--primary:hover` uses buttonGlowPulse
-- **_forms.scss**: `input:focus` uses inputFocusGlow, `input:invalid` uses inputShake
-- **_base.scss**: `.success-message`, `.success-icon`, `.checkmark-path` utility classes
-- **_gallery.scss**: `.gallery-card` with perspective and 3D tilt on hover (rotateX/rotateY)
-- **_components.scss**: `.glass-panel:hover` with translateY + scale + enhanced shadows
-- **_layout.scss**: `.primary-nav a:hover` with translateY + navGlowTrail, `.header-toggle:active` with themeTransition
-
-**Performance Characteristics**:
-- All keyframes use transform/opacity/box-shadow only (GPU-accelerated)
-- No layout thrashing or reflow triggers
-- Respects prefers-reduced-motion (inherited from existing @media rule)
-- Zero JavaScript, pure CSS solution
-- Bundle size: 0KB increase (CSS only)
-
-**Usage Examples**:
 ```scss
-// Button press feedback
-.btn:active:not(:disabled) {
-  animation: buttonPress var(--animation-duration-fast) var(--animation-ease-spring);
-}
-
-// Input focus glow
-input:focus {
-  animation: inputFocusGlow var(--animation-duration-normal) var(--animation-ease-smooth) forwards;
-}
-
-// Success message appearance
-.success-message {
-  animation: successFadeIn var(--animation-duration-normal) var(--animation-ease-smooth);
-}
-
-// 3D card tilt on hover
-.gallery-card {
-  perspective: var(--card-perspective);
-}
-.gallery-card:hover {
-  transform: translateY(-6px) scale(1.02) rotateX(2deg) rotateY(-2deg);
+.sticky-nav { @include glass-panel(var(--glass-panel-bg), 6px); }
+@supports (-moz-appearance: none) {
+  .sticky-nav { backdrop-filter: blur(4px) saturate(var(--glass-saturate)) contrast(var(--glass-contrast)); }
 }
 ```
 
-### Scroll-Triggered Animations (Phase 2)
-[PATTERN:2025-11-22]
+### Ancestor Transparency Requirement
+Ensure wrapper (`.sticky-header`) has `background: transparent;` or backdrop-filter will block underlying layers in Firefox.
 
-**Custom React Hooks for Scroll Effects:**
+### When To Reduce Blur
+- Background contains small, bright particle sprites.
+- Underlying layer relies on color contrast for visual depth.
+- Performance concerns on low-power devices (smaller blur kernel cheaper).
 
-#### useScrollReveal Hook
-```typescript
-import { useScrollReveal } from '@/lib/animations/useScrollReveal';
+### Do Not Reduce Blur When
+- Large background imagery benefits from strong diffusion.
+- Element is primary hero card (retain default aesthetic consistency).
 
-// Basic usage
-const { isVisible, ref } = useScrollReveal();
+### Benefits
+- Preserves particle visibility & depth.
+- Avoids code duplication by reusing mixin.
+- Maintains consistent theming variables.
+- Minimizes browser-specific hacks; uses feature detection.
 
-// With options
-const { isVisible, ref } = useScrollReveal({
-  threshold: 0.25,        // Trigger when 25% visible (default: 0.1)
-  rootMargin: '-50px',    // Trigger 50px before entering viewport
-  triggerOnce: true,      // Animate only once (default: false)
-  root: null,             // Viewport root (default: null for window)
-});
-```
+### Risks & Mitigation
+| Risk | Mitigation |
+|------|------------|
+| Over-reduction makes glass look like plain transparent panel | Maintain saturation/contrast filters and highlight ::before overlay |
+| Future browser changes to backdrop-filter detection | Fallback remains acceptable (slightly stronger blur) |
+| Inconsistent blur across components | Document per-component overrides; keep hero at default |
 
-- **Purpose**: Detect when element enters viewport using Intersection Observer API
-- **Browser Support**: 97% (no polyfill needed)
-- **Returns**: `{ isVisible: boolean, ref: RefObject }`
-- **Performance**: Automatic cleanup on unmount
-- **Graceful Degradation**: Shows immediately if IntersectionObserver unavailable
+### Future Enhancements
+- Particle overlay layer above nav (second canvas with selective opacity).
+- Dynamic blur reduction on scroll (progressive clarity as user scrolls).
+- User preference toggle for “High Clarity Nav”.
 
-#### useReducedMotion Hook
-```typescript
-import { useReducedMotion } from '@/lib/animations/useReducedMotion';
-
-const prefersReducedMotion = useReducedMotion();
-
-// Conditionally apply animations
-if (!prefersReducedMotion) {
-  // Apply animation classes or trigger animations
-}
-```
-
-- **Purpose**: Detect user's motion preference for accessibility
-- **Returns**: `boolean` (true if user prefers reduced motion)
-- **Media Query**: `(prefers-reduced-motion: reduce)`
-- **Dynamic**: Updates when user changes system preferences
-
-#### useCountUp Hook
-```typescript
-import { useCountUp, COUNT_DURATIONS } from '@/lib/animations/useCountUp';
-
-const { displayValue, currentValue, isAnimating, ref } = useCountUp({
-  end: 1234,                          // Target number
-  start: 0,                           // Starting number (default: 0)
-  duration: COUNT_DURATIONS.NORMAL,   // FAST (1000ms), NORMAL (1500ms), SLOW (2000ms)
-  decimals: 0,                        // Decimal places
-  prefix: '$',                        // Optional prefix
-  suffix: 'K',                        // Optional suffix
-  threshold: 0.25,                    // Scroll reveal threshold
-});
-
-// Render
-return <span ref={ref}>{displayValue}</span>;
-```
-
-- **Purpose**: Animated number counting triggered on scroll into view
-- **Easing Functions**: `linear`, `easeOutQuad`, `easeOutCubic`, `easeOutQuart`
-- **Accessibility**: Respects `prefers-reduced-motion` (jumps to end immediately)
-- **Helper**: `formatLargeNumber(num, decimals)` - Formats with K/M/B suffixes
-
-#### RevealOnScroll Component
-```typescript
-import RevealOnScroll from '@/components/animations/RevealOnScroll';
-
-// Basic usage
-<RevealOnScroll>
-  <div>Content fades in on scroll</div>
-</RevealOnScroll>
-
-// With stagger timing
-<RevealOnScroll delay={100}>
-  <div>Delayed reveal (100ms)</div>
-</RevealOnScroll>
-
-// Custom threshold
-<RevealOnScroll threshold={0.5} triggerOnce>
-  <div>Reveals when 50% visible, animates once</div>
-</RevealOnScroll>
-```
-
-- **Purpose**: Wrapper component for scroll-triggered fade-in animations
-- **CSS Classes**: `.reveal-hidden` (opacity: 0, translateY: 30px), `.reveal-visible` (opacity: 1, translateY: 0)
-- **Props**: `delay`, `threshold`, `rootMargin`, `triggerOnce`, `className`, `children`
-- **Accessibility**: Skips animation if `prefers-reduced-motion` is enabled
-
-#### Stagger Utilities
-```typescript
-import { generateStaggerDelays, calculateStaggerDelay } from '@/lib/animations/stagger';
-
-// Generate array of delays for multiple items
-const delays = generateStaggerDelays(
-  5,      // Number of items
-  0,      // Base delay (ms)
-  100     // Increment per item (ms)
-);
-// Returns: [0, 100, 200, 300, 400]
-
-// Calculate single item delay
-const delay = calculateStaggerDelay(2, 0, 50); // Returns: 100ms
-
-// Use with RevealOnScroll
-items.map((item, idx) => (
-  <RevealOnScroll key={item.id} delay={delays[idx]}>
-    {/* Content */}
-  </RevealOnScroll>
-));
-```
-
-- **Purpose**: Calculate stagger timing for sequential animations
-- **Max Delay**: Capped at 1000ms to prevent excessive delays
-- **Constants**: `STAGGER.SHORT (50ms)`, `STAGGER.MEDIUM (100ms)`, `STAGGER.LONG (150ms)`
-
-#### Parallax Utilities (Future Use)
-```typescript
-import { calculateParallaxTransform, PARALLAX_SPEEDS, throttle } from '@/lib/animations/parallax';
-
-// Calculate parallax transform
-const transform = calculateParallaxTransform(scrollY, PARALLAX_SPEEDS.MEDIUM);
-// Returns: "translateY(90px)" for scrollY=300
-
-// Throttle scroll handler
-const handleScroll = throttle(() => {
-  const transform = calculateParallaxTransform(window.scrollY, PARALLAX_SPEEDS.SLOW);
-  element.style.transform = transform;
-}, 16); // 60fps limit
-```
-
-- **Speeds**: `SLOW (0.5)`, `MEDIUM (0.3)`, `FAST (0.15)`
-- **Throttling**: Limits execution to 60fps for performance
-- **Frame Scheduling**: `onNextFrame()` uses `requestAnimationFrame` with SSR fallback
-
-**Performance Considerations:**
-- Use `content-visibility: auto` for large lists/galleries (50+ items)
-- Threshold 0.1-0.25 for early reveal triggers better perceived performance
-- Stagger increments: 50ms for cards, 100-200ms for sections
-- Bundle cost: ~1-2KB for all scroll animation utilities
-
-## Pricing Estimator - Style vs Color Separation (2025-11-22)
-
-- **Data**: `data/pricing.json` now includes a `styles` array with descriptive labels and multipliers alongside `complexityMultipliers` for backward compatibility.
-- **UI**: The estimator exposes a `Style` select (populated from `pricing.styles`) and a `Color Type` toggle (Monochrome vs Color). The `Color Profile` select filters based on the chosen color type and defaults to typical values (e.g., `full_color` for color styles).
-- **Computation**: `estimatePriceRange(sizeId, styleId, colorProfileId)` multiplies the style multiplier and the color multiplier; if no style is found, the function falls back to legacy complexity multipliers.
-- **Accessibility**: The UI includes inline descriptions of the selected style, and defaults align to common practice (e.g., Watercolor → Color; Blackwork → Monochrome).
-- **Backward compatibility**: The estimator still accepts legacy complexity IDs to avoid breaking integrations.
-
-### Animation Enhancement Roadmap
-- **Phase 1** (CSS-only, 0KB): ✅ Button press, input focus, card hovers, nav glow, theme transitions
-- **Phase 2** (Intersection Observer, ≤2KB): ✅ Scroll reveals, gallery stagger, counter animations, parallax utilities
-- **Phase 3** (View Transitions API, ~3KB): Page navigation morphing, modal expansion, image gallery transitions (86% browser support)
-- **Phase 4** (Advanced polish, ~5KB): Confetti effects, skeleton morphing, blur-up loading states (optional enhancement)
-
-### Legacy Animation Examples
-- Button hover: `transition: transform var(--animation-duration-fast) var(--animation-ease-spring)`
-- Gallery card: `animation: fadeIn var(--animation-duration-normal) var(--animation-ease-smooth) backwards`
-- Reduced motion: `* { animation-duration: 0.01ms !important; }`
-
-## Glassmorphism (Futuristic Style)
-[PATTERN:2025-11-20]
-- **Class**: `.glass-panel` (defined in `app/globals.scss`)
-- **Characteristics**:
-  - Background: Layered linear gradients with low opacity (white/5-20%).
-  - Filter: `backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-saturate)) contrast(var(--glass-contrast))`
-  - Border: `1px solid var(--border-glass)`
-  - Highlight: `::before` pseudo-element with `radial-gradient` and `mix-blend-mode: overlay`.
-  - Shadow: Deep, multi-layered box-shadows.
-  - Radius: `1.25rem` (default).
-- **Usage**: Apply `.glass-panel` to containers requiring the "futuristic glass" look.
-- **Buttons**: Use `.btn--glass` for glass-styled buttons (inherits from `.glass-panel` but with button-specific padding and radius).

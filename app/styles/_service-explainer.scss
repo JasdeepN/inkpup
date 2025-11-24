@@ -23,7 +23,7 @@
 }
 
 .service-explainer__card {
-  @extend .glass-panel;
+  @include glass-panel;
   padding: 2.5rem 2rem;
   text-align: center;
 }
