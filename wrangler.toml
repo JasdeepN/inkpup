@@ -14,14 +14,6 @@ binding = "ASSETS"
 binding = "R2_BUCKET"
 bucket_name = "inkpup"
 
-[[env.dev.r2_buckets]]
-binding = "R2_BUCKET"
-bucket_name = "dev-bucket"
-
-[[env.production.r2_buckets]]
-binding = "R2_BUCKET"
-bucket_name = "${R2_BUCKET}"
-
 [env.dev]
 name = "inkpup-dev"
 route = "dev.admin.inkpup.ca/*"
@@ -36,6 +28,10 @@ database_id = "cb636c73-b9ca-4a79-946a-e343541e878b"
 [[env.dev.kv_namespaces]]
 binding = "CACHE"
 id = "5dbe0ac9a630423ca4edc74280088fb3"
+
+[[env.dev.r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "dev-bucket"
 
 [env.dev.vars]
 R2_ACCOUNT_ID = "${R2_ACCOUNT_ID}"
@@ -65,6 +61,10 @@ database_id = "fb58122f-db2f-4152-8a7a-fbfc2150d520"
 [[env.production.kv_namespaces]]
 binding = "CACHE"
 id = "4ef6330025cc495dbdc098db32c3e6f4"
+
+[[env.production.r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "${R2_BUCKET}"
 
 [env.production.vars]
 R2_ACCOUNT_ID = "${R2_ACCOUNT_ID}"
