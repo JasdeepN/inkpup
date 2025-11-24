@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Script from 'next/script';
 import ConditionalHeader from '../components/ConditionalHeader';
 import LocalBusinessJsonLd from '../components/LocalBusinessJsonLd';
+import PageTransitionWrapper from '../components/PageTransitionWrapper';
 import ParticlesBackground from '../components/ParticlesBackground';
 import business from '../data/business.json';
 import { siteMetadata } from '../lib/site-metadata';
@@ -34,8 +35,10 @@ export default function RootLayout({ children }) {
     return JSON.stringify(config);
   })();
 
+  const debugAttr = process.env.NEXT_PUBLIC_VT_DEBUG === 'true' ? 'true' : undefined;
+
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" data-vt-debug={debugAttr}>
       <body>
         <a
           href="#content"
@@ -59,8 +62,12 @@ export default function RootLayout({ children }) {
 
         <div id="app-root" className="site-content">
           <ConditionalHeader />
-          <main id="content" className="container">
-            {children}
+          <main id="content">
+            <PageTransitionWrapper>
+              <div className="container">
+                {children}
+              </div>
+            </PageTransitionWrapper>
           </main>
           <footer className="site-footer">
             <div className="container site-footer__inner">

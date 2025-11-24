@@ -123,13 +123,31 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
   }, [itemsByCategory]);
 
   const closeModal = useCallback(() => {
-    setSelected(null);
-    setImageMeta(null);
-    setModalSize(null);
+    const trigger = lastTriggerRef.current;
+    const thumbImg = trigger?.querySelector('.gallery-card__img') as HTMLElement | null;
 
-    if (lastTriggerRef.current) {
-      lastTriggerRef.current.focus();
-      lastTriggerRef.current = null;
+    const closeLogic = () => {
+      setSelected(null);
+      setImageMeta(null);
+      setModalSize(null);
+    };
+
+    const cleanup = () => {
+      if (thumbImg) {
+        // Remove view-transition-name to avoid conflicts
+        thumbImg.style.viewTransitionName = '';
+      }
+      if (trigger) {
+        trigger.focus();
+        lastTriggerRef.current = null;
+      }
+    };
+
+    if (supportsViewTransitions()) {
+      startViewTransition(closeLogic).then(cleanup);
+    } else {
+      closeLogic();
+      cleanup();
     }
   }, []);
 

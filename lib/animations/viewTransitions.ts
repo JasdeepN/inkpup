@@ -64,6 +64,28 @@ export async function startViewTransition(
   callback: () => void | Promise<void>,
   config?: ViewTransitionConfig
 ): Promise<void> {
+  const debugEnabled = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_VT_DEBUG === 'true';
+  const transitionName = config?.name || 'unnamed';
+
+  const logDebug = (...args: any[]) => {
+    if (debugEnabled) {
+      // eslint-disable-next-line no-console
+      console.log('[VT DEBUG]', ...args);
+    }
+  };
+
+  const measurePageWrappers = (phase: string) => {
+    try {
+      const wrappers = Array.from(document.querySelectorAll('[style*="view-transition-name: page-"]')) as HTMLElement[];
+      wrappers.forEach(el => {
+        const rect = el.getBoundingClientRect();
+        logDebug(`${phase} rect`, { name: el.style.viewTransitionName, x: rect.x, y: rect.y, w: rect.width, h: rect.height, scrollY: window.scrollY });
+      });
+    } catch (err) {
+      logDebug('measurement-error', err);
+    }
+  };
+
   // Skip if explicitly requested or reduced motion preferred
   if (config?.skipTransition) {
     await callback();
@@ -72,16 +94,39 @@ export async function startViewTransition(
 
   // Feature detection - use native API if available
   if (supportsViewTransitions() && document.startViewTransition) {
+    if (debugEnabled) {
+      measurePageWrappers('before-callback');
+      logDebug('starting transition', transitionName);
+    }
     const transition = document.startViewTransition(async () => {
       await callback();
+      if (debugEnabled) {
+        // After DOM mutation, before painting new snapshot
+        measurePageWrappers('after-callback');
+        // Next frame (to observe potential layout shifts)
+        requestAnimationFrame(() => measurePageWrappers('after-callback-rAF'));
+      }
     });
-    
+    if (debugEnabled) {
+      transition.finished.then(() => logDebug('finished', transitionName));
+    }
     await transition.finished;
     return;
   }
 
   // Fallback: execute immediately (instant transition)
   await callback();
+}
+
+// waitForStableLayout removed
+
+
+/** Compute page segment name from href/path for consistent view-transition-name */
+export function computePageSegment(path: string): string {
+  if (!path || path === '/') return 'home';
+  const cleaned = path.startsWith('/') ? path.slice(1) : path;
+  const first = cleaned.split('/')[0];
+  return first || 'unknown';
 }
 
 /**

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { pricing, estimatePriceRange, formatRange } from '../lib/pricing';
+import { startViewTransition, supportsViewTransitions } from '../lib/animations/viewTransitions';
 
 export default function PricingEstimator() {
   const [sizeId, setSizeId] = useState('');
@@ -48,7 +49,10 @@ export default function PricingEstimator() {
           <span className="font-medium mb-1">Size Category</span>
           <select
             value={sizeId}
-            onChange={(e) => setSizeId(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              void startViewTransition(() => setSizeId(val));
+            }}
             className="mt-1 p-2 border rounded bg-surface text-primary"
             aria-describedby="size-help"
           >
@@ -68,7 +72,10 @@ export default function PricingEstimator() {
           <span className="font-medium mb-1">Style</span>
           <select
             value={styleId}
-            onChange={(e) => setStyleId(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              void startViewTransition(() => setStyleId(val));
+            }}
             className="mt-1 p-2 border rounded bg-surface text-primary"
             aria-describedby="style-help"
           >
@@ -98,7 +105,7 @@ export default function PricingEstimator() {
                 name="color-type"
                 value="monochrome"
                 checked={colorType === 'monochrome'}
-                onChange={() => setColorType('monochrome')}
+                onChange={() => void startViewTransition(() => setColorType('monochrome'))}
                 className="accent-accent"
               />
               <span>Monochrome</span>
@@ -109,7 +116,7 @@ export default function PricingEstimator() {
                 name="color-type"
                 value="color"
                 checked={colorType === 'color'}
-                onChange={() => setColorType('color')}
+                onChange={() => void startViewTransition(() => setColorType('color'))}
                 className="accent-accent"
               />
               <span>Color</span>
@@ -120,7 +127,10 @@ export default function PricingEstimator() {
             <span className="font-medium mb-1">Color Profile</span>
             <select
               value={colorProfileId}
-              onChange={(e) => setColorProfileId(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                void startViewTransition(() => setColorProfileId(val));
+              }}
               className="mt-1 p-2 border rounded bg-surface text-primary"
               aria-describedby="color-help"
             >
@@ -147,7 +157,11 @@ export default function PricingEstimator() {
         <div className="border-t pt-4 space-y-3">
           <div className="flex items-baseline justify-between">
             <span className="text-sm text-muted">Estimated Range (CAD)</span>
-            <span className="text-2xl font-bold text-accent" data-testid="pricing-estimate">
+            <span 
+              className="text-2xl font-bold text-accent" 
+              data-testid="pricing-estimate"
+              style={supportsViewTransitions() ? { viewTransitionName: 'pricing-estimate' } as any : {}}
+            >
               {formatRange(range)}
             </span>
           </div>

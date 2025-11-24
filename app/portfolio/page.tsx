@@ -26,13 +26,10 @@ export default async function PortfolioPage() {
 
   return (
     <section className="portfolio-gallery">
-      <RevealOnScroll>
       <div className="portfolio-gallery__intro">
         <h2 className="portfolio-gallery__title">Portfolio</h2>
         <p className="portfolio-gallery__subtitle">Browse healed pieces, available designs, flash, and fine art!</p>
       </div>
-      </RevealOnScroll>
-      <RevealOnScroll delay={100}>
       <GalleryView
         initialCategory={DEFAULT_CATEGORY}
         initialData={{
@@ -43,7 +40,6 @@ export default async function PortfolioPage() {
           credentialStatus: resolved.credentialStatus,
         }}
       />
-      </RevealOnScroll>
     </section>
   );
 }

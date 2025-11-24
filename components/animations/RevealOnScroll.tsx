@@ -25,12 +25,13 @@ export default function RevealOnScroll({
   rootMargin = '0px',
   triggerOnce = true,
 }: RevealOnScrollProps) {
+  const { isVisible, ref } = useScrollReveal({ threshold, rootMargin, triggerOnce });
+  const prefersReducedMotion = useReducedMotion();
+
   // Test environment shortcut: avoid IntersectionObserver/state churn to prevent act warnings
   if (process.env.NODE_ENV === 'test') {
     return <div className={className}>{children}</div>;
   }
-  const { isVisible, ref } = useScrollReveal({ threshold, rootMargin, triggerOnce });
-  const prefersReducedMotion = useReducedMotion();
 
   // Skip animation if user prefers reduced motion
   const shouldAnimate = !prefersReducedMotion;

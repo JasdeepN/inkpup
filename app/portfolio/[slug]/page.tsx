@@ -12,13 +12,9 @@ export default async function PortfolioItem(props: PortfolioItemPageProps) {
 
   return (
     <section>
-      <RevealOnScroll>
       <h2>Portfolio item: {slug}</h2>
       <p>Gallery for this artist / project.</p>
-      </RevealOnScroll>
-      <RevealOnScroll delay={100}>
       <Gallery items={gallery} />
-      </RevealOnScroll>
     </section>
   );
 }

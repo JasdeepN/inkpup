@@ -12,29 +12,25 @@ export async function generateMetadata() {
 export default function AboutPage() {
   return (
     <section className="container max-w-3xl mx-auto space-y-8 py-8">
-      <RevealOnScroll>
-        <header className="space-y-3">
-          <p className="text-accent font-semibold uppercase tracking-wide">Meet the artist</p>
-          <h1 className="text-4xl font-bold">About InkPup Tattoos</h1>
-          <p className="text-muted text-lg">
-            I&apos;m Devin, the dog-dad and illustrator behind InkPup Tattoos. Every piece is drawn by hand
-            and customized to celebrate the stories, pets, and people you love. Whether it&apos;s a delicate
-            fine-line portrait or bold neo-traditional flash, I approach each project with curiosity and
-            care so the final tattoo feels personal and expressive.
-          </p>
-        </header>
-      </RevealOnScroll>
+      <header className="space-y-3">
+        <p className="text-accent font-semibold uppercase tracking-wide">Meet the artist</p>
+        <h1 className="text-4xl font-bold">About InkPup Tattoos</h1>
+        <p className="text-muted text-lg">
+          I&apos;m Devin, the dog-dad and illustrator behind InkPup Tattoos. Every piece is drawn by hand
+          and customized to celebrate the stories, pets, and people you love. Whether it&apos;s a delicate
+          fine-line portrait or bold neo-traditional flash, I approach each project with curiosity and
+          care so the final tattoo feels personal and expressive.
+        </p>
+      </header>
 
-      <RevealOnScroll delay={100}>
-        <div className="space-y-4">
-          <h2 className="text-2xl font-semibold">What to expect</h2>
-          <ul className="list-disc space-y-2 pl-6 text-muted">
-            <li>Collaborative consultations that translate your ideas into thoughtful designs.</li>
-            <li>Single-use needles, welcoming atmosphere, and a sanitized studio set up for comfort.</li>
-            <li>Detailed aftercare guidance so your tattoo heals clean and brilliant.</li>
-          </ul>
-        </div>
-      </RevealOnScroll>
+      <div className="space-y-4">
+        <h2 className="text-2xl font-semibold">What to expect</h2>
+        <ul className="list-disc space-y-2 pl-6 text-muted">
+          <li>Collaborative consultations that translate your ideas into thoughtful designs.</li>
+          <li>Single-use needles, welcoming atmosphere, and a sanitized studio set up for comfort.</li>
+          <li>Detailed aftercare guidance so your tattoo heals clean and brilliant.</li>
+        </ul>
+      </div>
 
       <RevealOnScroll delay={200}>
         <div className="glass-panel glass-panel--interactive p-6">

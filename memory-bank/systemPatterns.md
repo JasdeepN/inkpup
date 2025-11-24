@@ -381,4 +381,39 @@ Defined in `_animations.scss`:
 - Expand pattern to image category tab switches (`tab-panel`).
 - Consider dynamic unique names for thumbnail → modal to enable simultaneous multi-modal patterns (if design evolves).
 
+## View Transitions API (Progressive Enhancement)
+
+The application uses the native View Transitions API for smooth state changes and page navigation, with a fallback for unsupported browsers.
+
+### Core Components
+- `lib/animations/viewTransitions.ts`: Utilities for feature detection (`supportsViewTransitions`) and wrapping updates (`startViewTransition`).
+- `components/PageTransitionWrapper.tsx`: Assigns unique `view-transition-name` to the page root based on the current route (e.g., `page-home`, `page-about`).
+- `components/TransitionLink.tsx`: A wrapper around `next/link` that intercepts navigation to trigger a view transition.
+- `app/styles/_animations.scss`: Defines the CSS animations for view transitions (slide, fade, scale) using `::view-transition-group`, `::view-transition-old`, and `::view-transition-new`.
+
+### Usage Patterns
+1. **Page Navigation**: Use `<TransitionLink>` instead of `<Link>` for internal navigation.
+2. **State Changes**: Wrap state updates (e.g., modal open/close, tab switching, theme toggle) in `startViewTransition(() => { setState(...) })`.
+3. **Shared Elements**: Assign matching `view-transition-name` styles to elements that should morph between states (e.g., `gallery-img` for modal expansion).
+4. **CSS Customization**: Use `[data-transition-name="..."]` or specific class selectors in `_animations.scss` to customize the transition behavior (duration, easing, transform).
+5. **Initial Viewport**: Avoid using `RevealOnScroll` for elements in the initial viewport (e.g., Hero titles). `RevealOnScroll` initially hides content (`opacity: 0`), which causes the View Transition API to capture an empty snapshot, leading to visual glitches/snapping. Let the View Transition handle the entrance animation for the page itself.
+6. **Transparent Backgrounds**: For pages with transparent backgrounds (e.g., glassmorphism over particles), use **sequential** View Transitions (Fade Out completely, *then* Fade In) rather than simultaneous cross-fades. This prevents visual clutter where text from the new page overlaps text from the old page during the transition.
+7. **Disable Group Morphing**: For full-page transitions where the layout size or scroll position changes significantly, explicitly set `animation-duration: 0s` on the `::view-transition-group` (e.g., `::view-transition-group(root)`). This prevents the browser from interpolating the geometry (width/height/transform) of the page container, which can cause "jumping" or "compression" artifacts. The content should animate via `::view-transition-old` and `::view-transition-new` (fade/slide) instead.
+8. **Simplified View Transitions**: Use a unified Fade Out / Fade In sequence for all page transitions to ensure stability and prevent layout artifacts. Complex geometry morphing and layout stabilization logic (`waitForStableLayout`) have been removed to avoid timeouts and visual glitches.
+   - Implementation: `startViewTransition(async () => { router.push(url); await waitForNavigation(); })`
+   - Debug: Use `NEXT_PUBLIC_VT_DEBUG=true` to log pre/post heights and stabilization progress.
+   - Trade-off: Adds up to ~700ms delay for pages with heavy late layout changes; tune timeout to balance smoothness vs. responsiveness.
+
+### Example
+```tsx
+// In a component
+import { startViewTransition } from '@/lib/animations/viewTransitions';
+
+const toggleTheme = () => {
+  void startViewTransition(() => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  });
+};
+```
+
 

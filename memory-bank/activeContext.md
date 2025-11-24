@@ -1,12 +1,36 @@
 # Active Context
 
 ## Current Focus
-- [CONTEXT:2025-11-24] EXECUTING: Animation Phase 3 - View Transitions API implementation
- - [CONTEXT:2025-11-24] EXECUTING: Animation Phase 3 - View Transitions API implementation (Component C started: Gallery modal transitions + header glass panel alignment completed)
-- Active components moving next: Component C (Gallery modal transitions), Component D (Image expansion) after foundation
-- Prerequisites met: Phase 1 (CSS micro-interactions), Phase 2 (Intersection Observer) both complete
-- Current status: Component A (Foundation) COMPLETE — utilities & tests stabilized; preparing to plan Component C tasks (modal open/close transitions, shared view-transition names for image elements).
-- Build status: Passing (3.3s), 283 tests passing
+- [CONTEXT:2025-11-24] ✅ COMPLETE: Animation Phase 3 - View Transitions API implementation
+- Implemented full View Transitions API support with progressive enhancement.
+- Key features: Page transitions (slide/fade), Gallery modal morphing, Theme toggle animation, Pricing estimator state transitions.
+- Components delivered: A (Foundation), B (Page Nav), C (Gallery Modal), D (Image Expansion via Modal), E (State Transitions), F (Tests).
+- Build status: Passing, 300 tests passing.
+- Next focus: Review project status or move to next priority (e.g., SEO refinement or content updates).
+
+## Recent Changes
+- **Feature**: Added `PageTransitionWrapper` and `TransitionLink` for SPA-like page transitions.
+- **Feature**: Integrated `startViewTransition` into `GalleryView` for smooth modal open/close.
+- **Feature**: Animated Theme Toggle and Pricing Estimator state changes.
+- **Refactor**: Removed `RevealOnScroll` from initial viewport elements (Hero, Page Titles) to prevent conflict with View Transitions (glitching/snapping).
+- **Refactor**: Updated View Transitions to be sequential (Fade Out -> Fade In) to prevent text overlap on transparent backgrounds.
+- **Fix**: Implemented `waitForNavigation` signal to ensure View Transitions wait for Next.js navigation to complete before capturing the new state. This fixes the "glitch" where the transition would happen on the old page content.
+- **Fix**: Added `scrollbar-gutter: stable` to `html` to prevent layout shifts when the scrollbar disappears during transitions.
+- **Refactor**: Disabled `::view-transition-group` animation (duration 0s) for page transitions to prevent layout morphing/jumping between pages of different heights.
+- **Refactor**: Restructured `layout.tsx` so `PageTransitionWrapper` wraps a full-width `<main>` and the centered `.container` is nested, eliminating narrow snapshot artifacts.
+- **Feature**: Added debug instrumentation (bounding rect logging) in `startViewTransition` when `NEXT_PUBLIC_VT_DEBUG=true`.
+- **Feature**: Added debug CSS overrides via `html[data-vt-debug="true"]` to force pure fade transitions for isolation (removes scale/slide).
+- **Fix**: Added `.page-transition-wrapper { width:100%; }` to guarantee full-width snapshot capture.
+- **Feature**: Implemented simplified View Transitions using the `root` (viewport) transition instead of element-based transitions. This resolves the "tiny page" artifact by ensuring snapshots are always viewport-sized.
+- **Refactor**: Removed `view-transition-name` from `PageTransitionWrapper` and updated CSS to target `::view-transition-group(root)`.
+- **Fix**: Removed `transform: none` from `::view-transition-group(root)` and switched to simultaneous cross-fade (300ms) to resolve "snapping" artifacts caused by incorrect snapshot positioning and sequential fade delays.
+- **Change**: Currently disabled stabilization wait inside `TransitionLink` (caused ViewTransition timeouts). Utility retained for future tuning.
+- **Refactor**: Simplified page transitions across all routes to a single sequential fade (180ms out -> 180ms in) to reduce visual complexity while issues are investigated.
+- **Fix**: Removed conditional style gating in `PageTransitionWrapper` to eliminate hydration mismatch warning; now always sets `view-transition-name` and uses `suppressHydrationWarning`.
+- **Fix**: Resolved build issue by cleaning cache; verified `PageTransitionWrapper` integration.
+- **Refactor**: Updated `layout.tsx` to include `PageTransitionWrapper`.
+- **Refactor**: Updated `Header.tsx` and `Hero.tsx` to use `TransitionLink`.
+- **Test**: Added unit tests for new components and verified build.
 - [CONTEXT:2025-11-24] Cross-browser glassmorphism refinement completed for sticky navigation (reduced blur for particle clarity, Firefox-specific override, transparent wrapper). Monitoring visual consistency; potential future enhancement: optional particle overlay layer above nav for added depth without further blur reduction.
 - [CONTEXT:2025-11-22] ✅ COMPLETE: Animation Phase 2 - Intersection Observer Scroll Effects
 - All 6 components delivered: A (Foundation), C (Section Reveals), E (Gallery Stagger), D (Counters), F (Documentation), B (Parallax utilities for future use)

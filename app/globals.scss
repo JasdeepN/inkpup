@@ -15,6 +15,10 @@
 
 
 /* apply theme colors using CSS variables so toggling is easy */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   background-color: var(--bg);
   color: var(--text);

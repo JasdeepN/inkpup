@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import TransitionLink from './TransitionLink';
+import { startViewTransition } from '../lib/animations/viewTransitions';
 
 export default function Header() {
   // Dark mode toggle
@@ -20,31 +22,38 @@ export default function Header() {
     <header className="sticky-header">
       <div className="nav-shell">
         <div className="sticky-nav flex items-center gap-6 w-full">
-          <Link href="/" className="nav-brand font-semibold text-lg">
+          <TransitionLink href="/" className="nav-brand font-semibold text-lg">
             InkPup
-          </Link>
+          </TransitionLink>
           {/* Primary navigation (desktop) */}
           <nav
             className="admin-nav hidden md:flex items-center gap-6"
             aria-label="Primary"
             aria-hidden={mobileOpen ? 'true' : 'false'}
           >
-            <Link href="/flash" className="nav-link">Flash Available</Link>
-            <Link href="/custom-design" className="nav-link">Custom Work</Link>
-            <Link href="/portfolio" className="nav-link">Portfolio</Link>
-            <Link href="/pricing" className="nav-link">Pricing</Link>
-            <Link href="/contact" className="nav-link">Contact</Link>
-            <Link href="/about" className="nav-link">About</Link>
+            <TransitionLink href="/flash" className="nav-link">Flash Available</TransitionLink>
+            <TransitionLink href="/custom-design" className="nav-link">Custom Work</TransitionLink>
+            <TransitionLink href="/portfolio" className="nav-link">Portfolio</TransitionLink>
+            <TransitionLink href="/pricing" className="nav-link">Pricing</TransitionLink>
+            <TransitionLink href="/contact" className="nav-link">Contact</TransitionLink>
+            <TransitionLink href="/about" className="nav-link">About</TransitionLink>
           </nav>
           <div className="flex items-center gap-4 header-actions ml-auto">
-            <Link href="/contact" className="btn btn--primary hidden md:inline-flex">
+            <TransitionLink href="/contact" className="btn btn--primary hidden md:inline-flex">
               Book Now
-            </Link>
+            </TransitionLink>
             <button
               type="button"
               aria-label="Toggle dark mode"
               className="text-2xl hover:text-accent transition-colors"
-              onClick={() => setDark((d) => !d)}
+              onClick={() => {
+                const next = !dark;
+                void startViewTransition(() => {
+                  setDark(next);
+                  if (next) document.documentElement.classList.add('dark');
+                  else document.documentElement.classList.remove('dark');
+                });
+              }}
             >
               {dark ? '🌙' : '☀️'}
             </button>
@@ -68,13 +77,13 @@ export default function Header() {
           className={`mobile-nav ${mobileOpen ? '' : 'hidden'}`}
         >
           <div className="mobile-nav__inner">
-            <Link href="/flash" className="nav-link" onClick={() => setMobileOpen(false)}>Flash Available</Link>
-            <Link href="/custom-design" className="nav-link" onClick={() => setMobileOpen(false)}>Custom Work</Link>
-            <Link href="/portfolio" className="nav-link" onClick={() => setMobileOpen(false)}>Portfolio</Link>
-            <Link href="/pricing" className="nav-link" onClick={() => setMobileOpen(false)}>Pricing</Link>
-            <Link href="/contact" className="nav-link" onClick={() => setMobileOpen(false)}>Contact</Link>
-            <Link href="/about" className="nav-link" onClick={() => setMobileOpen(false)}>About</Link>
-            <Link href="/contact" className="btn btn--primary mt-2" onClick={() => setMobileOpen(false)}>Book Now</Link>
+            <TransitionLink href="/flash" className="nav-link" onClick={() => setMobileOpen(false)}>Flash Available</TransitionLink>
+            <TransitionLink href="/custom-design" className="nav-link" onClick={() => setMobileOpen(false)}>Custom Work</TransitionLink>
+            <TransitionLink href="/portfolio" className="nav-link" onClick={() => setMobileOpen(false)}>Portfolio</TransitionLink>
+            <TransitionLink href="/pricing" className="nav-link" onClick={() => setMobileOpen(false)}>Pricing</TransitionLink>
+            <TransitionLink href="/contact" className="nav-link" onClick={() => setMobileOpen(false)}>Contact</TransitionLink>
+            <TransitionLink href="/about" className="nav-link" onClick={() => setMobileOpen(false)}>About</TransitionLink>
+            <TransitionLink href="/contact" className="btn btn--primary mt-2" onClick={() => setMobileOpen(false)}>Book Now</TransitionLink>
           </div>
         </nav>
       </div>

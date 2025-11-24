@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import TransitionLink from './TransitionLink';
 import SmartImage from './SmartImage';
 import HeroCarousel, { CarouselImage } from './HeroCarousel';
 import RevealOnScroll from './animations/RevealOnScroll';
@@ -32,7 +33,6 @@ export default function Hero({
           if you need full-bleed content. */}
         <div className="container">
         <div className="hero-copy pt-6">
-          <RevealOnScroll>
           <h1 className="hero-title text-3xl md:text-5xl pt-6" data-testid="hero-title">{title}</h1>
           {subtitle && (
             <p
@@ -42,9 +42,7 @@ export default function Hero({
               {subtitle}
             </p>
           )}
-          </RevealOnScroll>
           <div className="hero-paths pt-6" data-testid="hero-paths">
-            <RevealOnScroll delay={100}>
             <div className="hero-path-card hero-path-card--flash" data-testid="hero-path-flash">
               <div className="hero-path-card__icon" aria-hidden="true">⚡</div>
               <h2 className="hero-path-card__title">Flash Tattoos</h2>
@@ -53,10 +51,8 @@ export default function Hero({
                 <li>Quick booking</li>
                 <li>Same-week availability</li>
               </ul>
-              <Link href="/flash" className="btn btn--flash w-full" data-testid="hero-flash">Browse Flash</Link>
+              <TransitionLink href="/flash" className="btn btn--flash w-full" data-testid="hero-flash">Browse Flash</TransitionLink>
             </div>
-            </RevealOnScroll>
-            <RevealOnScroll delay={200}>
             <div className="hero-path-card hero-path-card--custom" data-testid="hero-path-custom">
               <div className="hero-path-card__icon" aria-hidden="true">✨</div>
               <h2 className="hero-path-card__title">Custom Designs</h2>
@@ -65,9 +61,8 @@ export default function Hero({
                 <li>Collaborative process</li>
                 <li>Your vision realized</li>
               </ul>
-              <Link href="/custom-design" className="btn btn--custom w-full" data-testid="hero-custom">Request Custom Design</Link>
+              <TransitionLink href="/custom-design" className="btn btn--custom w-full" data-testid="hero-custom">Request Custom Design</TransitionLink>
             </div>
-            </RevealOnScroll>
           </div>
         </div>
 
