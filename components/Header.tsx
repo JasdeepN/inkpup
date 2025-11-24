@@ -6,6 +6,9 @@ import { usePathname } from 'next/navigation';
 export default function Header() {
   // Dark mode toggle
   const [dark, setDark] = useState(true);
+  // Mobile menu state
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   useEffect(() => {
     if (dark) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
@@ -15,47 +18,66 @@ export default function Header() {
 
   return (
     <header className="sticky-header">
-    <div className="nav-shell">
-    <nav className="admin-nav admin-card--compact flex items-center justify-between mb-6 sticky-nav" aria-label="Main navigation">
-      <div className="flex items-center gap-6">
-        <Link href="/" className="nav-brand font-semibold text-lg">
-          InkPup
-        </Link>
-        <div className="hidden md:flex items-center gap-4">
-          <Link href="/flash" className="nav-link">
-            Flash
+      <div className="nav-shell">
+        <div className="sticky-nav flex items-center gap-6 w-full">
+          <Link href="/" className="nav-brand font-semibold text-lg">
+            InkPup
           </Link>
-          <Link href="/custom-design" className="nav-link">
-            Custom
-          </Link>
-          <Link href="/portfolio" className="nav-link">
-            Portfolio
-          </Link>
-          <Link href="/pricing" className="nav-link">
-            Pricing
-          </Link>
-          <Link href="/contact" className="nav-link">
-            Contact
-          </Link>
-          <Link href="/about" className="nav-link">
-            About
-          </Link>
+          {/* Primary navigation (desktop) */}
+          <nav
+            className="admin-nav hidden md:flex items-center gap-6"
+            aria-label="Primary"
+            aria-hidden={mobileOpen ? 'true' : 'false'}
+          >
+            <Link href="/flash" className="nav-link">Flash Available</Link>
+            <Link href="/custom-design" className="nav-link">Custom Work</Link>
+            <Link href="/portfolio" className="nav-link">Portfolio</Link>
+            <Link href="/pricing" className="nav-link">Pricing</Link>
+            <Link href="/contact" className="nav-link">Contact</Link>
+            <Link href="/about" className="nav-link">About</Link>
+          </nav>
+          <div className="flex items-center gap-4 header-actions ml-auto">
+            <Link href="/contact" className="btn btn--primary hidden md:inline-flex">
+              Book Now
+            </Link>
+            <button
+              type="button"
+              aria-label="Toggle dark mode"
+              className="text-2xl hover:text-accent transition-colors"
+              onClick={() => setDark((d) => !d)}
+            >
+              {dark ? '🌙' : '☀️'}
+            </button>
+            <button
+              type="button"
+              aria-label="Open menu"
+              className="md:hidden mobile-menu-button"
+              onClick={() => setMobileOpen((o) => !o)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setMobileOpen(false);
+              }}
+            >
+              {mobileOpen ? '✕' : '☰'}
+            </button>
+          </div>
         </div>
-      </div>
-      <div className="flex items-center gap-4">
-        <Link href="/contact" className="btn btn--primary hidden md:inline-flex">
-          Book Now
-        </Link>
-        <button
-          className="text-2xl hover:text-accent transition-colors"
-          aria-label="Toggle dark mode"
-          onClick={() => setDark((d) => !d)}
+        {/* Mobile navigation */}
+        <nav
+          aria-label="Mobile"
+          aria-hidden={mobileOpen ? 'false' : 'true'}
+          className={`mobile-nav ${mobileOpen ? '' : 'hidden'}`}
         >
-          {dark ? '🌙' : '☀️'}
-        </button>
+          <div className="mobile-nav__inner">
+            <Link href="/flash" className="nav-link" onClick={() => setMobileOpen(false)}>Flash Available</Link>
+            <Link href="/custom-design" className="nav-link" onClick={() => setMobileOpen(false)}>Custom Work</Link>
+            <Link href="/portfolio" className="nav-link" onClick={() => setMobileOpen(false)}>Portfolio</Link>
+            <Link href="/pricing" className="nav-link" onClick={() => setMobileOpen(false)}>Pricing</Link>
+            <Link href="/contact" className="nav-link" onClick={() => setMobileOpen(false)}>Contact</Link>
+            <Link href="/about" className="nav-link" onClick={() => setMobileOpen(false)}>About</Link>
+            <Link href="/contact" className="btn btn--primary mt-2" onClick={() => setMobileOpen(false)}>Book Now</Link>
+          </div>
+        </nav>
       </div>
-    </nav>
-    </div>
     </header>
   );
 }

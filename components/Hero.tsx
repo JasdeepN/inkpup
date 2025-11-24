@@ -31,19 +31,19 @@ export default function Hero({
           of the subtitle and other content appearing "clamped". Remove or override it
           if you need full-bleed content. */}
         <div className="container">
-        <div className="hero-copy">
+        <div className="hero-copy pt-6">
           <RevealOnScroll>
-          <h1 className="hero-title text-3xl md:text-5xl" data-testid="hero-title">{title}</h1>
+          <h1 className="hero-title text-3xl md:text-5xl pt-6" data-testid="hero-title">{title}</h1>
           {subtitle && (
             <p
-              className="hero-subtitle text-base lg:text-lg mt-3 mb-6 w-full max-w-none"
+              className="hero-subtitle text-base lg:text-lg mt-3 mb-6 pb-10 w-full max-w-none"
               data-testid="hero-subtitle"
             >
               {subtitle}
             </p>
           )}
           </RevealOnScroll>
-          <div className="hero-paths" data-testid="hero-paths">
+          <div className="hero-paths pt-6" data-testid="hero-paths">
             <RevealOnScroll delay={100}>
             <div className="hero-path-card hero-path-card--flash" data-testid="hero-path-flash">
               <div className="hero-path-card__icon" aria-hidden="true">⚡</div>

@@ -59,7 +59,7 @@ export default function RootLayout({ children }) {
 
         <div id="app-root" className="site-content">
           <ConditionalHeader />
-          <main id="content" className="py-6 container">
+          <main id="content" className="container">
             {children}
           </main>
           <footer className="site-footer">

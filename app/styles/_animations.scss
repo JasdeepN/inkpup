@@ -184,6 +184,100 @@
 }
 
 /* ============================================
+   VIEW TRANSITIONS API
+   ============================================ */
+
+/* Base view transition pseudo-elements
+ * Browser support: Chrome 111+, Edge 111+, Safari 18+ (86% coverage)
+ * Graceful fallback: No visual impact for unsupported browsers
+ */
+
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-group(*) {
+  animation-duration: var(--animation-duration-normal);
+  animation-timing-function: var(--animation-ease-smooth);
+}
+
+::view-transition-old(*),
+::view-transition-new(*) {
+  mix-blend-mode: normal;
+}
+
+/* Modal transitions - smooth scale from thumbnail to full-size */
+::view-transition-group(.gallery-modal) {
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+::view-transition-old(.gallery-modal),
+::view-transition-new(.gallery-modal) {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+}
+
+/* Image expansion transitions */
+::view-transition-group(.gallery-img) {
+  animation-duration: 350ms;
+  animation-timing-function: cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+/* Backdrop transitions - independent fade */
+::view-transition-group(.modal-backdrop) {
+  animation-duration: 300ms;
+  animation-timing-function: ease-out;
+}
+
+/* Page navigation transitions */
+::view-transition-group(.page-content) {
+  animation-duration: 300ms;
+}
+
+::view-transition-old(.page-content) {
+  animation: fade-out var(--animation-duration-normal) var(--animation-ease-smooth);
+}
+
+::view-transition-new(.page-content) {
+  animation: fade-in var(--animation-duration-normal) var(--animation-ease-smooth);
+}
+
+/* Tab switching transitions */
+::view-transition-group(.tab-panel) {
+  animation-duration: 250ms;
+}
+
+::view-transition-old(.tab-panel) {
+  animation: fade-out 250ms ease-out;
+}
+
+::view-transition-new(.tab-panel) {
+  animation: fade-in 250ms ease-in;
+}
+
+/* Utility animations for view transitions */
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Disable view transitions for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* ============================================
    MOTION PREFERENCES
    ============================================ */
 

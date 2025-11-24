@@ -39,6 +39,7 @@ jest.mock('../lib/featureFlags', () => ({
 }));
 
 import { isGalleryCaptionsEnabled } from '../lib/featureFlags';
+import { __resetViewTransitionsSupportCache } from '../lib/animations/viewTransitions';
 import GalleryView, { GalleryFallbackCode } from './GalleryView';
 import type { GalleryItem } from '../lib/gallery-types';
 
@@ -237,5 +238,28 @@ describe('GalleryView', () => {
       global.window = originalWindow;
       // Modal should still render
       expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    test('invokes document.startViewTransition when API is supported', async () => {
+      (isGalleryCaptionsEnabled as jest.Mock).mockReturnValue(false);
+      const startSpy = jest.fn((cb: () => void) => {
+        cb();
+        return {
+          finished: Promise.resolve(),
+          ready: Promise.resolve(),
+          updateCallbackDone: Promise.resolve(),
+        };
+      });
+      (document as any).startViewTransition = startSpy;
+      // Reset feature detection cache to ensure newly added API is recognized
+      __resetViewTransitionsSupportCache();
+      const items: GalleryItem[] = [
+        { id: 'vt-1', src: '/img1.webp', category: 'flash', alt: 'One' },
+      ];
+      render(<GalleryView initialCategory="flash" initialData={{ items, fallback: false, usedBundledFallback: false }} />);
+      const button = screen.getByRole('button', { name: /View .* in full size/i });
+      await userEvent.click(button);
+      await screen.findByRole('dialog');
+      expect(startSpy).toHaveBeenCalledTimes(1);
     });
 });

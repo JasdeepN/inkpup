@@ -51,7 +51,7 @@
   /* Nav-specific lighter blur to keep particles visible while retaining glass look.
      Reduced from hero default (10px/16px) to 6px. */
   @include glass-panel(var(--glass-panel-bg), 6px);
-  padding: clamp(1rem, 2vw, 1.75rem);
+  padding: clamp(0.85rem, 1.8vw, 1.25rem); /* restore more compact original height */
   background-clip: padding-box;
   -webkit-background-clip: padding-box;
 }
@@ -102,6 +102,10 @@
 .primary-nav a:hover::after, .primary-nav a:focus-visible::after { width: 100%; animation: navGlowTrail var(--animation-duration-normal) var(--animation-ease-smooth); }
 
 .header-actions { display: flex; align-items: center; gap: 0.75rem; }
+.sticky-nav .header-actions .btn.btn--primary { /* compact button to keep bar height stable */
+  padding: 0.45rem 0.9rem;
+  line-height: 1.1;
+}
 
 .header-toggle { padding: 0.45rem 0.65rem; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-elevated); color: var(--header-text); transition: background 0.2s ease, border 0.2s ease, color 0.2s ease, transform 0.2s ease; }
 .header-toggle:hover, .header-toggle:focus-visible { border-color: var(--nav-link-hover); color: var(--nav-link-hover); }

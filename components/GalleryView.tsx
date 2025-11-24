@@ -6,6 +6,7 @@ import type { GalleryItem, GalleryCategory } from '../lib/gallery-types';
 import { GALLERY_CATEGORIES, getCategoryLabel } from '../lib/gallery-types';
 import Gallery from './Gallery';
 import SmartImage from './SmartImage';
+import { supportsViewTransitions, startViewTransition, setTransitionName } from '../lib/animations/viewTransitions';
 import { isGalleryCaptionsEnabled } from '../lib/featureFlags';
 import type { GalleryFallbackReason } from '../lib/r2-server';
 
@@ -179,7 +180,19 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
 
   const handleSelect = useCallback((item: GalleryItem, trigger: HTMLButtonElement) => {
     lastTriggerRef.current = trigger;
-    setSelected(item);
+    // Progressive enhancement: use View Transitions API if supported
+    if (supportsViewTransitions()) {
+      const thumbImg = trigger.querySelector('.gallery-card__img') as HTMLElement | null;
+      if (thumbImg) {
+        setTransitionName(thumbImg, 'gallery-img');
+      }
+      // Wrap state update in view transition
+      void startViewTransition(() => {
+        setSelected(item);
+      });
+    } else {
+      setSelected(item);
+    }
   }, []);
 
   return (
@@ -233,6 +246,8 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
             closeModal();
           }}
           onClose={closeModal}
+          // Assign view-transition-name for modal container when supported
+          {...(supportsViewTransitions() ? { style: { viewTransitionName: 'gallery-modal' } as any } : {})}
         >
           <div className="gallery-modal__content">
             <button className="gallery-modal__close" type="button" onClick={closeModal} aria-label="Close image preview">✕</button>
@@ -247,6 +262,8 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
                 sizes="(min-width: 1024px) 70vw, 90vw"
                 className="gallery-modal__img"
                 onLoadingComplete={handleImageLoad}
+                // Assign view-transition-name for expanded image when supported
+                {...(supportsViewTransitions() ? { style: { viewTransitionName: 'gallery-img' } as any } : {})}
               />
             </div>
             {(selected.alt || (captionsEnabled && selected.caption)) && (

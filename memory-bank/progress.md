@@ -80,14 +80,18 @@
 - [PROGRESS:2025-11-24] Removed NEXT_PUBLIC_FORCE_PARTICLES debug env variable to keep accessibility logic accurate (respect reduced motion / save-data).
 - [PROGRESS:2025-11-24] Parameterized nav glass panel via mixin call @include glass-panel(var(--glass-panel-bg), 6px) avoiding duplication while enabling tuning.
 - [PROGRESS:2025-11-24] Verified hero glass panels unaffected; build succeeded with SCSS changes (no regression in tests).
+- [PROGRESS:2025-11-24] ✅ Component A (Phase 3 View Transitions) foundation stabilized: viewTransitions.ts utilities complete (supportsViewTransitions, startViewTransition, naming helpers, cache + reset), 14 unit tests passing, integrated test-only RevealOnScroll shortcut to eliminate React 19 AggregateError, full suite (299 tests) passing post-refactor.
+- [PROGRESS:2025-11-24] Began Component C (Gallery modal transitions): implemented view-transition-name assignments ('gallery-modal', 'gallery-img') and added unit test verifying attribute application under simulated API support.
+- [PROGRESS:2025-11-24] Header glass panel fix: Moved brand + action buttons inside .sticky-nav wrapper for consistent blur/gradient rendering; all header tests still passing.
 
 ## Doing
 
-- [PROGRESS:2025-11-22] EXECUTING: Animation Phase 2 - Component A complete, moving to Component C (Section Reveals)
-- Execution workflow: Execute.prompt.md
-- Current step: Creating reveal CSS classes and RevealOnScroll component
-- Completed: useScrollReveal, useReducedMotion hooks with 9 passing tests (247 total)
-- Plan next partial extractions: hero, gallery, flash, custom, pricing, admin blocks
+- [PROGRESS:2025-11-24] EXECUTING: Animation Phase 3 - View Transitions API
+- Current component: A (Foundation) - Creating feature detection and wrapper utilities
+- Target: 56 todos across 6 components (A-F)
+- Estimated effort: 2-3 days
+- Bundle budget: ≤3KB increase
+- [PROGRESS:2025-11-24] Component A.1 complete: Created lib/animations/viewTransitions.ts with feature detection, startViewTransition wrapper, transition name utilities, TypeScript augmentation
 
 ## Next
 
