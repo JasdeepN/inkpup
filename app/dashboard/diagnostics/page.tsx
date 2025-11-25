@@ -8,6 +8,7 @@ import { verifySessionToken, getSessionCookieOptions } from '../../../lib/admin-
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { pricing } from '../../../lib/pricing';
+import { getD1Binding, getSizeCategories, getStyles, getColorProfiles } from '../../../lib/db/d1';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -23,8 +24,50 @@ interface ServiceHealth {
 async function checkD1Health(): Promise<ServiceHealth> {
   const start = performance.now();
   try {
-    // Currently pricing data comes from JSON import
-    // TODO: When D1 integration is complete, check actual D1 connection here
+    // First, try to get D1 binding (only available in Cloudflare Workers)
+    const db = getD1Binding();
+    
+    if (db) {
+      // D1 is available - query actual database
+      const [sizes, styles, colors] = await Promise.all([
+        getSizeCategories(db),
+        getStyles(db),
+        getColorProfiles(db),
+      ]);
+      
+      const responseTime = Math.round(performance.now() - start);
+      const hasData = sizes.length > 0 && styles.length > 0 && colors.length > 0;
+      
+      if (!hasData) {
+        return {
+          name: 'Cloudflare D1 Database',
+          status: 'degraded',
+          message: 'Connected but data incomplete',
+          responseTime,
+          details: {
+            source: 'D1 (live)',
+            sizeCategories: sizes.length,
+            styles: styles.length,
+            colorProfiles: colors.length,
+          }
+        };
+      }
+      
+      return {
+        name: 'Cloudflare D1 Database',
+        status: 'healthy',
+        message: 'Connected and data loaded',
+        responseTime,
+        details: {
+          source: 'D1 (live)',
+          sizeCategories: sizes.length,
+          styles: styles.length,
+          colorProfiles: colors.length,
+        }
+      };
+    }
+    
+    // D1 not available (local dev) - fall back to JSON
     const data = pricing;
     const responseTime = Math.round(performance.now() - start);
     
@@ -33,38 +76,39 @@ async function checkD1Health(): Promise<ServiceHealth> {
     
     if (!hasData) {
       return {
-        name: 'Pricing Data',
+        name: 'Cloudflare D1 Database',
         status: 'degraded',
-        message: 'Data accessible but incomplete',
+        message: 'D1 unavailable, using JSON fallback (incomplete)',
         responseTime,
         details: {
+          source: 'JSON fallback',
           sizeCategories: data.sizeCategories.length,
           styles: (data as any).styles?.length || data.complexityMultipliers?.length || 0,
           colorProfiles: data.colorProfiles.length,
+          note: 'D1 only available in Cloudflare Workers environment',
         }
       };
     }
 
-    const source = 'JSON (D1 migration pending)';
-    
     return {
-      name: 'Pricing Data',
-      status: 'healthy',
-      message: `Loaded successfully (${source})`,
+      name: 'Cloudflare D1 Database',
+      status: 'degraded',
+      message: 'D1 unavailable, using JSON fallback',
       responseTime,
       details: {
-        source,
+        source: 'JSON fallback',
         sizeCategories: data.sizeCategories.length,
         styles: (data as any).styles?.length || data.complexityMultipliers?.length || 0,
         colorProfiles: data.colorProfiles.length,
+        note: 'D1 only available in Cloudflare Workers environment',
       }
     };
   } catch (error) {
     const responseTime = Math.round(performance.now() - start);
     return {
-      name: 'Pricing Data',
+      name: 'Cloudflare D1 Database',
       status: 'error',
-      message: error instanceof Error ? error.message : 'Failed to load',
+      message: error instanceof Error ? error.message : 'Failed to connect',
       responseTime,
     };
   }
@@ -74,12 +118,10 @@ async function checkR2Health(): Promise<ServiceHealth> {
   const start = performance.now();
   try {
     // Check if R2 env vars are configured
-    const hasConfig = Boolean(
-      process.env.R2_ACCOUNT_ID &&
-      process.env.R2_BUCKET_NAME &&
-      process.env.R2_ACCESS_KEY_ID &&
-      process.env.R2_SECRET_ACCESS_KEY
-    );
+    const bucket = (process.env.R2_BUCKET || process.env.R2_BUCKET_NAME)?.trim();
+    const hasAccessPair = Boolean(process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY);
+    const hasApiToken = Boolean(process.env.R2_API_TOKEN);
+    const hasConfig = Boolean(process.env.R2_ACCOUNT_ID && bucket && (hasAccessPair || hasApiToken));
 
     if (!hasConfig) {
       return {
@@ -87,20 +129,29 @@ async function checkR2Health(): Promise<ServiceHealth> {
         status: 'error',
         message: 'R2 credentials not configured',
         responseTime: Math.round(performance.now() - start),
+        details: {
+          accountIdPresent: Boolean(process.env.R2_ACCOUNT_ID),
+          bucketPresent: Boolean(bucket),
+          accessKeyPresent: Boolean(process.env.R2_ACCESS_KEY_ID),
+          secretKeyPresent: Boolean(process.env.R2_SECRET_ACCESS_KEY),
+          apiTokenPresent: Boolean(process.env.R2_API_TOKEN),
+        }
       };
     }
 
-    // TODO: Could add actual R2 ping test here by listing a single object
-    // For now, just check configuration
+    const forcedS3 = process.env.R2_FORCE_S3 === 'true';
+
     return {
       name: 'Cloudflare R2 Storage',
       status: 'healthy',
-      message: 'Credentials configured',
+      message: forcedS3 ? 'Credentials configured (S3 client forced)' : 'Credentials configured',
       responseTime: Math.round(performance.now() - start),
       details: {
         accountId: process.env.R2_ACCOUNT_ID,
-        bucketName: process.env.R2_BUCKET_NAME,
+        bucketName: bucket,
+        authMode: hasApiToken && !hasAccessPair ? 'api-token' : 'access-key',
         publicHostname: process.env.R2_PUBLIC_HOSTNAME || 'not set',
+        forcedS3,
       }
     };
   } catch (error) {
@@ -301,9 +352,9 @@ export default async function DiagnosticsPage() {
               <dd className="font-mono">{process.env.NODE_ENV}</dd>
             </div>
             <div>
-              <dt className="text-muted mb-1">D1 Pricing Enabled</dt>
+              <dt className="text-muted mb-1">D1 Binding Available</dt>
               <dd className="font-mono">
-                {process.env.ENABLE_D1_PRICING || process.env.NODE_ENV === 'production' ? 'true' : 'false'}
+                {getD1Binding() ? 'true' : 'false'}
               </dd>
             </div>
           </dl>

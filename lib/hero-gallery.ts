@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { listGalleryImages } from './r2-server';
 import type { GalleryCategory } from './gallery-types';
+import { getD1Binding, getSetting } from './db/d1';
 
 export type HeroGalleryItem = Readonly<{
   src: string;
@@ -24,6 +25,63 @@ function resolveHeroCategory(): GalleryCategory {
 
 function resolveHeroPrefix(): string {
   return (process.env.HERO_GALLERY_PREFIX ?? process.env.NEXT_PUBLIC_HERO_GALLERY_PREFIX ?? '') as string;
+}
+
+/**
+ * Get the active hero ID from D1 site_settings.
+ * Returns null if D1 is unavailable or no active hero is set.
+ */
+async function getActiveHeroId(): Promise<string | null> {
+  try {
+    const db = getD1Binding();
+    if (!db) {
+      console.log('[hero-gallery] D1 not available, using default ordering');
+      return null;
+    }
+    
+    const activeId = await getSetting(db, 'active_hero_id');
+    console.log('[hero-gallery] Active hero ID from D1:', activeId || '(none)');
+    return activeId;
+  } catch (error) {
+    console.error('[hero-gallery] Error fetching active hero ID:', error);
+    return null;
+  }
+}
+
+/**
+ * Reorder images to put the active hero first.
+ * If activeHeroId matches an image key or ID, that image is moved to index 0.
+ */
+function prioritizeActiveHero(
+  items: HeroGalleryItem[],
+  activeHeroId: string | null
+): HeroGalleryItem[] {
+  if (!activeHeroId || items.length === 0) {
+    return items;
+  }
+  
+  // Find the index of the active hero image
+  const activeIndex = items.findIndex((item) => {
+    // Match by key (R2 path) or by the ID portion of the key
+    if (item.key === activeHeroId) return true;
+    // Also match if activeHeroId is just the filename portion
+    if (item.key?.endsWith(`/${activeHeroId}`)) return true;
+    if (item.key?.includes(activeHeroId)) return true;
+    return false;
+  });
+  
+  if (activeIndex <= 0) {
+    // Not found or already first
+    return items;
+  }
+  
+  // Move active image to front
+  const reordered = [...items];
+  const [activeItem] = reordered.splice(activeIndex, 1);
+  reordered.unshift(activeItem);
+  
+  console.log('[hero-gallery] Reordered to prioritize active hero:', activeHeroId);
+  return reordered;
 }
 
 export const getHeroImages = cache(async (): Promise<HeroGalleryItem[]> => {
@@ -81,8 +139,12 @@ export const getHeroImages = cache(async (): Promise<HeroGalleryItem[]> => {
       key: it.key,
     }));
     
-    console.log('[hero-gallery] Returning hero items:', heroItems.length);
-    return heroItems;
+    // Fetch active hero ID from D1 and prioritize that image
+    const activeHeroId = await getActiveHeroId();
+    const prioritizedItems = prioritizeActiveHero(heroItems, activeHeroId);
+    
+    console.log('[hero-gallery] Returning hero items:', prioritizedItems.length);
+    return prioritizedItems;
   } catch (err) {
     console.error('getHeroImages failed', err);
     return [
