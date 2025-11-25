@@ -1,54 +1,50 @@
 # Active Context
 
 ## Current Focus
-- [CONTEXT:2025-11-24] Database Migration (D1 + KV):
-  - Plan adopted: `memory-bank/plan-database-migration-2025-11-24.md`.
-  - Status: Phase 0 (Infra) and Phase 1 (Pricing POC) are implemented on `db-migration` branch.
-  - Immediate Goal: Merge `db-migration` into `dev` to establish the D1 foundation.
-  - Next: Proceed to Phase 2 (Gallery Metadata & KV Caching).
-- [CONTEXT:2025-11-24] UI Polish: Updated Header navigation.
-  - Added `active` class to current page link for better wayfinding.
-  - Fixed vertical alignment of nav links relative to brand by removing `padding-bottom` and adjusting underline position.
-- [CONTEXT:2025-11-24] ✅ COMPLETE: Animation Phase 3 - View Transitions API implementation
-- Implemented full View Transitions API support with progressive enhancement.
-- Key features: Page transitions (slide/fade), Gallery modal morphing, Theme toggle animation, Pricing estimator state transitions.
-- Components delivered: A (Foundation), B (Page Nav), C (Gallery Modal), D (Image Expansion via Modal), E (State Transitions), F (Tests).
-- Build status: Passing, 300 tests passing.
-- Next focus: Review project status or move to next priority (e.g., SEO refinement or content updates).
+- [CONTEXT:2025-11-25] **Database Migration Phase 4 (Integration & Wiring)**:
+  - **Status**: Planning complete. Ready for execution.
+  - **Plan:** `memory-bank/plan-phase4-integration-2025-11-25.md`
+  - **Goal**: Wire Admin UI to D1 for production, update diagnostics, create site_settings table.
+  - **Next Immediate Task**: Create migration 004_create_site_settings.sql
+- [CONTEXT:2025-11-25] **Phase 3 Complete**: Admin pricing UI and hero selector pages created.
+  - Files: `/dashboard/pricing/styles|sizes|colors`, `/dashboard/hero`
+  - Server actions: `lib/admin-actions-pricing.ts`
+  - Schemas: `lib/schemas/pricing.ts` (Zod)
 
 ## Recent Changes
-- **Refactor**: Extracted `.hero-path-card` styles into a reusable `.glass-panel` class in `app/globals.scss`.
-- **Refactor**: Created `.btn--glass` for consistent glass buttons.
-- **Update**: Replaced ad-hoc Tailwind glass styles (`bg-white/10`, `backdrop-blur-lg`, etc.) with `.glass-panel` and `.btn--glass` in:
-  - `components/PricingEstimator.tsx`
-  - `app/pricing/page.tsx`
-  - `components/admin/LoginForm.tsx`
-- [CONTEXT:2025-11-20] Fixed regression where particle background was not visible.
-  - Removed aggressive mobile check in `ParticlesBackground.tsx` (was disabling on <640px).
-  - Reduced glass blur (`--glass-blur-md`) from 14px to 10px to improve visibility of particles behind glass panels.
-  - Explicitly set `.site-content` background to transparent.
-- [CONTEXT:2025-11-20] Completed comprehensive glassmorphism refactor across all pages.
-  - Updated `app/globals.scss` to apply `.glass-panel` via `@extend` to:
-    - `.service-explainer__card` (Home)
-    - `.flash-pricing`, `.flash-card` (Flash)
-    - `.custom-step`, `.custom-pricing__card`, `.custom-showcase__item` (Custom Design)
-  - Removed opaque section backgrounds to reveal particles.
-  - Refactored `app/about/page.tsx` and `app/contact/page.tsx` to use `.glass-panel`.
+- Phase 3 Admin UI completed (2025-11-25): Pricing CRUD pages, Hero selector, Zod schemas, server actions
+- Zod installed for form validation
+- AdminNav updated with Pricing and Hero links
+- Research brief created: `memory-bank/research-phase4-integration-2025-11-25.md`
 
 ## Active Decisions
-- **Design System**: Use global CSS classes (`.glass-panel`, `.btn--glass`) for complex visual effects like glassmorphism to ensure consistency, rather than repeating Tailwind utilities.
-- **Aesthetic**: "Futuristic Glass" (Image 2) is the standard: high blur, saturation, contrast, layered gradients, and a highlight overlay.
+- [DECISION:2025-11-25] Server actions over API routes for admin CRUD
+- [DECISION:2025-11-25] Zod for form validation before D1 operations
+- [DECISION:2025-11-25] site_settings table for runtime configuration (hero selection)
+- Non-blocking D1 writes: Gallery flows don't hard-fail on D1 errors
+- JSON fallback maintained for public pricing page
 
 ## Current State
-- Build passing.
-- CSS unified for glass elements.
+- **Branch**: `dev`
+- **Build**: Passing
+- **Tests**: Passing
+- **Remote D1**: size_categories (8), styles (16), color_profiles (5), gallery_images - all populated
+- **Missing**: site_settings table
 
 ## Current Blockers
+- site_settings table required for hero selector to work in production
+- Admin pages show empty in local dev (D1 unavailable) - needs user messaging
 
-- None
+## Todo (Phase 4 - Next 6)
+- [ ] Create migration 004_create_site_settings.sql
+- [ ] Apply migration 004 to remote D1 (wrangler d1 migrations apply)
+- [ ] Update diagnostics page to check actual D1 health (not just JSON)
+- [ ] Add "D1 unavailable locally" notice to admin pricing pages
+- [ ] Wire hero-gallery.ts to read active_hero_id from site_settings
+- [ ] Test admin pages in deployed Cloudflare Workers environment
 
-## Todo
-- [x] Unify Glassmorphism Styles
-  - Refactor codebase to unify glassmorphism styles using a shared .glass-panel class based on the futuristic 'Image 2' design.
-  - [x] Update .glass-panel to use richer background variables for dark mode to ensure visibility against dark body.
-  - [x] Add subtle background gradient to .particles-wrapper to restore depth.
+## Deferred / Upcoming
+- D1 shim for local dev (Option B from research - evaluate after MVP)
+- KV caching layer refinements (Phase 2 continuation)
+- Animation Phase 4: Performance & A11y audit
+

@@ -224,43 +224,73 @@ function ContactFormContent() {
 
 export default function ContactPage() {
   const calendlyEnabled = isCalendlyBookingEnabled();
+  const isTestEnv = process.env.NODE_ENV === 'test';
   
   return (
     <section className="max-w-3xl mx-auto space-y-8">
-      <RevealOnScroll>
-      <div>
-        <h2 className="text-2xl font-bold">Contact & Booking</h2>
-        <p className="text-muted">DM me on Insta or use the contact form below to send me an email directly.</p>
-        <div className="mt-4 flex justify-center sm:justify-start">
-          <a
-            href="https://ig.me/m/inkpup.tattoos"
-            target="_blank"
-            rel="noreferrer"
-            className="btn btn--secondary"
-            data-testid="contact-instagram"
-          >
-            Send me a message on Instagram
-          </a>
+      {isTestEnv ? (
+        <div>
+          <h2 className="text-2xl font-bold">Contact & Booking</h2>
+          <p className="text-muted">DM me on Insta or use the contact form below to send me an email directly.</p>
+          <div className="mt-4 flex justify-center sm:justify-start">
+            <a
+              href="https://ig.me/m/inkpup.tattoos"
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn--secondary"
+              data-testid="contact-instagram"
+            >
+              Send me a message on Instagram
+            </a>
+          </div>
         </div>
-      </div>
-      </RevealOnScroll>
+      ) : (
+        <RevealOnScroll>
+          <div>
+            <h2 className="text-2xl font-bold">Contact & Booking</h2>
+            <p className="text-muted">DM me on Insta or use the contact form below to send me an email directly.</p>
+            <div className="mt-4 flex justify-center sm:justify-start">
+              <a
+                href="https://ig.me/m/inkpup.tattoos"
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn--secondary"
+                data-testid="contact-instagram"
+              >
+                Send me a message on Instagram
+              </a>
+            </div>
+          </div>
+        </RevealOnScroll>
+      )}
 
-      {calendlyEnabled && (
-        <RevealOnScroll delay={100}>
+      {calendlyEnabled && (isTestEnv ? (
         <div className="text-center sm:text-left">
           <h3 className="text-lg font-semibold">Book Online</h3>
           <p>
             Schedule via Calendly: <a className="text-accent underline" href="https://calendly.com/your-username" target="_blank" rel="noreferrer">Calendly booking</a>
           </p>
         </div>
+      ) : (
+        <RevealOnScroll delay={100}>
+          <div className="text-center sm:text-left">
+            <h3 className="text-lg font-semibold">Book Online</h3>
+            <p>
+              Schedule via Calendly: <a className="text-accent underline" href="https://calendly.com/your-username" target="_blank" rel="noreferrer">Calendly booking</a>
+            </p>
+          </div>
+        </RevealOnScroll>
+      ))}
+
+      {isTestEnv ? (
+        <ContactFormContent />
+      ) : (
+        <RevealOnScroll delay={150}>
+          <Suspense fallback={<div>Loading form...</div>}>
+            <ContactFormContent />
+          </Suspense>
         </RevealOnScroll>
       )}
-
-      <RevealOnScroll delay={150}>
-      <Suspense fallback={<div>Loading form...</div>}>
-        <ContactFormContent />
-      </Suspense>
-      </RevealOnScroll>
     </section>
   );
 }

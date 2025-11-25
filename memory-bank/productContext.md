@@ -11,6 +11,7 @@ InkPup Tattoos runs a Cloudflare-hosted Next.js App Router site that showcases t
 - Automation scripts and docs for configuring R2 CORS, custom domains, and Wrangler/OpenNext deployments.
 - Playwright and Jest coverage for gallery views, navigation experiences, and storage behaviors.
 - Admin webhook receiver for job lifecycle notifications: the site accepts signed job events from the upload worker to revalidate the admin UI and surface job states.
+ - Cloudflare D1 pricing & gallery metadata persistence (size categories, styles, color profiles, and gallery_images table storing width/height/size_bytes + timestamps) with planned KV caching layer for high-frequency read optimization. [PRODUCT:2025-11-25]
 
 ## Technical Stack
 - Next.js 15 App Router running on Cloudflare Workers via @opennextjs/cloudflare/OpenNext.
@@ -150,4 +151,5 @@ Utilizes a structured approach to task management and memory storage.
 - Memory Management Libraries
 
 [PRODUCT:2025-11-24] Cross-browser glassmorphism refinement implemented: adaptive blur for navigation (6px general / 4px Firefox) preserves particle background clarity while maintaining consistent hero aesthetic. Removed unused debug env variable to keep runtime behavior predictable.
+[PRODUCT:2025-11-25] Remote gallery schema (gallery_images) established in dev database (version 3) with manual migration fallback; production D1 now configured with migrations_dir for unified schema evolution. Upcoming work: KV caching of gallery listings and signed URL TTL management.
 

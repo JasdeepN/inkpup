@@ -3,16 +3,20 @@
 ## Architectural Patterns
 - Cloudflare Worker deployment via OpenNext: Next.js App Router builds are produced by @opennextjs/cloudflare/OpenNext and run on Cloudflare Workers with nodejs_compat enabled, mirroring production in Wrangler dev.
 - Layered R2 access and fallback: lib/r2server prefers Cloudflare bindings, falls back to the AWS S3 client, and serves bundled gallery backups in non-production environments so the UI remains responsive without credentials.
+ - Non-blocking D1 synchronization for gallery metadata: Upload/delete flows attempt D1 insert/delete but never fail the primary R2 operation on D1 error; R2 is the source of truth, D1 provides structured query capability (width, height, size, category) for future filtering & admin experience. [PATTERN:2025-11-25]
+ - Manual migration fallback strategy: If `wrangler d1 migrations apply` encounters UNIQUE constraint on existing schema versions (e.g. version 1 already applied remotely), prefer targeted manual CREATE TABLE statements plus `INSERT OR IGNORE` into schema_migrations rather than destructive reset, preserving historical pricing data. [PATTERN:2025-11-25]
 
 ## Design Patterns
 - Server actions with signed session cookies: the admin portal authenticates via password-protected forms, stores sessions in signed cookies, and revalidates pages after uploads or deletes.
 - Instrumented storage helpers: listGalleryImages and callSendAndMaybeGlobal mirror client.send calls to global mocks, keeping Jest suites synchronous without refactoring to async observers.
+ - KV-first read with D1 fallback (planned): Gallery listing will query KV for cached, denormalized image metadata (id, key, url, dims) keyed by `gallery:<category>`; on miss, fall back to D1 SELECT, hydrate KV, and return. Ensures high-frequency reads avoid direct D1 queries. [PATTERN:2025-11-25]
 
 ## Common Idioms
 - Use data/business.json as the single source of truth for business copy, metadata, and structured data components.
 - Call listGalleryImages().asPromise() when asynchronous iteration is required while preserving the legacy synchronous result object.
 - Run Jest from the terminal with `npx jest --forceExit` (and additional flags as needed) to avoid hung processes.
 - Cloudflare analytics fetcher requests <=24h windows in sequence and caps historical lookback when the API reports retention limits, ensuring dashboards degrade gracefully.
+ - Record manual migrations with explicit version numbers to maintain chronological integrity; do not overwrite existing schema_migrations rows—use `INSERT OR IGNORE`. [PATTERN:2025-11-25]
 
 
 ## Centralized metadata management

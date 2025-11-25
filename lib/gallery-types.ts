@@ -9,6 +9,8 @@ export interface GalleryItem {
   caption?: string;
   category: GalleryCategory;
   size?: number;
+  width?: number;
+  height?: number;
   lastModified?: string;
   key?: string;
 }

@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Image from 'next/image';
 import { cookies } from 'next/headers';
 import { GALLERY_CATEGORIES, getCategoryLabel, isGalleryCategory } from '../../lib/gallery-types';
 import { listGalleryImages, hasR2Credentials, deleteGalleryImage } from '../../lib/r2-server';
@@ -47,14 +48,18 @@ export default async function AdminGalleryPage({ searchParams }: { searchParams?
           <p className="admin-empty-state">No artwork uploaded yet for this category.</p>
         ) : (
           <ul className="admin-gallery__grid">
-            {gallery.items.map((item: any) => (
+            {gallery.items.map((item: any, index: number) => (
               <li key={item.id} className="admin-gallery__item admin-gallery__item--tight">
                 <div className="admin-gallery__preview">
-                  <img
+                  <Image
                     src={item.src}
-                    alt={item.alt}
+                    alt={item.alt || item.caption || 'Gallery image'}
                     className="admin-gallery__image"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    width={item.width || 800}
+                    height={item.height || 800}
+                    priority={index < 4}
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                    style={{ objectFit: 'cover', width: '100%', height: 'auto' }}
                   />
                 </div>
                 <div className="admin-gallery__meta">

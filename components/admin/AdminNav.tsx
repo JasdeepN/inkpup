@@ -17,6 +17,12 @@ export default function AdminNav() {
           <Link href="/uploads" className="nav-link">
             Uploads
           </Link>
+          <Link href="/dashboard/pricing" className="nav-link">
+            Pricing
+          </Link>
+          <Link href="/dashboard/hero" className="nav-link">
+            Hero
+          </Link>
         </div>
       </div>
       <div className="flex items-center gap-4">

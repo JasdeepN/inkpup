@@ -24,6 +24,7 @@ logpush = true
 binding = "DB"
 database_name = "inkpup-db-dev"
 database_id = "cb636c73-b9ca-4a79-946a-e343541e878b"
+migrations_dir = "scripts/db/migrations"
 
 [[env.dev.kv_namespaces]]
 binding = "CACHE"
@@ -57,6 +58,7 @@ logpush = true
 binding = "DB"
 database_name = "inkpup-db"
 database_id = "fb58122f-db2f-4152-8a7a-fbfc2150d520"
+migrations_dir = "scripts/db/migrations"
 
 [[env.production.kv_namespaces]]
 binding = "CACHE"

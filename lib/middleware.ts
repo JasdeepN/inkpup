@@ -17,6 +17,7 @@ function shouldBypass(pathname: string): boolean {
     pathname === '/robots.txt' ||
     pathname === '/sitemap.xml' ||
     pathname === '/manifest.json' ||
+    pathname === '/test-d1' ||
     pathname.startsWith('/favicon-') ||
     pathname.startsWith('/icon-') ||
     pathname.startsWith('/apple-touch-icon') ||

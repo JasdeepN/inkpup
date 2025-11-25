@@ -89,5 +89,8 @@ playwright-report/
 !.github/instructions/
 TODO.IGNORE
 
+# Temporary/debug files
+*.pid
+*.html.bak
 
 scripts/

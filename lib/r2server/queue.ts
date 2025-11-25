@@ -6,6 +6,8 @@ import { sanitizeFilename } from './utils';
 import type { GalleryCategory } from '../gallery-types';
 import { generateGalleryObjectKey, uploadGalleryImage } from './storage';
 import { getAdminWebhookConfig, sendAdminWebhookEvent, type AdminWebhookEvent } from '../admin-webhooks';
+import { getD1Binding, insertGalleryImage } from '../db/d1';
+import { getKVBinding, upsertCachedGalleryItem } from '../cache/kv';
 
 const JOBS_PREFIX = 'jobs/';
 const DEAD_LETTER_PREFIX = 'jobs-failed/';
@@ -349,7 +351,7 @@ export async function processPendingUploadJobs(options?: ProcessJobsOptions) {
       }
 
       try {
-        await uploadGalleryImage({
+        const { item } = await uploadGalleryImage({
           category: record.category,
           originalFilename: record.originalFilename,
           buffer: originalBuffer,
@@ -357,6 +359,41 @@ export async function processPendingUploadJobs(options?: ProcessJobsOptions) {
           caption: record.caption,
           clientOptimized: record.clientOptimized ?? undefined,
         });
+
+        // Sync to D1
+        try {
+          const db = getD1Binding();
+          if (db) {
+            await insertGalleryImage(db, {
+              id: item.id,
+              key: item.key ?? item.id,
+              category: item.category,
+              src: item.src,
+              alt: item.alt,
+              caption: item.caption,
+              width: item.width,
+              height: item.height,
+              size: item.size,
+              lastModified: item.lastModified,
+            });
+          }
+        } catch (d1Error) {
+          console.error('Failed to sync gallery image to D1', d1Error);
+          // We don't fail the job if D1 sync fails, as the image is already in R2.
+          // In a production system, we might want to retry or have a reconciliation process.
+        }
+
+        // KV cache upsert (non-blocking)
+        try {
+          if (getKVBinding()) {
+            await upsertCachedGalleryItem(item);
+          }
+        } catch (kvErr) {
+          if (process.env.DEBUG === 'true') {
+            // eslint-disable-next-line no-console
+            console.warn('[queue] KV upsert failed (processPendingUploadJobs)', kvErr);
+          }
+        }
       } catch (error) {
         record.attempts += 1;
         record.lastError = error instanceof Error ? error.message : String(error);
