@@ -185,17 +185,48 @@ html.dark .admin-dashboard__metrics div {
   padding: clamp(2.5rem, 6vw, 3.5rem) clamp(1.5rem, 6vw, 2.75rem);
 }
 
+/* ----------------------------------------------
+   Admin Card - Unified Glass Panel Theme
+   Uses same glass-panel mixin as Price Preview for consistency
+---------------------------------------------- */
 .admin-card {
-  background: var(--surface);
-  border-radius: 1.5rem;
-  border: 1px solid var(--border);
+  @include glass-panel(var(--glass-panel-bg), 4px);
   padding: clamp(1.75rem, 3vw, 2.5rem);
-  box-shadow: 0 32px 70px rgba(15, 23, 42, 0.14);
-  backdrop-filter: blur(4px);
+}
+
+/* Disable hover transform on admin cards - keep them static */
+.admin-card:hover {
+  transform: none;
 }
 
 .admin-card--compact {
   padding: clamp(1.25rem, 2.5vw, 1.75rem);
+}
+
+/* Admin Navigation - same glass, compact padding */
+.admin-nav.admin-card {
+  padding: clamp(0.85rem, 1.8vw, 1.25rem);
+}
+
+/* Table styling within admin-cards */
+.admin-card table {
+  border-collapse: collapse;
+}
+
+.admin-card thead {
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.admin-card thead th {
+  border-bottom: 1px solid var(--glass-panel-border);
+}
+
+.admin-card tbody tr {
+  transition: background-color var(--animation-duration-fast) ease;
+}
+
+.admin-card tbody tr:hover {
+  background: rgba(15, 23, 42, 0.3);
 }
 
 .admin-card__header {
@@ -589,4 +620,138 @@ html.dark .admin-dashboard__metrics div {
 .admin-gallery__action:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+/* ----------------------------------------------
+   Price Breakdown Preview Panel
+---------------------------------------------- */
+.price-breakdown-panel {
+  background: var(--glass-panel-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg, 0.75rem);
+  overflow: hidden;
+  
+  // Collapsible header button
+  > button {
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+    }
+  }
+}
+
+.price-breakdown-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  transition: background-color 0.15s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
+}
+
+.price-breakdown-panel__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.price-breakdown-panel__toggle {
+  transform: rotate(0deg);
+  transition: transform 0.2s ease;
+  
+  &--closed {
+    transform: rotate(-90deg);
+  }
+}
+
+.price-breakdown-panel__content {
+  padding: 0 1.25rem 1.25rem;
+}
+
+// Breakdown progress bars
+.breakdown-bar {
+  height: 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+  
+  &__fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.3s ease-out;
+  }
+  
+  &--size .breakdown-bar__fill {
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  }
+  
+  &--style .breakdown-bar__fill {
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+  }
+  
+  &--color .breakdown-bar__fill {
+    background: linear-gradient(90deg, #10b981, #34d399);
+  }
+}
+
+.breakdown-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  
+  &__name {
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85);
+  }
+  
+  &__multiplier {
+    color: rgba(255, 255, 255, 0.5);
+    margin-left: 0.25rem;
+  }
+  
+  &__amount {
+    color: rgba(255, 255, 255, 0.6);
+  }
+}
+
+.breakdown-percentage {
+  text-align: right;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 0.125rem;
+}
+
+.breakdown-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  
+  &__label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  &__value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
 }

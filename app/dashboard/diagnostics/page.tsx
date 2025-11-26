@@ -167,8 +167,24 @@ async function checkR2Health(): Promise<ServiceHealth> {
 async function checkKVHealth(): Promise<ServiceHealth> {
   const start = performance.now();
   try {
-    // Check if KV namespace is bound (via globalThis in edge or env)
-    const hasKV = Boolean(process.env.CACHE || (globalThis as any).CACHE);
+    // Try to get KV binding through Cloudflare context first
+    let hasKV = false;
+    
+    // Check via getCloudflareContext (preferred for OpenNext)
+    try {
+      const cloudflareSymbol = Symbol.for('__cloudflare-context__');
+      const ctx = (globalThis as any)[cloudflareSymbol];
+      if (ctx?.env?.CACHE) {
+        hasKV = true;
+      }
+    } catch {
+      // Ignore - try other methods
+    }
+    
+    // Fallback: check globalThis.CACHE or dev shim
+    if (!hasKV) {
+      hasKV = Boolean((globalThis as any).CACHE);
+    }
     
     if (!hasKV) {
       return {
@@ -176,6 +192,10 @@ async function checkKVHealth(): Promise<ServiceHealth> {
         status: 'degraded',
         message: 'KV namespace not bound',
         responseTime: Math.round(performance.now() - start),
+        details: {
+          note: 'KV binding configured in wrangler.toml but not available in current context',
+          hint: 'KV is available when running via Cloudflare Workers',
+        }
       };
     }
 
@@ -184,6 +204,9 @@ async function checkKVHealth(): Promise<ServiceHealth> {
       status: 'healthy',
       message: 'Namespace bound',
       responseTime: Math.round(performance.now() - start),
+      details: {
+        binding: 'CACHE',
+      }
     };
   } catch (error) {
     const responseTime = Math.round(performance.now() - start);
@@ -265,25 +288,26 @@ export default async function DiagnosticsPage() {
 
   return (
     <div className="admin-shell admin-shell--full-width">
-      <section className="admin-dashboard__hero">
+      {/* Header Section */}
+      <section className="mb-8">
         <div className="admin-card">
-          <div>
-            <p className="admin-dashboard__eyebrow">Infrastructure</p>
-            <h1>System Diagnostics</h1>
-            <p className="text-muted">Service health and performance monitoring</p>
-          </div>
-          <div className="mt-4">
-            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
-              allHealthy ? 'bg-green-500/20 text-green-600' :
-              hasErrors ? 'bg-red-500/20 text-red-600' :
-              'bg-yellow-500/20 text-yellow-600'
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <p className="admin-dashboard__eyebrow">Infrastructure</p>
+              <h1 className="text-2xl font-bold">System Diagnostics</h1>
+              <p className="text-muted text-sm mt-1">Service health and performance monitoring</p>
+            </div>
+            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full self-start ${
+              allHealthy ? 'bg-green-500/20 text-green-400' :
+              hasErrors ? 'bg-red-500/20 text-red-400' :
+              'bg-yellow-500/20 text-yellow-400'
             }`}>
               <span className={`w-3 h-3 rounded-full ${
                 allHealthy ? 'bg-green-500' :
                 hasErrors ? 'bg-red-500' :
                 'bg-yellow-500'
               }`} />
-              <span className="font-semibold">
+              <span className="font-semibold text-sm">
                 {allHealthy ? 'All Systems Operational' :
                  hasErrors ? 'Service Degradation' :
                  'Partial Degradation'}
@@ -293,71 +317,77 @@ export default async function DiagnosticsPage() {
         </div>
       </section>
 
-      <div className="admin-dashboard__grid">
+      {/* Services Grid - 2x2 on desktop */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {services.map((service) => (
-          <div key={service.name} className="admin-card">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className={`w-4 h-4 rounded-full ${
-                    service.status === 'healthy' ? 'bg-green-500' :
-                    service.status === 'degraded' ? 'bg-yellow-500' :
-                    'bg-red-500'
-                  }`} />
-                  <div>
-                    <h2 className="text-xl font-semibold">{service.name}</h2>
-                    <p className={`text-sm ${
-                      service.status === 'healthy' ? 'text-green-600' :
-                      service.status === 'degraded' ? 'text-yellow-600' :
-                      'text-red-600'
-                    }`}>
-                      {service.message}
-                    </p>
-                  </div>
+          <article key={service.name} className="admin-card">
+            {/* Service Header */}
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
+                  service.status === 'healthy' ? 'bg-green-500' :
+                  service.status === 'degraded' ? 'bg-yellow-500' :
+                  'bg-red-500'
+                }`} />
+                <div>
+                  <h2 className="text-lg font-semibold">{service.name}</h2>
+                  <p className={`text-sm ${
+                    service.status === 'healthy' ? 'text-green-400' :
+                    service.status === 'degraded' ? 'text-yellow-400' :
+                    'text-red-400'
+                  }`}>
+                    {service.message}
+                  </p>
                 </div>
-                {service.responseTime !== undefined && (
-                  <div className="text-right">
-                    <div className="text-sm text-muted">Response Time</div>
-                    <div className="font-mono text-lg">{service.responseTime}ms</div>
-                  </div>
-                )}
               </div>
-
-              {service.details && (
-                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-sm font-semibold mb-2 text-muted">Details</h3>
-                  <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                    {Object.entries(service.details).map(([key, value]) => (
-                      <div key={key}>
-                        <dt className="text-muted">{key}</dt>
-                        <dd className="font-mono">{String(value)}</dd>
-                      </div>
-                    ))}
-                  </dl>
+              {service.responseTime !== undefined && (
+                <div className="text-right flex-shrink-0">
+                  <div className="text-xs text-muted">Response Time</div>
+                  <div className="font-mono text-sm">{service.responseTime}ms</div>
                 </div>
               )}
             </div>
-          ))}
-      </div>
 
-      <div className="admin-card">
-        <h2 className="text-xl font-semibold mb-4">Environment</h2>
-          <dl className="grid grid-cols-3 gap-4 text-sm">
+            {/* Service Details */}
+            {service.details && (
+              <div className="pt-4 border-t border-white/10">
+                <h3 className="text-xs font-semibold mb-3 text-muted uppercase tracking-wide">Details</h3>
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  {Object.entries(service.details).map(([key, value]) => (
+                    <div key={key} className="min-w-0">
+                      <dt className="text-muted text-xs">{key}</dt>
+                      <dd className="font-mono text-xs truncate" title={String(value)}>{String(value)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            )}
+          </article>
+        ))}
+      </section>
+
+      {/* Environment Section */}
+      <section>
+        <div className="admin-card">
+          <h2 className="text-lg font-semibold mb-4">Environment</h2>
+          <dl className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
             <div>
-              <dt className="text-muted mb-1">Runtime</dt>
+              <dt className="text-muted text-xs mb-1">Runtime</dt>
               <dd className="font-mono">server</dd>
             </div>
             <div>
-              <dt className="text-muted mb-1">Node Environment</dt>
+              <dt className="text-muted text-xs mb-1">Node Environment</dt>
               <dd className="font-mono">{process.env.NODE_ENV}</dd>
             </div>
             <div>
-              <dt className="text-muted mb-1">D1 Binding Available</dt>
+              <dt className="text-muted text-xs mb-1">D1 Binding Available</dt>
               <dd className="font-mono">
                 {getD1Binding() ? 'true' : 'false'}
               </dd>
             </div>
           </dl>
         </div>
+      </section>
     </div>
   );
 }

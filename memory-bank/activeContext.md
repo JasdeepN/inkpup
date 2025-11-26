@@ -1,50 +1,50 @@
 # Active Context
 
-## Current Focus
-- [CONTEXT:2025-11-25] **Database Migration Phase 4 (Integration & Wiring)**:
-  - **Status**: Planning complete. Ready for execution.
-  - **Plan:** `memory-bank/plan-phase4-integration-2025-11-25.md`
-  - **Goal**: Wire Admin UI to D1 for production, update diagnostics, create site_settings table.
-  - **Next Immediate Task**: Create migration 004_create_site_settings.sql
-- [CONTEXT:2025-11-25] **Phase 3 Complete**: Admin pricing UI and hero selector pages created.
-  - Files: `/dashboard/pricing/styles|sizes|colors`, `/dashboard/hero`
-  - Server actions: `lib/admin-actions-pricing.ts`
-  - Schemas: `lib/schemas/pricing.ts` (Zod)
+## Current Goals
+- [CONTEXT:2025-11-26] **Session Complete - Ready for Commit**
+- All features implemented and tested
+- Build passing, 459 tests passing
+- Ready for git commit and push to origin/dev
 
-## Recent Changes
-- Phase 3 Admin UI completed (2025-11-25): Pricing CRUD pages, Hero selector, Zod schemas, server actions
-- Zod installed for form validation
-- AdminNav updated with Pricing and Hero links
-- Research brief created: `memory-bank/research-phase4-integration-2025-11-25.md`
+## Current Focus
+- [CONTEXT:2025-11-26] **Session work completed**:
+  1. Price Breakdown Preview: ✅ COMPLETE (72 tests)
+  2. Hero Carousel Multi-Select: ✅ COMPLETE  
+  3. Glass Panel Admin Theme: ✅ COMPLETE
+  4. Diagnostics Page Layout: ✅ Improved (2x2 grid)
+
+## Recent Changes (2025-11-26)
+- **Price Breakdown Preview**: lib/pricing-breakdown.ts, PriceBreakdownPreview.tsx, integrated into pricing layout
+- **Hero Carousel**: Multi-select UI with order badges, reorder arrows, saves to D1 as JSON array
+- **Glass Panel Theme**: Unified admin-card styling using glass-panel mixin
+- **Diagnostics**: Better KV detection, improved 2x2 grid layout
+- **Hero Admin**: Changed from D1 to R2 for image listing (R2 is source of truth)
 
 ## Active Decisions
+- [DECISION:2025-11-26] Hero carousel: Store image keys as JSON array in site_settings (hero_carousel_ids)
+- [DECISION:2025-11-26] Price breakdown: Collapsible panel in layout vs inline previews
+- [DECISION:2025-11-26] Hero images: Read from R2 directly, D1 only for settings
 - [DECISION:2025-11-25] Server actions over API routes for admin CRUD
 - [DECISION:2025-11-25] Zod for form validation before D1 operations
-- [DECISION:2025-11-25] site_settings table for runtime configuration (hero selection)
-- Non-blocking D1 writes: Gallery flows don't hard-fail on D1 errors
-- JSON fallback maintained for public pricing page
 
 ## Current State
-- **Branch**: `dev`
-- **Build**: Passing
-- **Tests**: Passing
-- **Remote D1**: size_categories (8), styles (16), color_profiles (5), gallery_images - all populated
-- **Missing**: site_settings table
+- **Branch**: `dev` (ahead of origin/dev by 1 commit)
+- **Build**: ✅ Passing
+- **Tests**: ✅ 459 tests passing (55 suites)
+- **Uncommitted**: 15 modified files, 4 new files
 
 ## Current Blockers
-- site_settings table required for hero selector to work in production
-- Admin pages show empty in local dev (D1 unavailable) - needs user messaging
+- None - session work complete, ready for commit
 
-## Todo (Phase 4 - Next 6)
-- [ ] Create migration 004_create_site_settings.sql
-- [ ] Apply migration 004 to remote D1 (wrangler d1 migrations apply)
-- [ ] Update diagnostics page to check actual D1 health (not just JSON)
-- [ ] Add "D1 unavailable locally" notice to admin pricing pages
-- [ ] Wire hero-gallery.ts to read active_hero_id from site_settings
-- [ ] Test admin pages in deployed Cloudflare Workers environment
+## Next Steps
+1. Commit and push changes
+2. Test hero carousel in browser
+3. Verify homepage reflects carousel selection
+4. Consider E2E tests for new features
 
 ## Deferred / Upcoming
 - D1 shim for local dev (Option B from research - evaluate after MVP)
 - KV caching layer refinements (Phase 2 continuation)
 - Animation Phase 4: Performance & A11y audit
+- E2E tests for hero carousel and price breakdown
 

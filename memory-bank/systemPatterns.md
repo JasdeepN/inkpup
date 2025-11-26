@@ -442,3 +442,25 @@ Admin pricing pages need to show how changes affect final estimates. Solution: A
 
 - app/dashboard/pricing/layout.tsx - fetch getSizeCategories, getStyles, getColorProfiles and pass to PriceBreakdownPreview
 - components/admin/PriceBreakdownPreview.tsx - client component with size/style/color selectors and breakdown display
+
+
+## Glass Panel Admin Theme
+
+Admin components now use the glass-panel mixin from _components.scss for visual consistency with the main site. The admin-card base class uses @include glass-panel which provides backdrop-filter blur, gradient backgrounds, and border styling. Admin-nav uses a lighter 6px blur to match the sticky-nav. Table headers within admin-cards use glass styling via CSS rules rather than inline classes.
+
+### Examples
+
+- app/styles/_admin.scss - .admin-card { @include glass-panel; }
+- app/styles/_admin.scss - .admin-nav.admin-card { @include glass-panel(var(--glass-panel-bg), 6px); }
+- app/styles/_admin.scss - .admin-card thead { background: var(--glass-panel-bg); backdrop-filter: blur(6px); }
+
+
+## Hero Carousel Multi-Select Pattern
+
+Hero carousel images stored as JSON array in D1 site_settings (key: hero_carousel_ids). Admin selects images via checkboxes, reorders with arrows. getHeroImages() filters R2 images by stored IDs, maintaining order. Backward compatible: null/empty = show all images. R2 is source of truth for images, D1 only stores selection preferences.
+
+### Examples
+
+- lib/hero-gallery.ts - getHeroCarouselIds() fetches JSON array from D1
+- lib/admin-actions-pricing.ts - updateHeroCarouselAction saves ordered keys
+- app/dashboard/hero/HeroClient.tsx - multi-select UI with order management

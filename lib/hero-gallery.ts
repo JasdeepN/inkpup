@@ -28,6 +28,38 @@ function resolveHeroPrefix(): string {
 }
 
 /**
+ * Get the hero carousel image IDs from D1 site_settings.
+ * Returns null if no selection has been made (show all images).
+ */
+async function getHeroCarouselIds(): Promise<string[] | null> {
+  try {
+    const db = getD1Binding();
+    if (!db) {
+      console.log('[hero-gallery] D1 not available for carousel IDs');
+      return null;
+    }
+    
+    const value = await getSetting(db, 'hero_carousel_ids');
+    if (!value) {
+      console.log('[hero-gallery] No carousel IDs configured, will show all images');
+      return null;
+    }
+    
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      console.log('[hero-gallery] Invalid or empty carousel IDs');
+      return null;
+    }
+    
+    console.log('[hero-gallery] Carousel IDs from D1:', parsed);
+    return parsed;
+  } catch (error) {
+    console.error('[hero-gallery] Error fetching carousel IDs:', error);
+    return null;
+  }
+}
+
+/**
  * Get the active hero ID from D1 site_settings.
  * Returns null if D1 is unavailable or no active hero is set.
  */
@@ -117,7 +149,7 @@ export const getHeroImages = cache(async (): Promise<HeroGalleryItem[]> => {
       return false;
     });
 
-    console.log('[hero-gallery] Filtered images:', filtered.length);
+    console.log('[hero-gallery] Filtered by prefix:', filtered.length);
     
     if (filtered.length === 0) {
       // No hero images found in the Hero folder — return a bundled broken image placeholder from /public
@@ -139,12 +171,41 @@ export const getHeroImages = cache(async (): Promise<HeroGalleryItem[]> => {
       key: it.key,
     }));
     
-    // Fetch active hero ID from D1 and prioritize that image
-    const activeHeroId = await getActiveHeroId();
-    const prioritizedItems = prioritizeActiveHero(heroItems, activeHeroId);
+    // Fetch carousel selection from D1 - if set, filter to only selected images
+    const carouselIds = await getHeroCarouselIds();
     
-    console.log('[hero-gallery] Returning hero items:', prioritizedItems.length);
-    return prioritizedItems;
+    let selectedItems: HeroGalleryItem[];
+    if (carouselIds && carouselIds.length > 0) {
+      // Filter and sort by the order in carouselIds
+      const orderedItems: HeroGalleryItem[] = [];
+      for (const id of carouselIds) {
+        const found = heroItems.find(item => 
+          item.key === id || 
+          item.key?.endsWith(`/${id}`) || 
+          item.key?.includes(id)
+        );
+        if (found) {
+          orderedItems.push(found);
+        }
+      }
+      selectedItems = orderedItems;
+      
+      console.log('[hero-gallery] Filtered by carousel selection:', selectedItems.length, 'of', heroItems.length);
+      
+      // If none of the selected IDs match (maybe images were deleted), fall back to all
+      if (selectedItems.length === 0) {
+        console.log('[hero-gallery] No carousel selection matches found, using all images');
+        selectedItems = heroItems;
+      }
+    } else {
+      // No carousel selection - use all images with active hero prioritization (legacy behavior)
+      const activeHeroId = await getActiveHeroId();
+      selectedItems = prioritizeActiveHero(heroItems, activeHeroId);
+      console.log('[hero-gallery] No carousel selection, using all images with active hero first');
+    }
+    
+    console.log('[hero-gallery] Returning hero items:', selectedItems.length);
+    return selectedItems;
   } catch (err) {
     console.error('getHeroImages failed', err);
     return [

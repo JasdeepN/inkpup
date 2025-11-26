@@ -233,7 +233,7 @@ export default function ColorsClient({ initialColors }: ColorsClientProps) {
       ) : (
         <div className="admin-card overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-800">
+            <thead>
               <tr>
                 <th className="px-4 py-3 text-left text-sm font-medium">ID</th>
                 <th className="px-4 py-3 text-left text-sm font-medium">Label</th>

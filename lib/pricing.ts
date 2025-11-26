@@ -2,6 +2,15 @@ import pricingData from '../data/pricing.json';
 import { getD1Binding, getSizeCategories, getStyles, getColorProfiles } from './db/d1';
 import type { SizeCategory as D1SizeCategory, Style as D1Style, ColorProfile as D1ColorProfile } from '../types/cloudflare';
 
+// Re-export price breakdown utilities for admin components
+export {
+  calculatePriceBreakdown,
+  calculateContributions,
+  formatPriceRange,
+  formatAddition,
+  type PriceBreakdown,
+} from './pricing-breakdown';
+
 export type SizeCategory = {
   id: string;
   label: string;

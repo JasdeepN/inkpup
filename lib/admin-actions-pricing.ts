@@ -463,7 +463,7 @@ export async function getActiveHeroId(): Promise<string | null> {
 }
 
 /**
- * Set the active hero image ID
+ * Set the active hero image ID (deprecated - use updateHeroCarouselAction instead)
  */
 export async function setActiveHeroAction(
   _prevState: ActionState,
@@ -487,5 +487,75 @@ export async function setActiveHeroAction(
   } catch (error) {
     console.error('[setActiveHeroAction] Error:', error);
     return { error: error instanceof Error ? error.message : 'Failed to set active hero' };
+  }
+}
+
+/**
+ * Get the hero carousel image IDs from D1 settings.
+ * Returns null if no selection has been made (show all images).
+ */
+export async function getHeroCarouselIds(): Promise<string[] | null> {
+  const db = getD1Binding();
+  if (!db) {
+    return null;
+  }
+  const value = await getSetting(db, 'hero_carousel_ids');
+  if (!value) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Update the hero carousel image selection.
+ * Saves an ordered array of image keys that should be displayed in the carousel.
+ * The order determines display order (first = first in carousel).
+ */
+export async function updateHeroCarouselAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const db = getD1Binding();
+  if (!db) {
+    return { error: 'Database not available' };
+  }
+
+  const imageKeysJson = formData.get('image_keys')?.toString();
+  if (!imageKeysJson) {
+    return { error: 'Image selection is required' };
+  }
+
+  let imageKeys: string[];
+  try {
+    imageKeys = JSON.parse(imageKeysJson);
+    if (!Array.isArray(imageKeys)) {
+      return { error: 'Invalid image selection format' };
+    }
+  } catch {
+    return { error: 'Invalid image selection format' };
+  }
+
+  if (imageKeys.length === 0) {
+    return { error: 'Please select at least one image for the carousel' };
+  }
+
+  try {
+    // Save the ordered array of image keys
+    await setSetting(db, 'hero_carousel_ids', JSON.stringify(imageKeys));
+    
+    // Also set the first image as active_hero_id for backward compatibility
+    await setSetting(db, 'active_hero_id', imageKeys[0]);
+    
+    revalidatePath('/');
+    revalidatePath('/dashboard/hero');
+    return { success: true };
+  } catch (error) {
+    console.error('[updateHeroCarouselAction] Error:', error);
+    return { error: error instanceof Error ? error.message : 'Failed to update carousel selection' };
   }
 }
