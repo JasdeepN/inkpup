@@ -141,6 +141,57 @@ describe('Pricing Schemas', () => {
       const result = CreateStyleSchema.safeParse(validStyle);
       expect(result.success).toBe(true);
     });
+
+    it('should transform empty recommended_color_type to null', () => {
+      const validStyle = {
+        id: 'test',
+        label: 'Test',
+        multiplier: 1.0,
+        recommended_color_type: '',
+      };
+
+      const result = CreateStyleSchema.safeParse(validStyle);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.recommended_color_type).toBeNull();
+      }
+    });
+
+    it('should allow valid recommended_color_type format', () => {
+      const validStyle = {
+        id: 'test',
+        label: 'Test',
+        multiplier: 1.0,
+        recommended_color_type: 'black_grey',
+      };
+
+      const result = CreateStyleSchema.safeParse(validStyle);
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject recommended_color_type with uppercase', () => {
+      const invalidStyle = {
+        id: 'test',
+        label: 'Test',
+        multiplier: 1.0,
+        recommended_color_type: 'Full-Color',
+      };
+
+      const result = CreateStyleSchema.safeParse(invalidStyle);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject recommended_color_type with spaces', () => {
+      const invalidStyle = {
+        id: 'test',
+        label: 'Test',
+        multiplier: 1.0,
+        recommended_color_type: 'full color',
+      };
+
+      const result = CreateStyleSchema.safeParse(invalidStyle);
+      expect(result.success).toBe(false);
+    });
   });
 
   describe('UpdateStyleSchema', () => {

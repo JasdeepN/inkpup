@@ -18,6 +18,17 @@ Think (Research & Analysis) → Plan (Breakdown & Tasks) → Execute (Implementa
 
 ---
 
+## ⚠️ Mandatory Outputs
+
+**Every Think phase MUST produce BOTH:**
+
+1. **Research Brief File** → `memory-bank/research-<feature>-<YYYY-MM-DD>.md`
+2. **Memory Updates** → Update `activeContext.md`, `decisionLog.md`, `systemPatterns.md`
+
+**Do not skip either output.** The research file is the artifact; memory updates maintain continuity.
+
+---
+
 ## Instructions
 
 ### Phase 1: Problem Understanding
@@ -115,9 +126,15 @@ Think (Research & Analysis) → Plan (Breakdown & Tasks) → Execute (Implementa
 
 ### Phase 4: Synthesize Research Brief
 
-Create a structured output that Plan.prompt.md can consume:
+**⚠️ MANDATORY:** Create BOTH a research file AND update memory.
 
-#### Research Brief Template
+#### Step 1: Create Research File
+
+**Filename:** `memory-bank/research-<feature-slug>-<YYYY-MM-DD>.md`
+
+*(Example: `memory-bank/research-image-gallery-2025-11-26.md`)*
+
+#### Step 2: Use Research Brief Template
 
 ```markdown
 # Research Brief: <Problem/Feature Name>
@@ -180,11 +197,20 @@ Create a structured output that Plan.prompt.md can consume:
 - <Research sources>
 ```
 
-**Memory Actions:**
+#### Step 3: Update Memory (ALL required)
+
 ```
-#MemoryManagement updateProjectBrief "<Research brief content>"
-#MemoryManagement updateProgress "Next: Plan implementation of <feature>"
+#MemoryManagement updateContext "Researching: <feature> — Brief: research-<feature>-<date>.md"
+#MemoryManagement logDecision "<key decision>" "Context: <rationale>"
+#MemoryManagement updateSystemPatterns "<pattern>" "<description>" (if new patterns identified)
+#MemoryManagement updateProgress "Done: Research for <feature>; Next: Plan implementation"
 ```
+
+**Checklist before proceeding:**
+- [ ] Research file created in `memory-bank/`
+- [ ] `activeContext.md` updated with research link
+- [ ] Key decisions logged in `decisionLog.md`
+- [ ] New patterns added to `systemPatterns.md`
 
 ---
 
@@ -388,16 +414,21 @@ Create a structured output that Plan.prompt.md can consume:
 
 Before moving to Plan.prompt.md:
 
-- [ ] Problem is clearly understood
-- [ ] Multiple solutions have been explored
-- [ ] A recommended approach is justified
-- [ ] Technical details are documented
-- [ ] Risks are identified with mitigations
-- [ ] Success criteria are defined
-- [ ] Research is saved to #MemoryManagement
-- [ ] activeContext.md reflects current state
-- [ ] Relevant patterns added to systemPatterns.md
-- [ ] Decision logged in decisionLog.md
+**Research Quality:**
+- [ ] Problem clearly understood
+- [ ] Multiple solutions explored
+- [ ] Recommended approach justified
+- [ ] Technical details documented
+- [ ] Risks identified with mitigations
+- [ ] Success criteria defined
+
+**⚠️ Required Artifacts (MUST have both):**
+- [ ] **Research file created:** `memory-bank/research-<feature>-<YYYY-MM-DD>.md`
+- [ ] **Memory updated:**
+  - [ ] `activeContext.md` — current focus + link to research file
+  - [ ] `decisionLog.md` — key decisions with rationale
+  - [ ] `systemPatterns.md` — new patterns (if any)
+  - [ ] `progress.md` — "Done: Research; Next: Plan"
 
 ---
 

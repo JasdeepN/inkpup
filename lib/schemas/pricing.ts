@@ -10,6 +10,8 @@ import { z } from 'zod';
 
 /**
  * Schema for creating a new style
+ * Note: recommended_color_type should reference a valid color_profiles.id
+ * Server action validates this against the database
  */
 export const CreateStyleSchema = z.object({
   id: z
@@ -26,19 +28,33 @@ export const CreateStyleSchema = z.object({
     .min(0.1, 'Multiplier must be at least 0.1')
     .max(10, 'Multiplier must be 10 or less'),
   description: z.string().max(500, 'Description must be 500 characters or less').nullable().optional(),
-  recommended_color_type: z.string().max(50).nullable().optional(),
+  recommended_color_type: z
+    .string()
+    .max(50, 'Color type must be 50 characters or less')
+    .regex(/^[a-z0-9_-]*$/, 'Color type must be lowercase alphanumeric with dashes or underscores')
+    .nullable()
+    .optional()
+    .transform(val => val === '' ? null : val),
   sort_order: z.number().int().min(0).optional().default(0),
 });
 
 /**
  * Schema for updating an existing style
+ * Note: recommended_color_type should reference a valid color_profiles.id
+ * Server action validates this against the database
  */
 export const UpdateStyleSchema = z.object({
   id: z.string().min(1, 'ID is required'),
   label: z.string().min(1).max(100).optional(),
   multiplier: z.number().min(0.1).max(10).optional(),
   description: z.string().max(500).nullable().optional(),
-  recommended_color_type: z.string().max(50).nullable().optional(),
+  recommended_color_type: z
+    .string()
+    .max(50)
+    .regex(/^[a-z0-9_-]*$/, 'Color type must be lowercase alphanumeric with dashes or underscores')
+    .nullable()
+    .optional()
+    .transform(val => val === '' ? null : val),
   sort_order: z.number().int().min(0).optional(),
 });
 

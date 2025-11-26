@@ -4,6 +4,7 @@
  */
 
 import { getPricingData } from '../../lib/pricing';
+import { getD1Binding } from '../../lib/db/d1';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,11 +12,15 @@ export default async function D1TestPage() {
   let pricingData;
   let error: string | null = null;
   let source = 'unknown';
+  
+  // Check if D1 binding is actually available
+  const db = getD1Binding();
+  const d1Available = !!db;
 
   try {
     pricingData = await getPricingData();
     // Check if data came from D1 or JSON fallback
-    source = process.env.ENABLE_D1_PRICING === 'true' ? 'D1 Database' : 'JSON Fallback';
+    source = d1Available ? 'D1 Database' : 'JSON Fallback';
   } catch (e) {
     error = e instanceof Error ? e.message : 'Unknown error';
     source = 'Error';
@@ -93,14 +98,18 @@ export default async function D1TestPage() {
               <dd className="font-mono text-muted">edge</dd>
             </div>
             <div>
-              <dt className="font-semibold">D1 Enabled</dt>
-              <dd className="font-mono text-muted">
-                {process.env.ENABLE_D1_PRICING || process.env.NODE_ENV === 'production' ? 'true' : 'false'}
+              <dt className="font-semibold">D1 Binding Available</dt>
+              <dd className={`font-mono ${d1Available ? 'text-green-500' : 'text-yellow-500'}`}>
+                {d1Available ? 'Yes' : 'No'}
               </dd>
             </div>
             <div>
               <dt className="font-semibold">NODE_ENV</dt>
               <dd className="font-mono text-muted">{process.env.NODE_ENV}</dd>
+            </div>
+            <div>
+              <dt className="font-semibold">ENABLE_D1_PRICING</dt>
+              <dd className="font-mono text-muted">{process.env.ENABLE_D1_PRICING || 'not set'}</dd>
             </div>
           </dl>
         </div>

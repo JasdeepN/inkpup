@@ -1,6 +1,7 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useState, useEffect, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   createSizeAction,
   updateSizeAction,
@@ -20,9 +21,12 @@ function SizeForm({ size, onCancel, onSuccess }: SizeFormProps) {
   const action = isEdit ? updateSizeAction : createSizeAction;
   const [state, formAction, isPending] = useActionState<ActionState, FormData>(action, null);
 
-  if (state?.success && onSuccess) {
-    onSuccess();
-  }
+  // Call onSuccess when form submission succeeds (must be in useEffect to avoid setState during render)
+  useEffect(() => {
+    if (state?.success && onSuccess) {
+      onSuccess();
+    }
+  }, [state?.success, onSuccess]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -193,16 +197,29 @@ interface SizesClientProps {
 }
 
 export default function SizesClient({ initialSizes }: SizesClientProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [sizes, setSizes] = useState(initialSizes);
 
+  // Sync with server data when initialSizes changes (after router.refresh)
+  useEffect(() => {
+    setSizes(initialSizes);
+  }, [initialSizes]);
+
   const handleCreateSuccess = () => {
     setShowCreateForm(false);
+    startTransition(() => {
+      router.refresh();
+    });
   };
 
   const handleEditSuccess = () => {
     setEditingId(null);
+    startTransition(() => {
+      router.refresh();
+    });
   };
 
   const formatPrice = (price: number) => {

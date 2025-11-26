@@ -1,6 +1,7 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useState, useEffect, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   createColorAction,
   updateColorAction,
@@ -20,9 +21,12 @@ function ColorForm({ color, onCancel, onSuccess }: ColorFormProps) {
   const action = isEdit ? updateColorAction : createColorAction;
   const [state, formAction, isPending] = useActionState<ActionState, FormData>(action, null);
 
-  if (state?.success && onSuccess) {
-    onSuccess();
-  }
+  // Call onSuccess when form submission succeeds (must be in useEffect to avoid setState during render)
+  useEffect(() => {
+    if (state?.success && onSuccess) {
+      onSuccess();
+    }
+  }, [state?.success, onSuccess]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -82,7 +86,7 @@ function ColorForm({ color, onCancel, onSuccess }: ColorFormProps) {
             name="multiplier"
             defaultValue={color?.multiplier ?? 1}
             required
-            step="0.1"
+            step="0.01"
             min="0.1"
             max="10"
             className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded focus:border-accent focus:ring-1 focus:ring-accent"
@@ -175,16 +179,29 @@ interface ColorsClientProps {
 }
 
 export default function ColorsClient({ initialColors }: ColorsClientProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [colors, setColors] = useState(initialColors);
 
+  // Sync with server data when initialColors changes (after router.refresh)
+  useEffect(() => {
+    setColors(initialColors);
+  }, [initialColors]);
+
   const handleCreateSuccess = () => {
     setShowCreateForm(false);
+    startTransition(() => {
+      router.refresh();
+    });
   };
 
   const handleEditSuccess = () => {
     setEditingId(null);
+    startTransition(() => {
+      router.refresh();
+    });
   };
 
   return (

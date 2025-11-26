@@ -28,6 +28,7 @@ import {
   createColorProfile,
   updateColorProfile,
   deleteColorProfile,
+  getColorProfiles,
   getSetting,
   setSetting,
 } from './db/d1';
@@ -76,6 +77,18 @@ export async function createStyleAction(
       fieldErrors[field].push(issue.message);
     }
     return { error: 'Validation failed', fieldErrors };
+  }
+
+  // Validate recommended_color_type is a valid color profile ID
+  if (result.data.recommended_color_type) {
+    const colorProfiles = await getColorProfiles(db);
+    const validIds = colorProfiles.map(cp => cp.id);
+    if (!validIds.includes(result.data.recommended_color_type)) {
+      return {
+        error: 'Validation failed',
+        fieldErrors: { recommended_color_type: ['Invalid color profile'] },
+      };
+    }
   }
 
   try {
@@ -127,6 +140,18 @@ export async function updateStyleAction(
       fieldErrors[field].push(issue.message);
     }
     return { error: 'Validation failed', fieldErrors };
+  }
+
+  // Validate recommended_color_type is a valid color profile ID (if provided)
+  if (result.data.recommended_color_type) {
+    const colorProfiles = await getColorProfiles(db);
+    const validIds = colorProfiles.map(cp => cp.id);
+    if (!validIds.includes(result.data.recommended_color_type)) {
+      return {
+        error: 'Validation failed',
+        fieldErrors: { recommended_color_type: ['Invalid color profile'] },
+      };
+    }
   }
 
   const { id, ...updateData } = result.data;

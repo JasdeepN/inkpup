@@ -7,20 +7,55 @@ import type { D1Database, SizeCategory, Style, ColorProfile } from '../../types/
 import type { GalleryItem } from '../gallery-types';
 
 /**
+ * Check if a value looks like a D1 binding
+ */
+function looksLikeD1Binding(candidate: unknown): candidate is D1Database {
+  if (!candidate) return false;
+  if (typeof candidate !== 'object') return false;
+  const binding = candidate as Record<string, unknown>;
+  return typeof binding.prepare === 'function';
+}
+
+/**
  * Get D1 database binding from Cloudflare Workers environment
- * Falls back to undefined if not available (e.g., in Node.js environment)
+ * Uses the same pattern as R2 binding resolution via @opennextjs/cloudflare
  */
 export function getD1Binding(): D1Database | undefined {
-  // In Cloudflare Workers context, the binding is available via process.env
-  if (typeof process !== 'undefined' && process.env?.DB) {
-    return process.env.DB as unknown as D1Database;
+  try {
+    // Check globalThis.DB (set by Cloudflare Workers runtime)
+    const globalDB = (globalThis as Record<string, unknown>).DB;
+    if (looksLikeD1Binding(globalDB)) {
+      return globalDB;
+    }
+
+    // Check Cloudflare context symbol (set by initOpenNextCloudflareForDev)
+    const symbolKey = Symbol.for('__cloudflare-context__');
+    const symbolContext = (globalThis as Record<symbol, unknown>)[symbolKey] as { env?: Record<string, unknown> } | undefined;
+    if (symbolContext?.env && looksLikeD1Binding(symbolContext.env.DB)) {
+      return symbolContext.env.DB as D1Database;
+    }
+
+    // Try getCloudflareContext() from @opennextjs/cloudflare
+    try {
+      const mod = require('@opennextjs/cloudflare');
+      if (mod && typeof mod.getCloudflareContext === 'function') {
+        const ctx = mod.getCloudflareContext();
+        if (ctx?.env && looksLikeD1Binding(ctx.env.DB)) {
+          return ctx.env.DB as D1Database;
+        }
+      }
+    } catch {
+      // Module not available, continue to fallback
+    }
+
+    // Fallback: check process.env.DB (edge runtime)
+    if (typeof process !== 'undefined' && looksLikeD1Binding(process.env?.DB)) {
+      return process.env.DB as unknown as D1Database;
+    }
+  } catch {
+    // Ignore runtime errors
   }
-  
-  // In middleware/edge runtime, check globalThis
-  if (typeof globalThis !== 'undefined' && (globalThis as any).DB) {
-    return (globalThis as any).DB as D1Database;
-  }
-  
+
   return undefined;
 }
 
@@ -272,6 +307,10 @@ export async function createStyle(db: D1Database, data: CreateStyleInput): Promi
       .run();
   } catch (error) {
     console.error('[D1] Error creating style:', error);
+    // Check for UNIQUE constraint violation
+    if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
+      throw new Error(`Style with ID "${data.id}" already exists`);
+    }
     throw new Error('Failed to create style');
   }
 }
@@ -357,6 +396,10 @@ export async function createSizeCategory(db: D1Database, data: CreateSizeCategor
       .run();
   } catch (error) {
     console.error('[D1] Error creating size category:', error);
+    // Check for UNIQUE constraint violation
+    if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
+      throw new Error(`Size category with ID "${data.id}" already exists`);
+    }
     throw new Error('Failed to create size category');
   }
 }
@@ -439,6 +482,10 @@ export async function createColorProfile(db: D1Database, data: CreateColorProfil
       .run();
   } catch (error) {
     console.error('[D1] Error creating color profile:', error);
+    // Check for UNIQUE constraint violation
+    if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
+      throw new Error(`Color profile with ID "${data.id}" already exists`);
+    }
     throw new Error('Failed to create color profile');
   }
 }

@@ -48,11 +48,10 @@ export function D1UnavailableNotice({
         </div>
         <div className="flex-grow">
           <h3 className="font-semibold text-yellow-800 dark:text-yellow-200">
-            Database Not Available (Local Development)
+            Database Not Available
           </h3>
           <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
-            D1 database bindings are only available when running in Cloudflare Workers.
-            You&apos;re currently in local development mode, so the following features use fallback data:
+            D1 database bindings are not available. The following features use fallback data:
           </p>
           <ul className="mt-2 text-sm text-yellow-700 dark:text-yellow-300 list-disc list-inside">
             {affectedFeatures.map((feature) => (
@@ -60,7 +59,7 @@ export function D1UnavailableNotice({
             ))}
           </ul>
           <p className="mt-2 text-sm text-yellow-600 dark:text-yellow-400">
-            Deploy to Cloudflare Workers or use <code className="px-1 py-0.5 rounded bg-yellow-100 dark:bg-yellow-800/50">wrangler pages dev</code> for full functionality.
+            Run <code className="px-1 py-0.5 rounded bg-yellow-100 dark:bg-yellow-800/50">wrangler d1 migrations apply inkpup-db-dev --local --env dev</code> to set up local D1, then restart the dev server.
           </p>
         </div>
         <button

@@ -4,9 +4,17 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 try {
   if (process.env.NODE_ENV !== 'production') {
+    // Set environment before requiring the module
+    process.env.NEXT_DEV_WRANGLER_ENV = 'dev';
+    
     const { initOpenNextCloudflareForDev } = require('@opennextjs/cloudflare');
     if (typeof initOpenNextCloudflareForDev === 'function') {
-      initOpenNextCloudflareForDev();
+      // Initialize with dev environment to get D1, KV, R2 bindings from wrangler.toml [env.dev]
+      // Note: wrangler 4.x uses .wrangler/state/v3 internally, but getPlatformProxy uses its own
+      // persist logic. Omit persist option to use wrangler's default location for consistency.
+      initOpenNextCloudflareForDev({
+        environment: 'dev'
+      });
     }
   }
 } catch (e) {

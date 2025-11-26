@@ -5,6 +5,12 @@ Architecture notes for the InkPup Tattoos web platform deployed on Cloudflare Wo
 
 ## Architectural Decisions
 
+- Price preview panel integrated into /dashboard/pricing/layout.tsx for visibility on all pricing admin pages
+- Calculation reuses estimatePriceRange logic from lib/pricing.ts with added breakdown detail
+- Collapsible panel design to minimize UI clutter when not needed
+
+
+
 - Adopt responsive two-column hero grid with stat cards and quick actions
 - Integrate Cloudflare GraphQL Analytics API for real-time traffic stats
 - Use stat cards for Today, 7-day, and 30-day KPIs
@@ -83,6 +89,12 @@ Architecture notes for the InkPup Tattoos web platform deployed on Cloudflare Wo
 - Centralize business metadata and SEO schema through data/business.json, Meta, and LocalBusinessJsonLd components so copy updates stay consistent across the site.
 
 ## Design Considerations
+
+- D1 unavailable locally - show 'Preview unavailable' message
+- Data already fetched for individual pages, minimal additional queries
+- Must handle empty data states gracefully
+
+
 
 - Mobile-first, accessible design (min 44x44px touch targets, readable text, ARIA labels)
 - Graceful fallback for missing analytics data
@@ -170,6 +182,21 @@ Architecture notes for the InkPup Tattoos web platform deployed on Cloudflare Wo
 - Storage helpers preserve synchronous instrumentation (global sendMock) so existing Jest suites can assert on client behavior without refactoring.
 
 ## Components
+
+### PriceBreakdownPreview
+
+Client component showing live calculation breakdown for tattoo pricing. Displays Size base range × Style multiplier × Color multiplier = Final estimate with visual percentage bars.
+
+**Responsibilities:**
+
+- Receive pricing data (sizes, styles, colors) from server layout
+- Manage selection state for preview combinations
+- Calculate and display price breakdown with component contributions
+- Show visual percentage bars for multiplier impact
+
+
+
+
 
 ### AdminDashboard
 

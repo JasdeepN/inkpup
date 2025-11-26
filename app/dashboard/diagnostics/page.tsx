@@ -11,7 +11,6 @@ import { pricing } from '../../../lib/pricing';
 import { getD1Binding, getSizeCategories, getStyles, getColorProfiles } from '../../../lib/db/d1';
 
 export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
 
 interface ServiceHealth {
   name: string;
@@ -345,7 +344,7 @@ export default async function DiagnosticsPage() {
           <dl className="grid grid-cols-3 gap-4 text-sm">
             <div>
               <dt className="text-muted mb-1">Runtime</dt>
-              <dd className="font-mono">nodejs</dd>
+              <dd className="font-mono">server</dd>
             </div>
             <div>
               <dt className="text-muted mb-1">Node Environment</dt>

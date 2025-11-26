@@ -39,6 +39,39 @@ The server code will derive the access key id from `R2_API_TOKEN` when needed. S
 
 ---
 
+## Local D1 Database Access
+
+D1 bindings are automatically available in `npm run dev` via `initOpenNextCloudflareForDev()`.
+
+### Setup
+
+1) Apply migrations to local D1:
+```bash
+npx wrangler d1 migrations apply inkpup-db-dev --local --env dev
+```
+
+2) Start the dev server:
+```bash
+npm run dev
+```
+
+The admin pages at `/dashboard/pricing/*` and `/dashboard/hero` will use the local D1 database automatically.
+
+### How it works
+
+- `initOpenNextCloudflareForDev()` in `next.config.js` sets up Cloudflare context including D1 bindings
+- Wrangler stores local D1 data in `.wrangler/state/v3/d1/`
+- `getD1Binding()` accesses the binding via `getCloudflareContext().env.DB`
+- The same code path works in local dev and production
+
+### Troubleshooting
+
+- "Database not available" → Run `wrangler d1 migrations apply inkpup-db-dev --local --env dev` first
+- Tables missing → Run migrations again
+- Ensure `@opennextjs/cloudflare` is installed
+
+---
+
 ## Wrangler dev (with real bindings)
 
 This path builds the Worker and runs a local Cloudflare simulation with real bindings.

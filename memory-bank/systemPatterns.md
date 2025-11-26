@@ -421,3 +421,24 @@ const toggleTheme = () => {
 ```
 
 
+
+
+## Server Component D1 Detection Pattern
+
+Admin layouts that need to conditionally show D1 availability notices must be server components (not client components) to access getD1Binding(). When client-side interactivity is needed (e.g., usePathname for navigation), extract that logic to a separate client component. Pattern: 1) Server component layout calls getD1Binding() and passes isD1Available prop to D1UnavailableNotice, 2) Client navigation extracted to separate component (e.g., PricingNav.tsx), 3) D1UnavailableNotice receives server-computed availability. This matches the hero page pattern and ensures consistent D1 status across admin UI.
+
+### Examples
+
+- app/dashboard/pricing/layout.tsx - async server component with getD1Binding() check
+- app/dashboard/pricing/PricingNav.tsx - 'use client' navigation component with usePathname()
+- app/dashboard/hero/page.tsx - server component passing isD1Available to D1UnavailableNotice
+
+
+## Price Breakdown Preview Panel
+
+Admin pricing pages need to show how changes affect final estimates. Solution: Add a collapsible PriceBreakdownPreview panel to the pricing layout that displays live calculation breakdown (Size base × Style multiplier × Color multiplier = Final estimate) with percentage contribution visualization. Component receives all pricing data from server layout, manages selection state client-side, and shows visual bars for each multiplier's impact.
+
+### Examples
+
+- app/dashboard/pricing/layout.tsx - fetch getSizeCategories, getStyles, getColorProfiles and pass to PriceBreakdownPreview
+- components/admin/PriceBreakdownPreview.tsx - client component with size/style/color selectors and breakdown display

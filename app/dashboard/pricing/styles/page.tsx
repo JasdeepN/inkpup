@@ -1,4 +1,4 @@
-import { getD1Binding, getStyles } from '../../../../lib/db/d1';
+import { getD1Binding, getStyles, getColorProfiles } from '../../../../lib/db/d1';
 import StylesClient from './StylesClient';
 
 export const metadata = {
@@ -8,7 +8,9 @@ export const metadata = {
 
 export default async function StylesPage() {
   const db = getD1Binding();
-  const styles = db ? await getStyles(db) : [];
+  const [styles, colorProfiles] = db 
+    ? await Promise.all([getStyles(db), getColorProfiles(db)])
+    : [[], []];
 
-  return <StylesClient initialStyles={styles} />;
+  return <StylesClient initialStyles={styles} colorProfiles={colorProfiles} />;
 }
