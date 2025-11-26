@@ -161,6 +161,12 @@ Before completing:
 - [ ] Commit message follows conventional commits format
 - [ ] Recommendations are actionable and specific
 
+### Step 7: Cleanup
+
+- [ ] Remove any temporary notes or drafts from memory files
+- [ ] Move all completed Plans/Researches to completed Archive (`memory-bank/archive/...`)
+- [ ] Place files in appropriate folders (UI, Backend, DevOps, etc.) 
+
 ## Usage
 
 To run this checkpoint:

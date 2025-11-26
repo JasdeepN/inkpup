@@ -15,6 +15,7 @@ import { GALLERY_CATEGORIES, isGalleryCategory } from '../gallery-types';
 import type { ClientOptimizedInfo } from './queue';
 import { getD1Binding, deleteGalleryImage as deleteGalleryImageD1 } from '../db/d1';
 import { getCachedGallery, setCachedGallery, upsertCachedGalleryItem, removeCachedGalleryItem, getKVBinding } from '../cache/kv';
+import { r2Logger as log } from '../logger';
 
 type SharpFactory = typeof import('sharp');
 
@@ -26,13 +27,13 @@ async function loadSharpFactory(): Promise<SharpFactory | null> {
       .then((mod) => {
         const factory = (mod as unknown as { default?: SharpFactory }).default ?? (mod as unknown as SharpFactory);
         if (typeof factory !== 'function') {
-          console.warn('The `sharp` module did not export a callable factory. Skipping image optimization.');
+          log.warn('sharp module did not export callable factory, skipping optimization');
           return null;
         }
         return factory;
       })
       .catch((error) => {
-        console.warn('Optional dependency `sharp` failed to load. Falling back to uploading original image buffers.', error);
+        log.warn('sharp failed to load, using original buffers', error);
         return null;
       });
 
@@ -154,10 +155,7 @@ export async function uploadGalleryImage({
       await upsertCachedGalleryItem(item);
     }
   } catch (kvErr) {
-    if (process.env.DEBUG === 'true') {
-      // eslint-disable-next-line no-console
-      console.warn('[r2server] KV upsert failed (upload)', kvErr);
-    }
+    log.debug('KV upsert failed (upload)', kvErr);
   }
   return { key, item };
 }
@@ -193,10 +191,7 @@ export async function deleteGalleryImage(key: string, category: GalleryCategory)
       await removeCachedGalleryItem(key, category);
     }
   } catch (kvErr) {
-    if (process.env.DEBUG === 'true') {
-      // eslint-disable-next-line no-console
-      console.warn('[r2server] KV remove failed (delete)', kvErr);
-    }
+    log.debug('KV remove failed (delete)', kvErr);
   }
 }
 
@@ -288,10 +283,7 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
         };
       }
     } catch (kvErr) {
-      if (process.env.DEBUG === 'true') {
-        // eslint-disable-next-line no-console
-        console.warn('[r2server] KV read failed (list)', kvErr);
-      }
+      log.debug('KV read failed (list)', kvErr);
     }
   }
 
@@ -299,7 +291,7 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
     const items = bundledFallbackAllowed ? buildFallbackItems(category) : [];
     if (process.env.DEBUG === 'true') {
       // eslint-disable-next-line no-console
-      console.warn('[r2server] returning fallback gallery items', {
+      log.warn('returning fallback gallery items', {
         category,
         reason,
         bundledFallbackAllowed,
@@ -319,7 +311,7 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
   if (!hasR2Credentials()) {
     if (process.env.DEBUG === 'true') {
       // eslint-disable-next-line no-console
-      console.warn('[r2server] missing R2 credentials when fetching gallery items', {
+      log.warn('missing R2 credentials', {
         category,
         credentialStatus,
       });
@@ -339,19 +331,19 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
   // First, probe for a Cloudflare R2 binding (e.g., during Workers or when a test injects a mock)
   // Skip binding if R2_FORCE_S3 is set to true
   const shouldUseBinding = process.env.R2_FORCE_S3 !== 'true';
-  console.log('[r2server] binding check:', { shouldUseBinding, R2_FORCE_S3: process.env.R2_FORCE_S3 });
+  log.debug('binding check', { shouldUseBinding, R2_FORCE_S3: process.env.R2_FORCE_S3 });
   
   if (shouldUseBinding) {
   try {
     const probe = (typeof probeModule.probeR2BindingSync === 'function') ? probeModule.probeR2BindingSync() : await probeModule.probeR2Binding();
-    console.log('[r2server] probe result:', { hasBinding: !!probe.binding, source: probe.source, forceS3: process.env.R2_FORCE_S3 });
+    log.debug('probe result', { hasBinding: !!probe.binding, source: probe.source });
     if (probe.binding && typeof (probe.binding as any).list === 'function') {
       try {
         const binding = probe.binding as any;
         // Call the binding.list API as used in Workers: { prefix, limit, cursor }
         const bindingResult = await binding.list({ prefix: `${prefix}/`, limit: 1000, cursor: undefined });
         const objects = bindingResult?.objects ?? [];
-        console.log('[r2server] binding.list result:', { prefix: `${prefix}/`, objectsCount: objects.length });
+        log.debug('binding.list result', { prefix: `${prefix}/`, count: objects.length });
         if (process.env.DEBUG === 'true') {
         // eslint-disable-next-line no-console
         console.info('[r2server] r2 binding list()', {
@@ -427,7 +419,7 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
     }
   }
   } else {
-    console.log('[r2server] Skipping binding probe due to R2_FORCE_S3=true, using S3 client');
+    log.debug('skipping binding probe, R2_FORCE_S3=true');
   }
 
   // Prefer a synchronous client creation if available to make the call path

@@ -1,17 +1,23 @@
 # Active Context
 
 ## Current Goals
-- [CONTEXT:2025-11-26] **Session Complete - Ready for Commit**
-- All features implemented and tested
-- Build passing, 459 tests passing
-- Ready for git commit and push to origin/dev
+
+- [CONTEXT:2025-11-26] Planning complete for Inquiry Inbox + Email Templates. Plan file: plan-inquiry-inbox-2025-11-26.md. Research file: research-marketing-page-2025-11-26.md. Feature includes: D1 storage for inquiries, admin inbox (/dashboard/inquiries), editable email templates (/dashboard/templates), reply with templates via Resend, conversation history. Estimated: 2.5-3 days. Ready for execution.
 
 ## Current Focus
-- [CONTEXT:2025-11-26] **Session work completed**:
-  1. Price Breakdown Preview: ✅ COMPLETE (72 tests)
-  2. Hero Carousel Multi-Select: ✅ COMPLETE  
-  3. Glass Panel Admin Theme: ✅ COMPLETE
-  4. Diagnostics Page Layout: ✅ Improved (2x2 grid)
+- [CONTEXT:2025-11-26] **Unified Gallery View COMPLETE**:
+  - Created `GallerySection.tsx` - collapsible category section
+  - Created `GallerySectionList.tsx` - expand/collapse state manager
+  - Updated gallery page to fetch all 5 categories in parallel
+  - First section expanded by default, others collapsed
+  - Each section has image grid + upload panel
+  - **Status**: Ready for manual testing and commit
+
+## Recently Completed
+- [CONTEXT:2025-11-26] **Gallery/Uploads Merge - COMPLETE** ✅
+  - Created `GalleryUploadPanel.tsx` - collapsible client component
+  - Updated `/gallery` page with panel + pending jobs badge
+  - `/uploads` now redirects to `/gallery`
 
 ## Recent Changes (2025-11-26)
 - **Price Breakdown Preview**: lib/pricing-breakdown.ts, PriceBreakdownPreview.tsx, integrated into pricing layout

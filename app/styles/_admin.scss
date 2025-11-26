@@ -191,7 +191,7 @@ html.dark .admin-dashboard__metrics div {
 ---------------------------------------------- */
 .admin-card {
   @include glass-panel(var(--glass-panel-bg), 4px);
-  padding: clamp(1.75rem, 3vw, 2.5rem);
+  padding: clamp(0.75rem, 1.5vw, 1rem);
 }
 
 /* Disable hover transform on admin cards - keep them static */
@@ -200,7 +200,7 @@ html.dark .admin-dashboard__metrics div {
 }
 
 .admin-card--compact {
-  padding: clamp(1.25rem, 2.5vw, 1.75rem);
+  padding: clamp(0.5rem, 1vw, 0.75rem);
 }
 
 /* Admin Navigation - same glass, compact padding */
@@ -459,6 +459,40 @@ html.dark .admin-dashboard__metrics div {
   margin: 0;
 }
 
+// Dark theme for admin form inputs
+html.dark .admin-field input,
+html.dark .admin-field select,
+html.dark .admin-field textarea {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: var(--accent, #f472b6);
+    box-shadow: 0 0 0 2px rgba(244, 114, 182, 0.2);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+html.dark .admin-field select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' fill-opacity='0.6' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.5rem;
+}
+
 .admin-form__actions {
   display: flex;
   justify-content: flex-end;
@@ -514,6 +548,12 @@ html.dark .admin-dashboard__metrics div {
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
+// Compact grid for unified gallery view
+.admin-gallery__grid--compact {
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+
 .admin-gallery__item {
   display: grid;
   gap: 0.85rem;
@@ -522,6 +562,17 @@ html.dark .admin-dashboard__metrics div {
   background: var(--surface);
   border: 1px solid transparent;
   box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+}
+
+// Compact item variant
+.admin-gallery__item--compact {
+  gap: 0.25rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0.5rem;
+  overflow: hidden;
 }
 
 .admin-gallery__preview {
@@ -533,6 +584,80 @@ html.dark .admin-dashboard__metrics div {
   background: rgba(15, 23, 42, 0.05);
 }
 
+// Wrapper for preview button + delete overlay
+.admin-gallery__preview-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  
+  &:hover .admin-gallery__delete-x {
+    opacity: 1;
+  }
+}
+
+// Clickable preview with hover state (button element)
+.admin-gallery__preview--clickable {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: opacity 0.15s ease;
+  
+  &:hover {
+    opacity: 0.9;
+  }
+  
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+// Small X delete button overlay
+.admin-gallery__delete-x {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  
+  button {
+    width: 1.25rem;
+    height: 1.25rem;
+    min-width: unset;
+    padding: 0;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.9);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    color: white;
+    
+    &:hover {
+      background: rgba(220, 38, 38, 1);
+    }
+    
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    svg {
+      width: 8px;
+      height: 8px;
+    }
+  }
+}
+
 .admin-gallery__image {
   object-fit: cover;
   object-position: center;
@@ -541,6 +666,25 @@ html.dark .admin-dashboard__metrics div {
 .admin-gallery__meta {
   display: grid;
   gap: 0.35rem;
+}
+
+// Compact meta variant
+.admin-gallery__meta--compact {
+  gap: 0;
+  padding: 0.25rem 0.125rem;
+  
+  strong {
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  span {
+    font-size: 0.625rem;
+    color: var(--muted);
+  }
 }
 
 .admin-gallery__meta strong {
@@ -754,4 +898,290 @@ html.dark .admin-dashboard__metrics div {
     font-weight: 700;
     color: var(--accent);
   }
+}
+
+/* ----------------------------------------------
+   Gallery Upload Panel - Collapsible Upload Section
+---------------------------------------------- */
+.gallery-upload-panel {
+  background: var(--glass-panel-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg, 0.75rem);
+  overflow: hidden;
+}
+
+.gallery-upload-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background-color 0.15s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
+  
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+}
+
+.gallery-upload-panel__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.gallery-upload-panel__badges {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.gallery-upload-panel__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 999px;
+  
+  &--pending {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+  }
+  
+  &--error {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+  }
+}
+
+.gallery-upload-panel__toggle {
+  transform: rotate(0deg);
+  transition: transform 0.2s ease;
+  color: rgba(255, 255, 255, 0.6);
+  
+  &--closed {
+    transform: rotate(-90deg);
+  }
+}
+
+.gallery-upload-panel__content {
+  padding: 0 0.75rem 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gallery-upload-panel__grid {
+  display: grid;
+  gap: 0.75rem;
+  
+  @media (min-width: 1024px) {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+.gallery-upload-panel__form {
+  // Upload form styles inherited from .admin-form
+}
+
+.gallery-upload-panel__status {
+  // JobSummary styles inherited
+  
+  .admin-card {
+    // Override nested card styling within panel
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* ----------------------------------------------
+   Gallery Section - Accordion Style Category Sections
+---------------------------------------------- */
+.gallery-section-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.gallery-section {
+  background: var(--glass-panel-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg, 0.75rem);
+  overflow: hidden;
+}
+
+.gallery-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background-color 0.15s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
+  
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+}
+
+.gallery-section__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.gallery-section__icon {
+  font-size: 1.125rem;
+}
+
+.gallery-section__count {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  margin-left: 0.5rem;
+}
+
+.gallery-section__toggle {
+  transform: rotate(0deg);
+  transition: transform 0.2s ease;
+  color: rgba(255, 255, 255, 0.6);
+  
+  &--closed {
+    transform: rotate(-90deg);
+  }
+}
+
+// Animated body wrapper using CSS grid trick
+.gallery-section__body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease-out;
+  
+  &--expanded {
+    grid-template-rows: 1fr;
+  }
+}
+
+.gallery-section__content {
+  overflow: hidden;
+  padding: 0 0.75rem;
+  
+  .gallery-section__body--expanded & {
+    padding: 0.5rem 0.75rem 0.75rem;
+  }
+}
+
+.gallery-section__gallery {
+  margin-top: 0.5rem;
+}
+
+// Nested upload panel in section - make it more subtle
+.gallery-section .gallery-upload-panel {
+  margin-top: 0.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ----------------------------------------------
+   Image Modal - Full-screen image viewer
+---------------------------------------------- */
+.image-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.image-modal__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1001;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  &:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 2px;
+  }
+}
+
+.image-modal__content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 90vw;
+  max-height: 90vh;
+  animation: scaleIn 0.2s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.image-modal__image {
+  border-radius: 0.5rem;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
 }

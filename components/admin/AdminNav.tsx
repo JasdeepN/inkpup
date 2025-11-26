@@ -14,9 +14,6 @@ export default function AdminNav() {
           <Link href="/gallery" className="nav-link">
             Gallery
           </Link>
-          <Link href="/uploads" className="nav-link">
-            Uploads
-          </Link>
           <Link href="/dashboard/pricing" className="nav-link">
             Pricing
           </Link>

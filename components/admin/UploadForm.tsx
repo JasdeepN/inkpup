@@ -1,7 +1,6 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { uploadGalleryAction, type UploadState } from '../../lib/admin-actions';
-import { GALLERY_CATEGORIES, getCategoryLabel } from '../../lib/gallery-types';
 
 const INITIAL_STATE: UploadState = null;
 const MAX_OPTIMIZED_WIDTH = Number(process.env.NEXT_PUBLIC_R2_MAX_IMAGE_WIDTH ?? 1800);
@@ -178,38 +177,29 @@ function FormFields({
 }) {
   return (
     <>
-      <div className="admin-form__row admin-form__row--columns-2">
-        <div className="admin-field">
-          <label htmlFor="category">Category</label>
-          <select id="category" name="category" defaultValue={category} disabled={disabled}>
-            {GALLERY_CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {getCategoryLabel(cat)}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Category is implicit from the parent accordion */}
+      <input type="hidden" name="category" value={category} />
+      
+      <div className="admin-form__row">
         <div className="admin-field">
           <label htmlFor="file">Image file</label>
           <input id="file" type="file" name="file" accept="image/*" required disabled={disabled} />
-          <p className="admin-field__hint">Large uploads are auto-rotated, resized, and converted to WebP.</p>
+          <p className="admin-field__hint">Auto-converted to WebP and optimized for web.</p>
         </div>
       </div>
       <div className="admin-form__row admin-form__row--columns-2">
         <div className="admin-field">
           <label htmlFor="alt">Alt text</label>
           <input id="alt" type="text" name="alt" placeholder="Describe the artwork" maxLength={256} disabled={disabled} />
-          <p className="admin-field__hint">Used for accessibility and shown beneath the image when no caption is provided.</p>
         </div>
         <div className="admin-field">
           <label htmlFor="caption">Caption (optional)</label>
           <input id="caption" type="text" name="caption" maxLength={256} disabled={disabled} />
-          <p className="admin-field__hint">Appears with the artwork in the gallery layout.</p>
         </div>
       </div>
       <div className="admin-form__actions">
         <button className="btn btn--primary" type="submit" disabled={disabled}>
-          {pending ? 'Uploading…' : 'Upload image'}
+          {pending ? 'Uploading…' : 'Upload'}
         </button>
       </div>
     </>

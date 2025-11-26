@@ -464,3 +464,13 @@ Hero carousel images stored as JSON array in D1 site_settings (key: hero_carouse
 - lib/hero-gallery.ts - getHeroCarouselIds() fetches JSON array from D1
 - lib/admin-actions-pricing.ts - updateHeroCarouselAction saves ordered keys
 - app/dashboard/hero/HeroClient.tsx - multi-select UI with order management
+
+
+## Centralized Logging
+
+Use lib/logger.ts createLogger(namespace) for module logging. Pre-configured: r2Logger, heroLogger, dbLogger, cacheLogger. Respects LOG_LEVEL env (debug/info/warn/error/silent). Default is 'warn' in production, 'info' in development.
+
+### Examples
+
+- import { r2Logger as log } from '../logger'; log.debug('msg'); log.warn('issue');
+- LOG_LEVEL=debug npm run dev  # Show all logs

@@ -15,6 +15,9 @@ export const metadata: Metadata = {
   title: 'Admin Dashboard',
 };
 
+// Dashboard fetches live analytics and gallery data - skip static prerendering
+export const dynamic = 'force-dynamic';
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const numberFormatter = new Intl.NumberFormat(undefined, {

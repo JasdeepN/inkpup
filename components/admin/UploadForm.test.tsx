@@ -18,21 +18,19 @@ describe('UploadForm', () => {
     const { container } = renderForm({ canMutate: true, category: 'flash' });
     const form = container.querySelector('form');
     expect(form).not.toBeNull();
-    expect(container.querySelector('label[for="category"]')).not.toBeNull();
-    expect(container.querySelector('select#category')).not.toBeNull();
+    // Category is now a hidden input (implicit from parent)
+    expect(container.querySelector('input[name="category"][type="hidden"]')).not.toBeNull();
     expect(container.querySelector('label[for="file"]')).not.toBeNull();
     expect(container.querySelector('input#file[type="file"]')).not.toBeNull();
     expect(container.querySelector('label[for="alt"]')).not.toBeNull();
     expect(container.querySelector('label[for="caption"]')).not.toBeNull();
     const button = container.querySelector('button[type="submit"]');
-    expect(button?.textContent).toBe('Upload image');
+    expect(button?.textContent).toBe('Upload');
   });
 
   it('disables inputs and shows notice when mutations are not allowed', () => {
     const { container } = renderForm({ canMutate: false, category: 'flash' });
     expect(container.textContent).toContain('Uploads are disabled until storage credentials are configured.');
-    const select = container.querySelector('select#category');
-    expect(select?.getAttribute('disabled')).not.toBeNull();
     const fileInput = container.querySelector('input#file');
     expect(fileInput?.getAttribute('disabled')).not.toBeNull();
     const button = container.querySelector('button[type="submit"]');

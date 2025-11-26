@@ -598,7 +598,8 @@ describe('storage module branch coverage', () => {
     const body = instanceSend.mock.calls[0][0].input.Body;
     expect(body).toBe(buffer);
     expect(warnSpy).toHaveBeenCalledWith(
-      'The `sharp` module did not export a callable factory. Skipping image optimization.'
+      '[r2server]',
+      'sharp module did not export callable factory, skipping optimization'
     );
   });
 
@@ -619,7 +620,8 @@ describe('storage module branch coverage', () => {
     const body = instanceSend.mock.calls[0][0].input.Body;
     expect(body).toBe(buffer);
     expect(warnSpy).toHaveBeenCalledWith(
-      'Optional dependency `sharp` failed to load. Falling back to uploading original image buffers.',
+      '[r2server]',
+      'sharp failed to load, using original buffers',
       expect.any(Error)
     );
   });
@@ -641,7 +643,8 @@ describe('storage module branch coverage', () => {
     const body = instanceSend.mock.calls[0][0].input.Body;
     expect(body).toBe(buffer);
     expect(warnSpy).toHaveBeenCalledWith(
-      'The `sharp` module did not export a callable factory. Skipping image optimization.'
+      '[r2server]',
+      'sharp module did not export callable factory, skipping optimization'
     );
   });
 
