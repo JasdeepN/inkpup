@@ -2,7 +2,7 @@
 
 ## Current Goals
 
-- [CONTEXT:2025-11-26] Planning COMPLETE: Visitor UI → Backend wiring. Plan: plan-visitor-ui-wiring-2025-11-26.md. Ready for execution (~1 hour).
+- [CONTEXT:2025-11-26] EXECUTING: Visitor UI → Backend wiring. Phase 1: Flash page to R2, Phase 2: Pricing page to D1.
 
 ## Current Focus
 - [CONTEXT:2025-11-26] **Unified Gallery View COMPLETE**:

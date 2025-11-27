@@ -2,10 +2,10 @@
 
 ## Done
 
-- [2025-11-26] IMPLEMENTED: Inquiry Inbox + Email Templates
-- [2025-11-26] IMPLEMENTED: Dashboard Overhaul - business-focused stat cards
-- [2025-11-26] Research: Visitor UI wiring gaps → research-visitor-ui-wiring-2025-11-26.md
-- [2025-11-26] Plan: Visitor UI wiring → plan-visitor-ui-wiring-2025-11-26.md
+- [PROGRESS:2025-01-26] Wired Flash page to R2 - now fetches live images from listGalleryImages('flash') and listGalleryImages('available')
+- [PROGRESS:2025-01-26] Wired Pricing page to D1 - server component calls getPricingData(), passes to PricingEstimator
+- [PROGRESS:2025-01-26] Updated estimatePriceRange() to accept optional pricingData parameter for dynamic pricing
+- [PROGRESS:2025-01-26] Visitor UI now displays live backend data instead of static JSON files
 
 ## Doing
 
@@ -13,6 +13,5 @@
 
 ## Next
 
-- Execute: Wire Flash page to R2 (~30 min)
-- Execute: Wire Pricing page to D1 (~20 min)
-- Test & verify (~15 min)
+- Archive plan file plan-visitor-ui-wiring-2025-11-26.md
+- Manual QA testing of Flash and Pricing pages
