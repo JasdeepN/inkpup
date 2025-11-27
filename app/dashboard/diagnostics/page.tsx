@@ -9,8 +9,186 @@ import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { pricing } from '../../../lib/pricing';
 import { getD1Binding, getSizeCategories, getStyles, getColorProfiles } from '../../../lib/db/d1';
+import StatCard, { StatDelta } from '../../../components/admin/StatCard';
+import {
+  getCloudflareAnalyticsSummary,
+  type CloudflareAnalyticsSummary,
+} from '../../../lib/cloudflare-analytics';
+import type { ReactNode } from 'react';
 
 export const dynamic = 'force-dynamic';
+
+// Analytics formatting helpers
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const numberFormatter = new Intl.NumberFormat(undefined, {
+  maximumFractionDigits: 0,
+});
+
+const byteFormatter = new Intl.NumberFormat(undefined, {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+
+const percentFormatter = new Intl.NumberFormat(undefined, {
+  style: 'percent',
+  maximumFractionDigits: 1,
+});
+
+type AnalyticsField = 'requests' | 'visits' | 'bytes' | 'cachedBytes';
+
+function formatNumber(value: number | undefined): string {
+  if (typeof value !== 'number' || Number.isNaN(value)) return '—';
+  return numberFormatter.format(value);
+}
+
+function formatBytes(value: number | undefined): string {
+  if (typeof value !== 'number' || Number.isNaN(value)) return '—';
+  if (value < 1_000_000) {
+    return `${numberFormatter.format(value)} B`;
+  }
+  return `${byteFormatter.format(value)}B`;
+}
+
+function formatPercent(value: number | null | undefined): string {
+  if (typeof value !== 'number' || Number.isNaN(value)) return '—';
+  return percentFormatter.format(value);
+}
+
+function sumField(summary: CloudflareAnalyticsSummary, field: AnalyticsField, start: number, end: number): number {
+  return summary.timeseries.reduce((total, point) => {
+    const time = Date.parse(point.timestamp);
+    if (!Number.isFinite(time) || time < start || time >= end) {
+      return total;
+    }
+
+    switch (field) {
+      case 'requests':
+        return total + point.requests;
+      case 'visits':
+        return total + point.visits;
+      case 'bytes':
+        return total + point.bytes;
+      case 'cachedBytes':
+        return total + point.cachedBytes;
+      default:
+        return total;
+    }
+  }, 0);
+}
+
+function computeDelta(summary: CloudflareAnalyticsSummary | null, field: AnalyticsField): StatDelta | undefined {
+  if (!summary) return undefined;
+  const now = Date.now();
+  const current = sumField(summary, field, now - DAY_MS, now);
+  const previous = sumField(summary, field, now - 2 * DAY_MS, now - DAY_MS);
+  if (previous <= 0) {
+    return undefined;
+  }
+  const deltaValue = (current - previous) / previous;
+  return {
+    value: deltaValue,
+    format: 'percent',
+    label: 'vs prev. day',
+  };
+}
+
+function buildAnalyticsStats(summary: CloudflareAnalyticsSummary | null): Array<{
+  key: string;
+  title: string;
+  value: string;
+  description: string;
+  delta?: StatDelta;
+  trend?: number[];
+  error?: string;
+  icon?: ReactNode;
+}> {
+  if (!summary) {
+    return [
+      {
+        key: 'requests',
+        title: 'Requests (24h)',
+        value: '—',
+        description: 'Connect Cloudflare analytics to populate traffic trends.',
+        error: 'Cloudflare analytics unavailable',
+        icon: <span aria-hidden="true">📈</span>,
+      },
+      {
+        key: 'visits',
+        title: 'Visits (24h)',
+        value: '—',
+        description: 'Set CLOUDFLARE_* env vars to enable visit tracking.',
+        error: 'Cloudflare analytics unavailable',
+        icon: <span aria-hidden="true">👥</span>,
+      },
+      {
+        key: 'bandwidth',
+        title: 'Bandwidth (24h)',
+        value: '—',
+        description: 'Bandwidth metrics require Cloudflare analytics access.',
+        error: 'Cloudflare analytics unavailable',
+        icon: <span aria-hidden="true">🛰️</span>,
+      },
+      {
+        key: 'cache',
+        title: 'Cache hit rate',
+        value: '—',
+        description: 'Caching insight unavailable until Cloudflare analytics is configured.',
+        error: 'Cloudflare analytics unavailable',
+        icon: <span aria-hidden="true">🗄️</span>,
+      },
+    ];
+  }
+
+  const window24h = summary.windows['24h'];
+  const window7d = summary.windows['7d'];
+  const trendRequests = summary.timeseries.map((point) => point.requests);
+  const trendVisits = summary.timeseries.map((point) => point.visits);
+  const trendBytes = summary.timeseries.map((point) => point.bytes);
+
+  return [
+    {
+      key: 'requests',
+      title: 'Requests (24h)',
+      value: formatNumber(window24h.requests),
+      description: `${formatNumber(window7d.requests)} requests this week`,
+      delta: computeDelta(summary, 'requests'),
+      trend: trendRequests,
+      icon: <span aria-hidden="true">📈</span>,
+    },
+    {
+      key: 'visits',
+      title: 'Visits (24h)',
+      value: formatNumber(window24h.visits),
+      description: `${formatNumber(window7d.visits)} visits this week`,
+      delta: computeDelta(summary, 'visits'),
+      trend: trendVisits,
+      icon: <span aria-hidden="true">👥</span>,
+    },
+    {
+      key: 'bandwidth',
+      title: 'Bandwidth (24h)',
+      value: formatBytes(window24h.bytes),
+      description: `${formatBytes(summary.windows['7d'].bytes)} transferred this week`,
+      delta: computeDelta(summary, 'bytes'),
+      trend: trendBytes,
+      icon: <span aria-hidden="true">🛰️</span>,
+    },
+    {
+      key: 'cache',
+      title: 'Cache hit rate',
+      value: formatPercent(summary.cacheHitRate24h),
+      description: 'Caching efficiency over the last 24 hours',
+      trend: summary.timeseries.map((point) => {
+        const total = point.requests || 0;
+        if (!total) return 0;
+        return point.cachedRequests / total;
+      }),
+      delta: undefined,
+      icon: <span aria-hidden="true">🗄️</span>,
+    },
+  ];
+}
 
 interface ServiceHealth {
   name: string;
@@ -274,17 +452,19 @@ export default async function DiagnosticsPage() {
     redirect('/admin');
   }
 
-  // Run all health checks in parallel
-  const [pricingHealth, r2Health, kvHealth, emailHealth] = await Promise.all([
+  // Run all health checks and analytics in parallel
+  const [pricingHealth, r2Health, kvHealth, emailHealth, analyticsSummary] = await Promise.all([
     checkD1Health(),
     checkR2Health(),
     checkKVHealth(),
     checkEmailHealth(),
+    getCloudflareAnalyticsSummary(),
   ]);
 
   const services = [pricingHealth, r2Health, kvHealth, emailHealth];
   const allHealthy = services.every(s => s.status === 'healthy');
   const hasErrors = services.some(s => s.status === 'error');
+  const analyticsStats = buildAnalyticsStats(analyticsSummary);
 
   return (
     <div className="admin-shell admin-shell--full-width">
@@ -314,6 +494,26 @@ export default async function DiagnosticsPage() {
               </span>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Traffic Analytics Section */}
+      <section className="mb-8">
+        <h2 className="text-lg font-semibold mb-4">Traffic Analytics</h2>
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {analyticsStats.map((stat) => (
+            <StatCard
+              key={stat.key}
+              title={stat.title}
+              value={stat.value}
+              description={stat.description}
+              delta={stat.delta}
+              trend={stat.trend}
+              trendLabel={`${stat.title} trend`}
+              icon={stat.icon}
+              error={stat.error}
+            />
+          ))}
         </div>
       </section>
 

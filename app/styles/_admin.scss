@@ -61,6 +61,109 @@
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
+/* Business Stats Grid - 3 columns on desktop, 2 on tablet, 1 on mobile */
+.admin-dashboard__stats-grid {
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.25rem);
+  grid-template-columns: 1fr;
+  margin-top: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .admin-dashboard__stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-dashboard__stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Dashboard Stat Card */
+.admin-dashboard__stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-dashboard__stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.admin-dashboard__stat-card--highlight {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+html.dark .admin-dashboard__stat-card--highlight {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.admin-dashboard__stat-card-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.admin-dashboard__stat-card-content {
+  flex: 1;
+}
+
+.admin-dashboard__stat-card-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--muted);
+  margin: 0;
+}
+
+.admin-dashboard__stat-card-value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0.25rem 0;
+}
+
+.admin-dashboard__stat-card-subtitle {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.admin-dashboard__stat-card-link {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--primary);
+  text-decoration: none;
+  margin-top: auto;
+}
+
+.admin-dashboard__stat-card-link:hover {
+  text-decoration: underline;
+}
+
+/* Badge for unread count in hero */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  margin-left: 0.5rem;
+}
+
+.badge--danger {
+  background: rgb(239, 68, 68);
+  color: white;
+}
+
 .admin-dashboard__grid {
   display: grid;
   gap: var(--dashboard-grid-gap);

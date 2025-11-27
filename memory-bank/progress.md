@@ -15,6 +15,7 @@
 - [2025-11-26] FIXED: Duplicate AdminNav removed from dashboard pages
 - [2025-11-26] FIXED: Dark input styling for template editor forms
 - [2025-11-26] UPDATED: Dashboard overhaul plan with Inquiry Inbox integration
+- [2025-11-26] IMPLEMENTED: Dashboard Overhaul - business-focused stat cards (Phase 1-4 complete)
 
 ## Doing
 
@@ -22,6 +23,6 @@
 
 ## Next
 
-- Execute Dashboard Overhaul (4 phases, ~2 hours)
 - Promotions/Banner system implementation (~2 days)
-- Manual testing of inquiry inbox workflow
+- Manual testing of inquiry inbox and dashboard
+- E2E tests for new admin pages
