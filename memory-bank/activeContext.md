@@ -2,7 +2,7 @@
 
 ## Current Goals
 
-- [CONTEXT:2025-11-26] Research COMPLETE: Visitor UI → Backend wiring. Found 2 critical gaps: Flash page uses static JSON (R2 uploads invisible), Pricing uses JSON instead of D1. Research brief: research-visitor-ui-wiring-2025-11-26.md. Ready for Plan phase.
+- [CONTEXT:2025-11-26] Planning COMPLETE: Visitor UI → Backend wiring. Plan: plan-visitor-ui-wiring-2025-11-26.md. Ready for execution (~1 hour).
 
 ## Current Focus
 - [CONTEXT:2025-11-26] **Unified Gallery View COMPLETE**:
