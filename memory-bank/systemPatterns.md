@@ -504,3 +504,15 @@ z.record(z.string()) // ❌ ERROR
 - // Zod v4 error messages
 z.string().min(1, { error: 'Required' }) // preferred
 z.string().min(1, 'Required') // deprecated but works
+
+
+## Unit Test Patterns for Admin Components
+
+Standard patterns for testing React admin components with server actions and D1 database mocks. Key conventions: (1) Use @jest-environment jsdom comment in docblock for component tests, @jest-environment node for lib tests. (2) Use relative imports (../../lib/) not @/ aliases - Jest doesn't resolve path aliases. (3) Mock server actions: jest.mock('../../lib/admin-actions-xyz') with resolved promise implementations. (4) Mock D1Database: const mockDb = { prepare: jest.fn().mockReturnThis(), bind: jest.fn().mockReturnThis(), first: jest.fn(), all: jest.fn(), run: jest.fn() }. (5) Wrap async renders in act(): await act(async () => { render(<Component />) }). (6) Disambiguate multiple buttons via aria-controls: screen.getAllByRole('button', { name: /text/i }).find(btn => btn.getAttribute('aria-controls')?.startsWith('prefix-')). (7) Match formatted text with regex: expect(screen.getByText(/3 images/i)). (8) Run with --forceExit to prevent Jest hangs.
+
+### Examples
+
+- lib/db/inquiries.test.ts - D1 CRUD mocking pattern
+- components/admin/InquiryDetail.test.tsx - server action mocking
+- components/admin/GallerySection.test.tsx - aria-controls button disambiguation
+- components/admin/GallerySectionList.test.tsx - onToggle callback with category param

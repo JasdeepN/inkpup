@@ -2,10 +2,13 @@
 
 ## Done
 
-- [PROGRESS:2025-01-26] Wired Flash page to R2 - now fetches live images from listGalleryImages('flash') and listGalleryImages('available')
-- [PROGRESS:2025-01-26] Wired Pricing page to D1 - server component calls getPricingData(), passes to PricingEstimator
-- [PROGRESS:2025-01-26] Updated estimatePriceRange() to accept optional pricingData parameter for dynamic pricing
-- [PROGRESS:2025-01-26] Visitor UI now displays live backend data instead of static JSON files
+- [2025-11-26] Wire visitor-facing Flash page to R2 backend (3fdbc8b)
+- [2025-11-26] Wire visitor-facing Pricing page to D1 backend (3fdbc8b)
+- [2025-11-26] Create comprehensive unit tests for all new lib files - 5 files: logger, dashboard-stats, db/inquiries, db/email-templates, db/inquiry-emails (370788a)
+- [2025-11-26] Create comprehensive unit tests for all new component files - 10 files: DashboardStatCard, GallerySection, GallerySectionList, GalleryUploadPanel, ImageModal, InquiryDetail, InquiryList, InquiryReplyForm, TemplateEditor, TemplateList (370788a)
+- [2025-11-26] Fix GallerySection.test.tsx assertions - count format '3 images' not '3', multiple button matches via aria-controls (370788a)
+- [2025-11-26] Fix GallerySectionList.test.tsx mock - onToggle needs category parameter (370788a)
+- [2025-11-26] Full test suite: 658 tests pass (71 suites)
 
 ## Doing
 
@@ -13,5 +16,7 @@
 
 ## Next
 
-- Archive plan file plan-visitor-ui-wiring-2025-11-26.md
-- Manual QA testing of Flash and Pricing pages
+- Push 15 commits to origin/dev
+- Consider E2E tests for inquiry flow (Playwright)
+- Review test coverage report for remaining gaps
+- Continue to next feature work
