@@ -1,4 +1,4 @@
-import { estimatePriceRange, formatRange } from './pricing';
+import { estimatePriceRange, formatRange, type PricingDataShape } from './pricing';
 
 describe('pricing estimator', () => {
   it('scales flat rate range by complexity multiplier', () => {
@@ -77,6 +77,69 @@ describe('pricing estimator', () => {
       expect(range2).toEqual([112, 224]);
       expect(range3).toEqual([125, 250]);
       expect(range4).toEqual([135, 270]);
+    });
+  });
+
+  describe('custom pricing data parameter', () => {
+    const customPricing: PricingDataShape = {
+      hourlyRateTypical: { min: 200, max: 300 },
+      sizeCategories: [
+        { id: 'custom_small', label: 'Custom Small', flatRateRangeCAD: [200, 400] },
+        { id: 'custom_large', label: 'Custom Large', flatRateRangeCAD: [1000, 2000] },
+      ],
+      complexityMultipliers: [
+        { id: 'simple', label: 'Simple', multiplier: 1.0 },
+        { id: 'complex', label: 'Complex', multiplier: 1.5 },
+      ],
+      styles: [
+        { id: 'basic', label: 'Basic', multiplier: 1.0 },
+        { id: 'detailed', label: 'Detailed', multiplier: 2.0 },
+      ],
+      colorProfiles: [
+        { id: 'mono', label: 'Monochrome', multiplier: 1.0 },
+        { id: 'vibrant', label: 'Vibrant Color', multiplier: 1.5 },
+      ],
+    };
+
+    it('uses custom pricing data when provided', () => {
+      const range = estimatePriceRange('custom_small', 'basic', 'mono', customPricing);
+      expect(range).toEqual([200, 400]);
+    });
+
+    it('applies custom style multipliers from pricingData', () => {
+      // custom_small: [200, 400], detailed: 2.0x
+      const range = estimatePriceRange('custom_small', 'detailed', 'mono', customPricing);
+      expect(range).toEqual([400, 800]);
+    });
+
+    it('applies custom color multipliers from pricingData', () => {
+      // custom_small: [200, 400], basic: 1.0x, vibrant: 1.5x
+      const range = estimatePriceRange('custom_small', 'basic', 'vibrant', customPricing);
+      expect(range).toEqual([300, 600]);
+    });
+
+    it('stacks custom style and color multipliers', () => {
+      // custom_large: [1000, 2000], detailed: 2.0x, vibrant: 1.5x = 3.0x
+      const range = estimatePriceRange('custom_large', 'detailed', 'vibrant', customPricing);
+      expect(range).toEqual([3000, 6000]);
+    });
+
+    it('returns null for unknown size in custom data', () => {
+      const range = estimatePriceRange('unknown', 'basic', 'mono', customPricing);
+      expect(range).toBeNull();
+    });
+
+    it('falls back to multiplier 1.0 for unknown style in custom data', () => {
+      const range = estimatePriceRange('custom_small', 'unknown_style', 'mono', customPricing);
+      expect(range).toEqual([200, 400]); // baseline with 1.0 multiplier
+    });
+
+    it('falls back to static pricing when no custom data provided', () => {
+      // Verify default behavior unchanged
+      const withDefault = estimatePriceRange('micro', 'minimal_line');
+      const withUndefined = estimatePriceRange('micro', 'minimal_line', undefined, undefined);
+      expect(withDefault).toEqual(withUndefined);
+      expect(withDefault).toEqual([100, 200]);
     });
   });
 });
