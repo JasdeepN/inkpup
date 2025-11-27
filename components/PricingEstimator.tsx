@@ -1,17 +1,24 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { pricing, estimatePriceRange, formatRange } from '../lib/pricing';
-import { startViewTransition, supportsViewTransitions } from '../lib/animations/viewTransitions';
+import { pricing as defaultPricing, estimatePriceRange, formatRange, type PricingDataShape } from '@/lib/pricing';
+import { startViewTransition, supportsViewTransitions } from '@/lib/animations/viewTransitions';
 
-export default function PricingEstimator() {
+interface PricingEstimatorProps {
+  initialData?: PricingDataShape;
+}
+
+export default function PricingEstimator({ initialData }: PricingEstimatorProps) {
+  // Use initialData from server (D1) or fall back to static JSON
+  const pricing = initialData ?? defaultPricing;
+  
   const [sizeId, setSizeId] = useState('');
   const [styleId, setStyleId] = useState('');
   const [colorType, setColorType] = useState<'monochrome' | 'color'>('monochrome');
   const [colorProfileId, setColorProfileId] = useState('monochrome_black_grey');
   
   const range = sizeId && styleId 
-    ? estimatePriceRange(sizeId, styleId, colorProfileId)
+    ? estimatePriceRange(sizeId, styleId, colorProfileId, pricing)
     : null;
 
   // Ensure the colorProfile selection remains sensible with the chosen color type
@@ -23,7 +30,7 @@ export default function PricingEstimator() {
     } else {
       if (!colorIds.includes(colorProfileId)) setColorProfileId(colorIds[0] || 'full_color');
     }
-  }, [colorType, colorProfileId]);
+  }, [colorType, colorProfileId, pricing.colorProfiles]);
 
   // If the user picks a style that commonly defaults to Color or Monochrome, auto-select a reasonable colorType
   useEffect(() => {

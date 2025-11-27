@@ -1,9 +1,10 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import SmartImage from '../../components/SmartImage';
-import gallery from '../../data/gallery';
-import { createPageMetadata } from '../../lib/site-metadata';
-import RevealOnScroll from '../../components/animations/RevealOnScroll';
+import SmartImage from '@/components/SmartImage';
+import { listGalleryImages } from '@/lib/r2-server';
+import { createPageMetadata } from '@/lib/site-metadata';
+import RevealOnScroll from '@/components/animations/RevealOnScroll';
+import type { GalleryItem } from '@/lib/gallery-types';
 
 export async function generateMetadata(): Promise<Metadata> {
   return createPageMetadata({
@@ -12,11 +13,45 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default function FlashPage() {
-  // Filter for flash and available designs
-  const flashDesigns = gallery.filter(
-    item => item.category === 'flash' || item.category === 'available'
-  );
+async function getFlashDesigns(): Promise<{ items: GalleryItem[]; isFallback: boolean }> {
+  try {
+    // Fetch flash and available categories in parallel
+    const [flashResult, availableResult] = await Promise.all([
+      listGalleryImages('flash'),
+      listGalleryImages('available'),
+    ]);
+
+    // Handle the .asPromise() pattern if needed
+    const flashResolved = typeof (flashResult as any)?.asPromise === 'function'
+      ? await (flashResult as any).asPromise()
+      : flashResult;
+    const availableResolved = typeof (availableResult as any)?.asPromise === 'function'
+      ? await (availableResult as any).asPromise()
+      : availableResult;
+
+    // Combine results, avoiding duplicates by id
+    const seenIds = new Set<string>();
+    const combinedItems: GalleryItem[] = [];
+    
+    for (const item of [...flashResolved.items, ...availableResolved.items]) {
+      if (!seenIds.has(item.id)) {
+        seenIds.add(item.id);
+        combinedItems.push(item);
+      }
+    }
+
+    return {
+      items: combinedItems,
+      isFallback: flashResolved.isFallback || availableResolved.isFallback,
+    };
+  } catch (error) {
+    console.error('[Flash] Failed to fetch designs from R2:', error);
+    return { items: [], isFallback: true };
+  }
+}
+
+export default async function FlashPage() {
+  const { items: flashDesigns, isFallback } = await getFlashDesigns();
 
   return (
     <div className="flash-page">
@@ -47,6 +82,11 @@ export default function FlashPage() {
         <div className="container">
           <RevealOnScroll delay={200}>
           <h2 className="flash-gallery__heading">Available Flash Designs</h2>
+          {isFallback && (
+            <p className="text-sm text-muted mb-4">
+              Gallery is temporarily unavailable. Showing cached designs.
+            </p>
+          )}
           </RevealOnScroll>
           
           {flashDesigns.length === 0 ? (
@@ -73,6 +113,9 @@ export default function FlashPage() {
                   
                   <div className="flash-card__content">
                     <h3 className="flash-card__title">{design.alt}</h3>
+                    {design.caption && (
+                      <p className="flash-card__caption">{design.caption}</p>
+                    )}
                     <p className="flash-card__id">Design ID: {design.id}</p>
                     
                     <Link 

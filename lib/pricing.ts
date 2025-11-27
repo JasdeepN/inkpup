@@ -129,12 +129,14 @@ export async function getPricingData(): Promise<PricingDataShape> {
  * @param sizeId - Size category identifier
  * @param complexityId - Complexity (or style) identifier. This function supports both legacy complexity IDs and the newer `styles` array via pricing.styles.
  * @param colorProfileId - Optional color profile identifier (defaults to monochrome/1.0)
+ * @param pricingData - Optional pricing data object (defaults to static JSON import)
  */
-export function estimatePriceRange(sizeId: string, complexityId: string, colorProfileId?: string) {
-  const size = pricing.sizeCategories.find(s => s.id === sizeId);
+export function estimatePriceRange(sizeId: string, complexityId: string, colorProfileId?: string, pricingData?: PricingDataShape) {
+  const data = pricingData ?? pricing;
+  const size = data.sizeCategories.find(s => s.id === sizeId);
   // Support new styles array (`pricing.styles`) while keeping the legacy complexityMultipliers for compatibility
-  const style = (pricing as any).styles?.find((s: Style) => s.id === complexityId) || pricing.complexityMultipliers.find(c => c.id === complexityId) || { multiplier: 1 } as Complexity | Style;
-  const colorProfile = colorProfileId ? pricing.colorProfiles.find(cp => cp.id === colorProfileId) : undefined;
+  const style = (data as any).styles?.find((s: Style) => s.id === complexityId) || data.complexityMultipliers.find(c => c.id === complexityId) || { multiplier: 1 } as Complexity | Style;
+  const colorProfile = colorProfileId ? data.colorProfiles.find(cp => cp.id === colorProfileId) : undefined;
   if (!size) return null;
   const styleMult = style.multiplier || 1;
   const colorMult = colorProfile?.multiplier || 1;
@@ -148,7 +150,7 @@ export function estimatePriceRange(sizeId: string, complexityId: string, colorPr
 
   const hours = size.typicalHoursRange || (size.typicalHours ? [size.typicalHours, size.typicalHours] : undefined);
   if (hours) {
-    const hourlyMid = (pricing.hourlyRateTypical.min + pricing.hourlyRateTypical.max) / 2;
+    const hourlyMid = (data.hourlyRateTypical.min + data.hourlyRateTypical.max) / 2;
     const [hMin, hMax] = hours;
     return [Math.round(hMin * hourlyMid * totalMult), Math.round(hMax * hourlyMid * totalMult)] as [number, number];
   }

@@ -1,7 +1,8 @@
 import { Metadata } from 'next';
-import PricingEstimator from '../../components/PricingEstimator';
-import LocalBusinessJsonLd from '../../components/LocalBusinessJsonLd';
-import RevealOnScroll from '../../components/animations/RevealOnScroll';
+import PricingEstimator from '@/components/PricingEstimator';
+import LocalBusinessJsonLd from '@/components/LocalBusinessJsonLd';
+import RevealOnScroll from '@/components/animations/RevealOnScroll';
+import { getPricingData } from '@/lib/pricing';
 
 export const metadata: Metadata = {
   title: 'Tattoo Pricing Toronto | Size, Complexity & Color Costs',
@@ -22,7 +23,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  // Fetch pricing data from D1 (falls back to static JSON if unavailable)
+  const pricingData = await getPricingData();
+  
   const offerSchema = {
     "@context": "https://schema.org",
     "@type": "Service",
@@ -106,7 +110,7 @@ export default function PricingPage() {
 
         <RevealOnScroll delay={100}>
         <section>
-          <PricingEstimator />
+          <PricingEstimator initialData={pricingData} />
         </section>
         </RevealOnScroll>
 
