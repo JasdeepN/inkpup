@@ -2,7 +2,7 @@
 
 ## Current Goals
 
-- [CONTEXT:2025-11-26] Session complete: Inquiry Inbox + Email Templates feature FULLY IMPLEMENTED. Created D1 tables (inquiries, email_templates, inquiry_emails), Zod schemas, server actions, admin UI pages (/dashboard/inquiries, /dashboard/templates), and integrated with contact form. Also fixed: tsconfig @/ aliases, Zod v4 compatibility, duplicate AdminNav in pages, dark input styling. Ready for commit and testing.
+- [CONTEXT:2025-11-26] Planning: Dashboard Overhaul updated with Inquiry Inbox integration. Plan file: plan-dashboard-overhaul-2025-11-26.md. Ready for execution - ~2 hours estimated.
 
 ## Current Focus
 - [CONTEXT:2025-11-26] **Unified Gallery View COMPLETE**:
