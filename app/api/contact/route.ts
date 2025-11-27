@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { createInquiryWithBinding } from '@/lib/db/inquiries';
+import type { InquiryType } from '@/lib/schemas/inquiry';
 
 // Using Resend Email API
 // Free tier: 3,000 emails/month, 100 emails/day
@@ -36,6 +38,33 @@ export async function POST(request: NextRequest) {
         { error: 'Invalid email address' },
         { status: 400 }
       );
+    }
+
+    // Store inquiry in D1 (non-blocking - continues even if D1 fails)
+    const inquiryType: InquiryType = designId ? 'flash' : bookingType === 'custom' ? 'custom' : 'contact';
+    const fullMessage = concept ? `${concept}${message ? '\n\n' + message : ''}` : message;
+    const fullPlacement = placementSize || placement;
+    
+    try {
+      const inquiryResult = await createInquiryWithBinding({
+        name,
+        email,
+        phone,
+        inquiry_type: inquiryType,
+        design_id: designId,
+        message: fullMessage,
+        placement: fullPlacement,
+        budget,
+      });
+      
+      if (inquiryResult) {
+        console.log('📥 Inquiry stored in D1:', { id: inquiryResult.id, type: inquiryType });
+      } else {
+        console.warn('⚠️ D1 not available - inquiry not stored (email will still send)');
+      }
+    } catch (d1Error) {
+      // Non-blocking: log error but continue with email
+      console.error('⚠️ D1 storage error (continuing with email):', d1Error);
     }
 
     const contactEmail = process.env.CONTACT_EMAIL || 'jasdeepn4@gmail.com';

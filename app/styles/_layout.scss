@@ -215,3 +215,36 @@
 .admin-nav .nav-link:active {
   transform: translateY(0);
 }
+
+/* Nav link with badge (for notification counts) */
+.admin-nav .nav-link--with-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-nav .nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #000;
+  background: linear-gradient(135deg, #d4af37, #aa8a2e);
+  border-radius: 9999px;
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0);
+  }
+}
+

@@ -474,3 +474,33 @@ Use lib/logger.ts createLogger(namespace) for module logging. Pre-configured: r2
 
 - import { r2Logger as log } from '../logger'; log.debug('msg'); log.warn('issue');
 - LOG_LEVEL=debug npm run dev  # Show all logs
+
+
+## Import Path Convention
+
+Use @/ path aliases for cleaner imports. New code should always use @/ (e.g., `import { foo } from '@/lib/utils'`). Existing relative imports (../) are acceptable for 1-2 levels deep. Convert deep relative imports (3+ levels like ../../../../) to @/ when editing those files. Both styles work identically at runtime - no need for mass migration.
+
+### Examples
+
+- // New code - ALWAYS use @/
+import { Inquiry } from '@/lib/schemas/inquiry';
+import AdminNav from '@/components/admin/AdminNav';
+- // Shallow relative - OK to leave
+import { toPublicR2Url } from '../r2';
+- // Deep relative - CONVERT when editing
+// BAD: from '../../../../lib/admin-actions-pricing'
+// GOOD: from '@/lib/admin-actions-pricing'
+
+
+## Zod v4 API Changes
+
+Zod v4 requires explicit key AND value schemas for records: `z.record(keySchema, valueSchema)`. Single-argument `z.record(valueSchema)` no longer works. Error messages use `{ error: "message" }` instead of plain string or `{ message: "..." }`.
+
+### Examples
+
+- // Zod v4 record (REQUIRED two args)
+z.record(z.string(), z.string()) // ✅
+z.record(z.string()) // ❌ ERROR
+- // Zod v4 error messages
+z.string().min(1, { error: 'Required' }) // preferred
+z.string().min(1, 'Required') // deprecated but works

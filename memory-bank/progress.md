@@ -1,4 +1,4 @@
-# Progress (Updated: 2025-11-26)
+# Progress (Updated: 2025-11-27)
 
 ## Done
 
@@ -9,6 +9,11 @@
 - [2025-11-26] Research: Dashboard overhaul → plan-dashboard-overhaul-2025-11-26.md
 - [2025-11-26] Research: Marketing page feasibility → research-marketing-page-2025-11-26.md
 - [2025-11-26] Plan: Inquiry Inbox + Email Templates → plan-inquiry-inbox-2025-11-26.md
+- [2025-11-26] IMPLEMENTED: Inquiry Inbox + Email Templates (D1 tables, schemas, server actions, admin UI)
+- [2025-11-26] FIXED: tsconfig @/ path aliases added
+- [2025-11-26] FIXED: Zod v4 z.record() compatibility (requires 2 args)
+- [2025-11-26] FIXED: Duplicate AdminNav removed from dashboard pages
+- [2025-11-26] FIXED: Dark input styling for template editor forms
 
 ## Doing
 
@@ -16,6 +21,7 @@
 
 ## Next
 
-- Execute: Inquiry Inbox + Email Templates (9 phases, ~3 days)
-- Execute: Promotions/Banner system (~2 days)
-- Execute: Dashboard overhaul (4 phases per plan)
+- Run tests to verify no regressions
+- Manual testing of inquiry inbox workflow
+- Promotions/Banner system implementation (~2 days)
+- Dashboard overhaul execution (4 phases per plan)
