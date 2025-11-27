@@ -66,8 +66,8 @@ describe('inquiry-emails', () => {
 
       await createInquiryEmail(db, data);
 
-      // Should pass null for template_id
-      expect(mockBind).toHaveBeenCalledWith(5, null, 'Custom reply', 'Custom message');
+      // Should pass null for template_id, default 'outbound' for direction, null for from_email and resend_email_id
+      expect(mockBind).toHaveBeenCalledWith(5, null, 'Custom reply', 'Custom message', 'outbound', null, null);
     });
 
     it('returns null on error', async () => {

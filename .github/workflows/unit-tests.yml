@@ -1,39 +1,31 @@
-
-name: Unit tests
+name: Unit Tests
 
 on:
+  workflow_call:
   workflow_dispatch:
 
 jobs:
-  unit-tests:
-    name: Unit tests
+  lint-and-test:
+    name: Lint & Unit Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Use Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-
-      - name: Cache node modules
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          node-version: '22.14'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        # package-lock.json is tracked; use npm ci for clean, reproducible installs
-        run: npm ci
+        run: npm install --legacy-peer-deps --silent
 
-      - name: Run Jest unit tests (coverage disabled for speed)
-        # Following GitHub's Node.js CI guidance, run npm test (Jest) without coverage enforcement to keep CI fast.
-        run: npm test -- --ci --reporters=default --coverage=false
+      - name: Lint
+        run: npm run lint
 
-      - name: Upload coverage artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage
+      - name: Run Jest tests
+        env:
+          CI: true
+        run: npm test

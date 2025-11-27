@@ -295,6 +295,14 @@ html.dark .admin-dashboard__metrics div {
 .admin-card {
   @include glass-panel(var(--glass-panel-bg), 4px);
   padding: clamp(0.75rem, 1.5vw, 1rem);
+  animation: adminFadeIn 0.25s ease-out;
+}
+
+/* Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .admin-card {
+    animation: none;
+  }
 }
 
 /* Disable hover transform on admin cards - keep them static */
@@ -1558,17 +1566,48 @@ html.dark .admin-field select {
   border: 1px solid var(--glass-panel-border);
 }
 
+/* Inbound emails (customer replies) - align left with different background */
+.inquiry-email--inbound {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.2);
+  margin-right: 2rem;
+}
+
+/* Outbound emails (admin sent) - align right */
+.inquiry-email--outbound {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.2);
+  margin-left: 2rem;
+}
+
 .inquiry-email__header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: baseline;
-  gap: 1rem;
+  gap: 0.5rem 1rem;
   margin-bottom: 0.5rem;
+}
+
+.inquiry-email__direction {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.inquiry-email--inbound .inquiry-email__direction {
+  color: rgba(59, 130, 246, 0.9);
+}
+
+.inquiry-email--outbound .inquiry-email__direction {
+  color: rgba(34, 197, 94, 0.9);
 }
 
 .inquiry-email__subject {
   font-weight: 600;
   font-size: 0.875rem;
+  flex: 1;
 }
 
 .inquiry-email__time {
@@ -2176,4 +2215,16 @@ html.dark .inquiry-reply-form__textarea,
   }
 }
 
-
+/* ----------------------------------------------
+   Admin Entrance Animation
+---------------------------------------------- */
+@keyframes adminFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -22,8 +22,15 @@ select:focus {
   transform: translateY(-1px);
 }
 
-input:invalid:not(:focus):not(:placeholder-shown),
-textarea:invalid:not(:focus):not(:placeholder-shown) {
+// Only show validation errors AFTER user has interacted and submitted
+// Using :user-invalid (modern browsers) - only shows invalid state after blur/submit
+// Fallback: .form-submitted class added by JS on form submit
+input:user-invalid,
+textarea:user-invalid,
+select:user-invalid,
+.form-submitted input:invalid,
+.form-submitted textarea:invalid,
+.form-submitted select:invalid {
   border-color: #ef4444;
   animation: inputShake var(--animation-duration-normal) ease-in-out;
 }

@@ -95,6 +95,9 @@ export const UpdateTemplateSchema = z.object({
 // Inquiry Email Schemas (sent messages log)
 // ============================================
 
+export const EmailDirectionSchema = z.enum(['inbound', 'outbound']);
+export type EmailDirection = z.infer<typeof EmailDirectionSchema>;
+
 export const InquiryEmailSchema = z.object({
   id: z.number(),
   inquiry_id: z.number(),
@@ -102,6 +105,9 @@ export const InquiryEmailSchema = z.object({
   subject: z.string(),
   body: z.string(),
   sent_at: z.string(),
+  direction: EmailDirectionSchema.default('outbound'),
+  from_email: z.string().nullable().optional(),
+  resend_email_id: z.string().nullable().optional(),
 });
 
 export const CreateInquiryEmailSchema = z.object({
@@ -109,6 +115,9 @@ export const CreateInquiryEmailSchema = z.object({
   template_id: z.number().optional().nullable(),
   subject: z.string().min(1, 'Subject is required'),
   body: z.string().min(1, 'Body is required'),
+  direction: EmailDirectionSchema.optional().default('outbound'),
+  from_email: z.string().optional().nullable(),
+  resend_email_id: z.string().optional().nullable(),
 });
 
 // ============================================

@@ -390,7 +390,7 @@ export async function processPendingUploadJobs(options?: ProcessJobsOptions) {
           }
         } catch (kvErr) {
           if (process.env.DEBUG === 'true') {
-            // eslint-disable-next-line no-console
+             
             console.warn('[queue] KV upsert failed (processPendingUploadJobs)', kvErr);
           }
         }

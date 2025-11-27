@@ -7,6 +7,23 @@ import type { InquiryType } from '@/lib/schemas/inquiry';
 // Free tier: 3,000 emails/month, 100 emails/day
 // No external account setup needed beyond API key
 
+/**
+ * Build redirect URL respecting reverse proxy headers.
+ * Uses X-Forwarded-Host and X-Forwarded-Proto to construct correct public URL.
+ */
+function buildRedirectUrl(request: NextRequest, path: string, params?: Record<string, string>): URL {
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const forwardedProto = request.headers.get('x-forwarded-proto');
+  const host = forwardedHost || request.headers.get('host') || new URL(request.url).host;
+  const proto = forwardedProto || (request.url.startsWith('https') ? 'https' : 'http');
+
+  const url = new URL(path, `${proto}://${host}`);
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+  }
+  return url;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -76,9 +93,7 @@ export async function POST(request: NextRequest) {
         name, email, message, designId, bookingType, phone, placement, concept, placementSize, budget 
       });
       // Continue to success redirect even without email service
-      const url = new URL('/contact', request.url);
-      url.searchParams.set('success', 'true');
-      return NextResponse.redirect(url, 303);
+      return NextResponse.redirect(buildRedirectUrl(request, '/contact', { success: 'true' }), 303);
     }
 
     const resend = new Resend(resendApiKey);
@@ -141,13 +156,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Always redirect with success - the message is logged even if email fails
-    const url = new URL('/contact', request.url);
-    url.searchParams.set('success', 'true');
-    return NextResponse.redirect(url, 303);
+    return NextResponse.redirect(buildRedirectUrl(request, '/contact', { success: 'true' }), 303);
   } catch (error) {
     console.error('Contact form error:', error);
-    const url = new URL('/contact', request.url);
-    url.searchParams.set('error', 'true');
-    return NextResponse.redirect(url, 303);
+    return NextResponse.redirect(buildRedirectUrl(request, '/contact', { error: 'true' }), 303);
   }
 }

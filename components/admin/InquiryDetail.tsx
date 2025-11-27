@@ -182,17 +182,26 @@ export default function InquiryDetail({ inquiry }: InquiryDetailProps) {
         <div className="inquiry-detail__section">
           <h4 className="inquiry-detail__label">Conversation History</h4>
           <div className="inquiry-emails">
-            {emails.map((email) => (
-              <div key={email.id} className="inquiry-email">
-                <div className="inquiry-email__header">
-                  <span className="inquiry-email__subject">{email.subject}</span>
-                  <span className="inquiry-email__time text-muted">
-                    {new Date(email.sent_at).toLocaleString()}
-                  </span>
+            {emails.map((email) => {
+              const isInbound = email.direction === 'inbound';
+              return (
+                <div
+                  key={email.id}
+                  className={`inquiry-email ${isInbound ? 'inquiry-email--inbound' : 'inquiry-email--outbound'}`}
+                >
+                  <div className="inquiry-email__header">
+                    <span className="inquiry-email__direction">
+                      {isInbound ? '📥 Customer' : '📤 You'}
+                    </span>
+                    <span className="inquiry-email__subject">{email.subject}</span>
+                    <span className="inquiry-email__time text-muted">
+                      {new Date(email.sent_at).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="inquiry-email__body">{email.body}</div>
                 </div>
-                <div className="inquiry-email__body">{email.body}</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

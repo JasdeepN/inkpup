@@ -56,7 +56,7 @@ type KVMetrics = {
 };
 
 declare global {
-  // eslint-disable-next-line no-var
+   
   var __kvMetrics: KVMetrics | undefined;
 }
 
@@ -121,7 +121,7 @@ export function deserializeItems(raw: string | null): GalleryItem[] {
   } catch (e) {
     metrics().errors += 1;
     if (process.env.DEBUG === 'true') {
-      // eslint-disable-next-line no-console
+       
       console.warn('[kv] failed to parse cached gallery items', e);
     }
     return [];
@@ -148,7 +148,7 @@ export async function getCachedGallery(category: GalleryCategory): Promise<Galle
   } catch (e) {
     metrics().errors += 1;
     if (process.env.DEBUG === 'true') {
-      // eslint-disable-next-line no-console
+       
       console.warn('[kv] getCachedGallery error', e);
     }
     return null;
@@ -165,7 +165,7 @@ export async function setCachedGallery(category: GalleryCategory, items: Gallery
   } catch (e) {
     metrics().errors += 1;
     if (process.env.DEBUG === 'true') {
-      // eslint-disable-next-line no-console
+       
       console.warn('[kv] setCachedGallery error', e);
     }
   }
@@ -183,7 +183,7 @@ export async function upsertCachedGalleryItem(item: GalleryItem, ttlSeconds: num
   } catch (e) {
     metrics().errors += 1;
     if (process.env.DEBUG === 'true') {
-      // eslint-disable-next-line no-console
+       
       console.warn('[kv] upsertCachedGalleryItem error', e);
     }
   }
@@ -206,7 +206,7 @@ export async function removeCachedGalleryItem(key: string, category: GalleryCate
   } catch (e) {
     metrics().errors += 1;
     if (process.env.DEBUG === 'true') {
-      // eslint-disable-next-line no-console
+       
       console.warn('[kv] removeCachedGalleryItem error', e);
     }
   }
@@ -221,7 +221,7 @@ export async function invalidateGalleryCategory(category: GalleryCategory): Prom
   } catch (e) {
     metrics().errors += 1;
     if (process.env.DEBUG === 'true') {
-      // eslint-disable-next-line no-console
+       
       console.warn('[kv] invalidateGalleryCategory error', e);
     }
   }

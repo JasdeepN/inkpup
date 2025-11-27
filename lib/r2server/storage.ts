@@ -290,7 +290,7 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
   const fallbackResult = (reason: GalleryFallbackReason): GalleryFetchResult => {
     const items = bundledFallbackAllowed ? buildFallbackItems(category) : [];
     if (process.env.DEBUG === 'true') {
-      // eslint-disable-next-line no-console
+       
       log.warn('returning fallback gallery items', {
         category,
         reason,
@@ -310,7 +310,7 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
 
   if (!hasR2Credentials()) {
     if (process.env.DEBUG === 'true') {
-      // eslint-disable-next-line no-console
+       
       log.warn('missing R2 credentials', {
         category,
         credentialStatus,
@@ -345,7 +345,7 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
         const objects = bindingResult?.objects ?? [];
         log.debug('binding.list result', { prefix: `${prefix}/`, count: objects.length });
         if (process.env.DEBUG === 'true') {
-        // eslint-disable-next-line no-console
+         
         console.info('[r2server] r2 binding list()', {
           category,
           prefix,
@@ -378,7 +378,7 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
 
         if (images.length === 0) {
           if (process.env.DEBUG === 'true') {
-            // eslint-disable-next-line no-console
+             
             console.warn('[r2server] r2 binding returned no gallery objects', {
               category,
               prefix,
@@ -393,7 +393,7 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
           }
         } catch (kvErr) {
           if (process.env.DEBUG === 'true') {
-            // eslint-disable-next-line no-console
+             
             console.warn('[r2server] KV set failed (list hydrate binding)', kvErr);
           }
         }
@@ -406,7 +406,7 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
       } catch (err) {
         // If binding call fails, fall through to S3 client path but log for diagnostics
         if (process.env.DEBUG === 'true') {
-          // eslint-disable-next-line no-console
+           
           console.warn('[r2server] r2 binding list() failed', err);
         }
       }
@@ -414,7 +414,7 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
   } catch (err) {
     // Log probe errors for diagnostics and continue to S3 path
     if (process.env.DEBUG === 'true') {
-      // eslint-disable-next-line no-console
+       
       console.warn('[r2server] probeR2Binding failed', err);
     }
   }
@@ -438,7 +438,7 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
       // Log the error and return a fallback result so callers can continue in CI/test environments.
       // Keep the fallback behavior to avoid hard failures when R2 is not configured.
       if (process.env.DEBUG === 'true') {
-        // eslint-disable-next-line no-console
+         
         console.error('[r2server] client initialization failed while listing gallery images', error);
       }
       return fallbackResult('client_initialization_failed');
@@ -450,7 +450,7 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
   try {
     const images = await fetchGalleryImagesFromR2(clientInstance as S3Client, prefix, category);
     if (process.env.DEBUG === 'true') {
-      // eslint-disable-next-line no-console
+       
       console.info('[r2server] r2 s3 client fetched gallery objects', {
         category,
         prefix,
@@ -464,7 +464,7 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
       }
     } catch (kvErr) {
       if (process.env.DEBUG === 'true') {
-        // eslint-disable-next-line no-console
+         
         console.warn('[r2server] KV set failed (list hydrate s3)', kvErr);
       }
     }
@@ -477,7 +477,7 @@ export async function listGalleryImages(category: GalleryCategory, options?: Lis
   } catch (error) {
     // Log fetch errors and return a fallback result.
     if (process.env.DEBUG === 'true') {
-      // eslint-disable-next-line no-console
+       
       console.error('[r2server] failed to fetch gallery images from R2', error);
     }
     return fallbackResult('r2_fetch_failed');

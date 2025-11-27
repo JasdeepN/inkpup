@@ -69,7 +69,7 @@ export async function startViewTransition(
 
   const logDebug = (...args: any[]) => {
     if (debugEnabled) {
-      // eslint-disable-next-line no-console
+       
       console.log('[VT DEBUG]', ...args);
     }
   };

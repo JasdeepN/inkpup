@@ -219,12 +219,13 @@ export async function sendReplyAction(
       return { error: 'Failed to send email' };
     }
 
-    // Log the sent email
+    // Log the sent email (outbound from admin)
     await createInquiryEmail(db, {
       inquiry_id: inquiryId,
       template_id: templateId,
       subject: renderedSubject,
       body: renderedBody,
+      direction: 'outbound',
     });
 
     // Update inquiry status to replied

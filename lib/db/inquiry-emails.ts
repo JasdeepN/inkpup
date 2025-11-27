@@ -4,10 +4,10 @@
  */
 
 import type { D1Database } from '../../types/cloudflare';
-import type { InquiryEmail, CreateInquiryEmail } from '../schemas/inquiry';
+import type { InquiryEmail, CreateInquiryEmail, EmailDirection } from '../schemas/inquiry';
 
 /**
- * Create a record of a sent email
+ * Create a record of an email (outbound by default)
  */
 export async function createInquiryEmail(
   db: D1Database,
@@ -16,15 +16,18 @@ export async function createInquiryEmail(
   try {
     const result = await db
       .prepare(
-        `INSERT INTO inquiry_emails (inquiry_id, template_id, subject, body, sent_at)
-         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+        `INSERT INTO inquiry_emails (inquiry_id, template_id, subject, body, direction, from_email, resend_email_id, sent_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
          RETURNING id`
       )
       .bind(
         data.inquiry_id,
         data.template_id ?? null,
         data.subject,
-        data.body
+        data.body,
+        data.direction ?? 'outbound',
+        data.from_email ?? null,
+        data.resend_email_id ?? null
       )
       .first<{ id: number }>();
 
@@ -33,6 +36,29 @@ export async function createInquiryEmail(
     console.error('[D1] Error creating inquiry email record:', error);
     return null;
   }
+}
+
+/**
+ * Create an inbound email record (customer reply)
+ */
+export async function createInboundEmail(
+  db: D1Database,
+  data: {
+    inquiry_id: number;
+    subject: string;
+    body: string;
+    from_email: string;
+    resend_email_id?: string;
+  }
+): Promise<{ id: number } | null> {
+  return createInquiryEmail(db, {
+    inquiry_id: data.inquiry_id,
+    subject: data.subject,
+    body: data.body,
+    direction: 'inbound',
+    from_email: data.from_email,
+    resend_email_id: data.resend_email_id,
+  });
 }
 
 /**

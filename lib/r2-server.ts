@@ -281,7 +281,7 @@ export const listGalleryImages = (
   });
 
   if (process.env.DEBUG === 'true') {
-    // eslint-disable-next-line no-console
+     
     console.debug('[r2-server] listGalleryImages returning result keys:', Object.keys(result));
   }
 
