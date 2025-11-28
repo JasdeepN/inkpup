@@ -563,3 +563,25 @@ Customer tracking with deposits: Customer has email (unique), name, phone, notes
 - app/styles/_admin.scss - Global admin input dark styles
 - components/admin/AddDepositForm.tsx - Uses add-deposit-form__input which inherits global dark styles
 - components/admin/UploadForm.tsx - Uses admin-field which inherits global dark styles
+
+
+## Admin SCSS modular directory structure
+
+Admin styles organized in modular directory structure under app/styles/admin/. Each partial handles its own @use dependencies. Main _index.scss aggregates via @forward. Design tokens in _variables.scss (--admin-*), shared mixins in _components.scss (@mixin admin-*). Partials: _base.scss (shell/cards/forms), _dashboard.scss (stats/metrics), _dialogs.scss (modals), _gallery.scss (upload/images), _inquiries.scss (inbox/detail), _templates.scss (email editor), _customers.scss (CRM/deposits).
+
+### Examples
+
+- app/styles/admin/_index.scss - aggregator file
+- app/styles/admin/_base.scss - @use '../components' as *; then .admin-shell, .admin-card, etc
+- app/styles/_variables.scss - :root { --admin-surface-muted: rgba(...); }
+
+
+## Admin SCSS Modular Architecture
+
+Admin styles organized in app/styles/admin/ with 7 partials by domain. Each partial @use's '../components' for mixin access. Index file uses @forward to re-export. Design tokens in _variables.scss (--admin-*), mixins in _components.scss (admin-dark-input, admin-list-item, etc.).
+
+### Examples
+
+- app/styles/admin/_index.scss - aggregator with @forward statements
+- app/styles/admin/_base.scss - shell, cards, forms using @include admin-card-base
+- app/styles/_variables.scss - --admin-surface-subtle, --admin-radius-md tokens

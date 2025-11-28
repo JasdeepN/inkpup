@@ -30,6 +30,15 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps --silent
 
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.scss') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+            nextjs-${{ runner.os }}-
+
       - name: Build Next.js
         run: npm run build
 
@@ -59,10 +68,10 @@ jobs:
     if: ${{ github.event_name == 'push' || !inputs.skip_tests }}
     uses: ./.github/workflows/unit-tests.yml
 
-  # E2E tests need the build artifact
+  # E2E tests need the build artifact - only run on master
   e2e-tests:
     name: E2E Tests
-    if: ${{ github.event_name == 'push' || !inputs.skip_tests }}
+    if: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'push' || !inputs.skip_tests) }}
     needs: [build]
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -121,8 +130,8 @@ jobs:
     needs: [build, unit-tests, e2e-tests]
     if: |
       always() && 
-      (inputs.skip_tests || 
-       (needs.unit-tests.result == 'success' && needs.e2e-tests.result == 'success'))
+      needs.unit-tests.result == 'success' &&
+      (needs.e2e-tests.result == 'success' || needs.e2e-tests.result == 'skipped')
     uses: ./.github/workflows/cloudflare-reusable.yml
     with:
       environment: ${{ github.ref == 'refs/heads/master' && 'production' || 'dev' }}

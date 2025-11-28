@@ -5,7 +5,14 @@ import { Webhook } from 'svix';
 import { getD1Binding } from '@/lib/db/d1';
 import { createInboundEmail } from '@/lib/db/inquiry-emails';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialization to avoid build-time errors when RESEND_API_KEY is not available
+let resend: Resend | null = null;
+function getResend(): Resend {
+  if (!resend) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 
 /**
  * Resend Webhook Event Types
@@ -80,7 +87,7 @@ export async function POST(request: NextRequest) {
     // Get full email content from Resend API
     let emailContent = { text: '', html: '' };
     try {
-      const { data } = await resend.emails.get(emailEvent.data.email_id);
+      const { data } = await getResend().emails.get(emailEvent.data.email_id);
       if (data) {
         emailContent = {
           text: (data as { text?: string }).text || '',

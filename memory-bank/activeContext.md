@@ -2,15 +2,13 @@
 
 ## Current Goals
 
-- Planning: Admin SCSS Refactoring — Plan: plan-admin-scss-refactor-2025-11-28.md
-- Strategy: Extract admin patterns AS the canonical mixins, then refactor
-- 5 Phases:
-- 1. Add design tokens to _variables.scss (admin surface/border/input tokens)
-- 2. Add mixins to _components.scss (admin-dark-input, admin-list-item, etc.)
-- 3. Create admin/ directory with 7 partials
-- 4. Migrate sections one-by-one with build+visual verification
-- 5. Update main index, full test, delete old file
-- Key principle: Admin styles are source of truth. Copy first, verify, then comment out original (never delete until verified).
+- EXECUTING: Admin SCSS Refactoring - Starting systematic implementation
+- Plan: plan-admin-scss-refactor-2025-11-28.md
+- Phase 1: Add design tokens to _variables.scss
+- Phase 2: Add mixins to _components.scss
+- Phase 3: Create admin/ directory structure
+- Phase 4: Migrate sections
+- Phase 5: Finalization
 
 ## Current Focus
 - [CONTEXT:2025-11-26] **Unified Gallery View COMPLETE**:
