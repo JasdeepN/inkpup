@@ -5,6 +5,9 @@ import { isAdminHost } from '../../lib/admin-hosts';
 import AdminNav from '../../components/admin/AdminNav';
 import type { ReactNode } from 'react';
 
+// Force dynamic rendering - auth checks must happen at runtime
+export const dynamic = 'force-dynamic';
+
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   if (!isAdminEnabled()) {
     notFound();
