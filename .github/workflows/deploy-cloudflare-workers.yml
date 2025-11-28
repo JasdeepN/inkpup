@@ -41,6 +41,11 @@ jobs:
 
       - name: Build Next.js
         run: npm run build
+        env:
+          ADMIN_PORTAL_PASSWORD: ${{ secrets.ADMIN_PORTAL_PASSWORD }}
+          ADMIN_SESSION_SECRET: ${{ secrets.ADMIN_SESSION_SECRET }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
 
       - name: Build OpenNext bundle
         run: npm run opennext:build
