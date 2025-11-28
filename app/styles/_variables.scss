@@ -60,6 +60,11 @@
   --parallax-speed-slow: 0.5;
   --parallax-speed-medium: 0.3;
   --parallax-speed-fast: 0.15;
+  
+  /* Admin spacing tokens */
+  --admin-radius-sm: 0.5rem;
+  --admin-radius-md: 0.75rem;
+  --admin-radius-lg: 1rem;
 }
 
 html.dark {
@@ -104,4 +109,21 @@ html.dark {
   --glass-panel-border: rgba(255, 255, 255, 0.15);
   /* navbar variant for dark mode */
   --glass-panel-nav-bg: linear-gradient(135deg, rgba(30, 58, 138, 0.04) 0%, rgba(15, 23, 42, 0.12) 100%);
+  
+  /* Admin surface tokens (dark mode) */
+  --admin-surface-subtle: rgba(255, 255, 255, 0.03);
+  --admin-surface-muted: rgba(255, 255, 255, 0.06);
+  --admin-surface-elevated: rgba(255, 255, 255, 0.08);
+  
+  /* Admin border tokens (dark mode) */
+  --admin-border-subtle: rgba(255, 255, 255, 0.08);
+  --admin-border-muted: rgba(255, 255, 255, 0.12);
+  --admin-border-elevated: rgba(255, 255, 255, 0.15);
+  
+  /* Admin input tokens (dark mode) */
+  --admin-input-bg: var(--admin-surface-muted);
+  --admin-input-border: var(--admin-border-muted);
+  --admin-input-focus-border: var(--brand-accent, #f472b6);
+  --admin-input-focus-shadow: rgba(244, 114, 182, 0.2);
+  --admin-input-placeholder: rgba(255, 255, 255, 0.4);
 }

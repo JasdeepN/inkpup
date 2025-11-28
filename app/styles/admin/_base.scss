@@ -1,0 +1,388 @@
+// =============================================================================
+// Admin Base Styles
+// Shell, cards, navigation, forms, alerts
+// =============================================================================
+@use '../components' as *;
+
+/* ----------------------------------------------
+   Admin Portal Shell
+---------------------------------------------- */
+.admin-shell {
+  display: grid;
+  gap: clamp(1.75rem, 4vw, 2.75rem);
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  padding: clamp(2rem, 5vw, 3rem) clamp(1.25rem, 4vw, 2rem);
+}
+
+.admin-shell--full-width {
+  max-width: none;
+}
+
+.admin-shell--compact {
+  max-width: 520px;
+  padding: clamp(2.5rem, 6vw, 3.5rem) clamp(1.5rem, 6vw, 2.75rem);
+}
+
+/* ----------------------------------------------
+   GLOBAL ADMIN DARK INPUT STYLES
+   All form inputs inside admin shell get dark styling
+---------------------------------------------- */
+html.dark .admin-shell {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="password"],
+  input[type="search"],
+  input[type="url"],
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  select,
+  textarea {
+    @include admin-dark-input;
+  }
+  
+  select {
+    @include admin-dark-select;
+  }
+  
+  textarea {
+    @include admin-dark-textarea;
+  }
+  
+  input[type="file"] {
+    padding: 0.5rem;
+    cursor: pointer;
+    
+    &::file-selector-button {
+      background: var(--brand-accent, #f472b6);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      margin-right: 0.75rem;
+      font-weight: 500;
+      
+      &:hover {
+        filter: brightness(1.1);
+      }
+    }
+  }
+}
+
+/* ----------------------------------------------
+   Admin Card - Unified Glass Panel Theme
+---------------------------------------------- */
+.admin-card {
+  @include admin-card-base;
+  animation: adminFadeIn 0.25s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-card {
+    animation: none;
+  }
+}
+
+.admin-card--compact {
+  padding: clamp(0.5rem, 1vw, 0.75rem);
+}
+
+.admin-nav.admin-card {
+  padding: clamp(0.85rem, 1.8vw, 1.25rem);
+}
+
+/* Table styling within admin-cards */
+.admin-card table {
+  border-collapse: collapse;
+}
+
+.admin-card thead {
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.admin-card thead th {
+  border-bottom: 1px solid var(--glass-panel-border);
+}
+
+.admin-card tbody tr {
+  transition: background-color var(--animation-duration-fast) ease;
+}
+
+.admin-card tbody tr:hover {
+  background: rgba(15, 23, 42, 0.3);
+}
+
+.admin-card__header {
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: clamp(1rem, 3vw, 1.5rem);
+}
+
+.admin-card h1,
+.admin-card h2,
+.admin-card h3 {
+  margin-top: 0;
+  color: var(--text);
+}
+
+.admin-card p {
+  margin-bottom: 0;
+}
+
+.admin-card--warning {
+  border-left: 4px solid #f97316;
+  background: linear-gradient(120deg, rgba(249, 115, 22, 0.08), rgba(249, 115, 22, 0.02));
+  box-shadow: 0 24px 50px rgba(249, 115, 22, 0.18);
+}
+
+/* ----------------------------------------------
+   Admin Header
+---------------------------------------------- */
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-header__actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* ----------------------------------------------
+   Admin Alerts
+---------------------------------------------- */
+.admin-alert {
+  border-radius: var(--admin-radius-lg);
+  padding: 1rem 1.25rem;
+  background: rgba(251, 113, 133, 0.12);
+  border-left: 4px solid var(--brand-accent);
+  color: var(--text);
+  box-shadow: 0 20px 45px rgba(251, 113, 133, 0.18);
+}
+
+.admin-alert--warning {
+  background: rgba(251, 191, 36, 0.16);
+  border-left-color: #f59e0b;
+  box-shadow: 0 20px 55px rgba(245, 158, 11, 0.22);
+  color: #854d0e;
+}
+
+.admin-alert--compact {
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-alert--success {
+  background: rgba(34, 197, 94, 0.12);
+  border-left-color: #22c55e;
+  box-shadow: 0 20px 45px rgba(34, 197, 94, 0.18);
+}
+
+.admin-alert--error {
+  background: rgba(239, 68, 68, 0.12);
+  border-left-color: #ef4444;
+  box-shadow: 0 20px 45px rgba(239, 68, 68, 0.2);
+}
+
+/* ----------------------------------------------
+   Admin Forms
+---------------------------------------------- */
+.admin-form {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.admin-form__row {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.admin-form__row--columns-2 {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+@media (min-width: 768px) {
+  .admin-form__row--columns-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-field label {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+
+.admin-field__hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.admin-field input,
+.admin-field select,
+.admin-field textarea {
+  width: 100%;
+  margin: 0;
+}
+
+// Dark theme for admin form inputs (specific field styling)
+html.dark .admin-field input,
+html.dark .admin-field select,
+html.dark .admin-field textarea {
+  @include admin-dark-input;
+}
+
+html.dark .admin-field select {
+  @include admin-dark-select;
+}
+
+.admin-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* ----------------------------------------------
+   Admin Category Navigation
+---------------------------------------------- */
+.admin-category-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.admin-category-nav__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, border 0.2s ease;
+}
+
+.admin-category-nav__link:hover,
+.admin-category-nav__link:focus-visible {
+  background: var(--surface-elevated);
+  border-color: transparent;
+  transform: translateY(-1px);
+}
+
+.admin-category-nav__link.is-active {
+  background: var(--brand-accent);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 18px 45px rgba(37, 99, 235, 0.35);
+}
+
+/* ----------------------------------------------
+   Badge Component
+---------------------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  margin-left: 0.5rem;
+}
+
+.badge--danger {
+  background: rgb(239, 68, 68);
+  color: white;
+}
+
+/* ----------------------------------------------
+   Admin Empty State
+---------------------------------------------- */
+.admin-empty-state {
+  margin-top: 1rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ----------------------------------------------
+   Admin Entrance Animation
+---------------------------------------------- */
+@keyframes adminFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ----------------------------------------------
+   Button Variants for Admin
+---------------------------------------------- */
+.btn--danger {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9));
+  color: white;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 1), rgba(185, 28, 28, 1));
+    transform: translateY(-1px);
+  }
+}
+
+.btn--success {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.9), rgba(22, 163, 74, 0.9));
+  color: white;
+  border: 1px solid rgba(34, 197, 94, 0.5);
+  
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(22, 163, 74, 1), rgba(21, 128, 61, 1));
+    transform: translateY(-1px);
+  }
+}
+
+.btn--warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(217, 119, 6, 0.9));
+  color: white;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(217, 119, 6, 1), rgba(180, 83, 9, 1));
+    transform: translateY(-1px);
+  }
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--admin-border-subtle);
+  
+  &:hover:not(:disabled) {
+    background: var(--admin-surface-subtle);
+    color: var(--text);
+    border-color: var(--admin-border-muted);
+  }
+}

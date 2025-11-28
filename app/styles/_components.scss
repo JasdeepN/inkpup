@@ -42,3 +42,104 @@
 
 // The `::before` highlight is now included in the `glass-panel` mixin, so
 // any selector that includes the mixin gets the same highlight overlay.
+
+
+// =============================================================================
+// ADMIN COMPONENT MIXINS
+// Extracted from admin portal patterns - these are the canonical styles
+// =============================================================================
+
+// Admin dark input - the standard dark mode input styling
+@mixin admin-dark-input {
+  background: var(--admin-input-bg);
+  border: 1px solid var(--admin-input-border);
+  color: var(--text);
+  border-radius: var(--admin-radius-sm);
+  padding: 0.625rem 0.875rem;
+  font-size: 0.95rem;
+  width: 100%;
+  
+  &::placeholder {
+    color: var(--admin-input-placeholder);
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: var(--admin-input-focus-border);
+    box-shadow: 0 0 0 2px var(--admin-input-focus-shadow);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// Admin dark select - extends input with dropdown arrow
+@mixin admin-dark-select {
+  @include admin-dark-input;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='rgba(255,255,255,0.5)' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+// Admin dark textarea - extends input with resize
+@mixin admin-dark-textarea {
+  @include admin-dark-input;
+  resize: vertical;
+  min-height: 80px;
+}
+
+// Admin list item - the repeated list item pattern
+@mixin admin-list-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--admin-surface-subtle);
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: var(--admin-radius-md);
+  transition: all 0.15s ease;
+  text-decoration: none;
+  color: inherit;
+  
+  &:hover {
+    background: var(--admin-surface-muted);
+    border-color: var(--admin-border-muted);
+  }
+}
+
+// Admin section label - uppercase label pattern
+@mixin admin-section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+
+// Admin message box - note/message container
+@mixin admin-message-box {
+  background: var(--admin-surface-subtle);
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: var(--admin-radius-sm);
+  padding: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+// Admin card base - simplified glass panel for admin
+@mixin admin-card-base {
+  @include glass-panel(var(--glass-panel-bg), 4px);
+  padding: clamp(0.75rem, 1.5vw, 1rem);
+  
+  // Disable hover transform on admin cards
+  &:hover {
+    transform: none;
+  }
+}

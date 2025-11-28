@@ -9,7 +9,8 @@
 @forward './layout';
 @forward './hero';
 @forward './gallery';
-@forward './admin';
+// Admin styles - modular structure (replaces monolithic _admin.scss)
+@forward './admin/index';
 @forward './service-explainer';
 @forward './flash';
 @forward './custom';

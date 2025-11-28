@@ -1,0 +1,13 @@
+// =============================================================================
+// Admin Styles - Modular Organization
+// These styles are the canonical admin design system
+// Each partial @use's its own dependencies
+// =============================================================================
+
+@forward './base';
+@forward './dashboard';
+@forward './dialogs';
+@forward './gallery';
+@forward './inquiries';
+@forward './templates';
+@forward './customers';
