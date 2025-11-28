@@ -180,6 +180,53 @@ export async function deleteInquiry(
 }
 
 /**
+ * Link an inquiry to a customer
+ */
+export async function linkInquiryToCustomer(
+  db: D1Database,
+  inquiryId: number,
+  customerId: number
+): Promise<boolean> {
+  try {
+    const result = await db
+      .prepare('UPDATE inquiries SET customer_id = ?, status = ? WHERE id = ?')
+      .bind(customerId, 'customer_created', inquiryId)
+      .run();
+
+    return result.success;
+  } catch (error) {
+    console.error('[D1] Error linking inquiry to customer:', error);
+    return false;
+  }
+}
+
+/**
+ * Get all inquiries for a customer
+ */
+export async function getInquiriesByCustomerId(
+  customerId: number,
+  db?: D1Database
+): Promise<Inquiry[]> {
+  const database = db || getD1Binding();
+  if (!database) {
+    console.error('[D1] No database binding available');
+    return [];
+  }
+
+  try {
+    const result = await database
+      .prepare('SELECT * FROM inquiries WHERE customer_id = ? ORDER BY created_at DESC')
+      .bind(customerId)
+      .all<Inquiry>();
+
+    return result.results || [];
+  } catch (error) {
+    console.error('[D1] Error fetching inquiries by customer:', error);
+    return [];
+  }
+}
+
+/**
  * Helper: Get D1 and create inquiry (convenience wrapper)
  */
 export async function createInquiryWithBinding(

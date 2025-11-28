@@ -1,15 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import type { Inquiry } from '@/lib/schemas/inquiry';
-import InquiryDetail from './InquiryDetail';
 
 interface InquiryListProps {
   inquiries: Inquiry[];
 }
 
 export default function InquiryList({ inquiries }: InquiryListProps) {
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const searchParams = useSearchParams();
+  const currentStatus = searchParams?.get('status') || 'all';
 
   if (inquiries.length === 0) {
     return (
@@ -23,18 +24,13 @@ export default function InquiryList({ inquiries }: InquiryListProps) {
     );
   }
 
-  const toggleExpand = (id: number) => {
-    setExpandedId(expandedId === id ? null : id);
-  };
-
   return (
     <div className="inquiry-list">
       {inquiries.map((inquiry) => (
         <InquiryListItem
           key={inquiry.id}
           inquiry={inquiry}
-          isExpanded={expandedId === inquiry.id}
-          onToggle={() => toggleExpand(inquiry.id)}
+          fromStatus={currentStatus}
         />
       ))}
     </div>
@@ -43,23 +39,23 @@ export default function InquiryList({ inquiries }: InquiryListProps) {
 
 interface InquiryListItemProps {
   inquiry: Inquiry;
-  isExpanded: boolean;
-  onToggle: () => void;
+  fromStatus: string;
 }
 
-function InquiryListItem({ inquiry, isExpanded, onToggle }: InquiryListItemProps) {
+function InquiryListItem({ inquiry, fromStatus }: InquiryListItemProps) {
   const isUnread = inquiry.status === 'unread';
   const typeEmoji = inquiry.inquiry_type === 'flash' ? '🎨' : inquiry.inquiry_type === 'custom' ? '✨' : '💬';
   const timeAgo = formatTimeAgo(inquiry.created_at);
+  
+  // Build detail URL with from param to preserve filter on back
+  const detailUrl = `/dashboard/inquiries/${inquiry.id}${fromStatus !== 'all' ? `?from=${fromStatus}` : ''}`;
 
   return (
-    <div className={`inquiry-item ${isUnread ? 'inquiry-item--unread' : ''}`}>
-      <button
-        type="button"
-        className="inquiry-item__header"
-        onClick={onToggle}
-        aria-expanded={isExpanded}
-      >
+    <Link 
+      href={detailUrl}
+      className={`inquiry-item ${isUnread ? 'inquiry-item--unread' : ''}`}
+    >
+      <div className="inquiry-item__header">
         <div className="inquiry-item__status">
           {isUnread && <span className="inquiry-item__dot" aria-label="Unread" />}
         </div>
@@ -84,14 +80,10 @@ function InquiryListItem({ inquiry, isExpanded, onToggle }: InquiryListItemProps
         <div className="inquiry-item__meta">
           <span className="inquiry-item__time">{timeAgo}</span>
           <InquiryStatusBadge status={inquiry.status} />
-          <span className="inquiry-item__chevron" aria-hidden="true">
-            {isExpanded ? '▼' : '▶'}
-          </span>
+          <span className="inquiry-item__chevron" aria-hidden="true">→</span>
         </div>
-      </button>
-
-      {isExpanded && <InquiryDetail inquiry={inquiry} />}
-    </div>
+      </div>
+    </Link>
   );
 }
 
@@ -99,7 +91,8 @@ function InquiryStatusBadge({ status }: { status: string }) {
   const labels: Record<string, { label: string; className: string }> = {
     unread: { label: 'Unread', className: 'inquiry-badge--unread' },
     read: { label: 'Read', className: 'inquiry-badge--read' },
-    replied: { label: 'Replied', className: 'inquiry-badge--replied' },
+    replied: { label: 'Awaiting', className: 'inquiry-badge--replied' },
+    deposit_received: { label: '💰 Deposit', className: 'inquiry-badge--deposit_received' },
     booked: { label: 'Booked', className: 'inquiry-badge--booked' },
     archived: { label: 'Archived', className: 'inquiry-badge--archived' },
   };

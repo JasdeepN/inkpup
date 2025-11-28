@@ -20,6 +20,7 @@ describe('InquiryStatusSchema', () => {
     expect(InquiryStatusSchema.parse('unread')).toBe('unread');
     expect(InquiryStatusSchema.parse('read')).toBe('read');
     expect(InquiryStatusSchema.parse('replied')).toBe('replied');
+    expect(InquiryStatusSchema.parse('deposit_received')).toBe('deposit_received');
     expect(InquiryStatusSchema.parse('booked')).toBe('booked');
     expect(InquiryStatusSchema.parse('archived')).toBe('archived');
   });

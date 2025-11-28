@@ -37,7 +37,8 @@ export default async function InquiriesPage({ searchParams }: PageProps) {
           <StatusTab status="all" current={statusFilter} label="All" />
           <StatusTab status="unread" current={statusFilter} label="Unread" />
           <StatusTab status="read" current={statusFilter} label="Read" />
-          <StatusTab status="replied" current={statusFilter} label="Replied" />
+          <StatusTab status="replied" current={statusFilter} label="Awaiting" />
+          <StatusTab status="deposit_received" current={statusFilter} label="💰 Deposit" />
           <StatusTab status="booked" current={statusFilter} label="Booked" />
           <StatusTab status="archived" current={statusFilter} label="Archived" />
         </div>

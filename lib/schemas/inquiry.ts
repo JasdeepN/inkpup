@@ -12,8 +12,11 @@ export const InquiryStatusSchema = z.enum([
   'unread',
   'read', 
   'replied',
-  'booked',
-  'archived'
+  'customer_created',  // Customer profile created from inquiry
+  'deposit_received',  // Deposit payment received
+  'design',            // Design phase (after deposit)
+  'booked',            // Appointment booked
+  'archived'           // Archived (can happen at any point)
 ]);
 
 export const InquiryTypeSchema = z.enum([
@@ -40,6 +43,7 @@ export const InquirySchema = z.object({
   created_at: z.string(),
   replied_at: z.string().nullable(),
   notes: z.string().nullable(),
+  customer_id: z.number().nullable().optional(),  // Link to customer profile
 });
 
 export const CreateInquirySchema = z.object({

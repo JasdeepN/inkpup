@@ -516,3 +516,50 @@ Standard patterns for testing React admin components with server actions and D1 
 - components/admin/InquiryDetail.test.tsx - server action mocking
 - components/admin/GallerySection.test.tsx - aria-controls button disambiguation
 - components/admin/GallerySectionList.test.tsx - onToggle callback with category param
+
+
+## ConfirmDialog Accessibility Pattern
+
+Reusable confirmation modal with full ARIA support: role='alertdialog', aria-modal='true', aria-labelledby/describedby, focus trap on mount (cancel button focused first), ESC key closes, overlay click closes. Located at components/admin/ConfirmDialog.tsx. Use for destructive actions like archive/delete.
+
+### Examples
+
+- InquiryDetail archive confirmation
+- Future: gallery image deletion
+- Future: template deletion
+
+
+## Deferred Read-Marking Pattern
+
+Deferred read-marking pattern: instead of marking items as read immediately on view, defer until user takes an action. Pass onActionTaken callback to child components, call it on any meaningful action (status change, save, reply, etc.). Parent wrapper handles the actual status update. Add explicit Mark Read/Unread buttons for manual control.
+
+### Examples
+
+- InquiryDetailPage → InquiryDetail onActionTaken callback
+- handleBackClick marks read before navigation
+
+
+## Customer/Deposit CRM Pattern
+
+Customer tracking with deposits: Customer has email (unique), name, phone, notes, total_deposits computed field. Deposits linked to customer_id (required) and inquiry_id (optional). quickCreateDepositAction handles find-or-create customer workflow. CustomerDetailPage shows customer info, deposit list, and AddDepositForm. Server/client component split for forms with useActionState.
+
+### Examples
+
+- lib/schemas/customer.ts - Zod schemas
+- lib/db/customers.ts - 8 query functions
+- lib/db/deposits.ts - 10 query functions
+- lib/admin-actions-customers.ts - server actions
+- lib/admin-actions-deposits.ts - quickCreateDepositAction
+- components/admin/CustomerDetailPage.tsx - client wrapper
+- components/admin/AddDepositForm.tsx - deposit form
+
+
+## Admin Dark Input Styling
+
+[PATTERN:2025-11-27] All admin form inputs (text, email, number, select, textarea) automatically receive dark theme styling via global selector: `html.dark .admin-shell input[type="..."]`. No need for component-specific classes. Inputs get: dark background (rgba 6%), subtle border (rgba 12%), white text, pink accent on focus, and proper file input button styling. Defined in app/styles/_admin.scss near the top under "GLOBAL ADMIN DARK INPUT STYLES" section.
+
+### Examples
+
+- app/styles/_admin.scss - Global admin input dark styles
+- components/admin/AddDepositForm.tsx - Uses add-deposit-form__input which inherits global dark styles
+- components/admin/UploadForm.tsx - Uses admin-field which inherits global dark styles

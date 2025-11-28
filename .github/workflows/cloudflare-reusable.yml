@@ -148,6 +148,20 @@ jobs:
           envsubst < wrangler.toml > wrangler.resolved.toml
           echo "Wrangler config rendered successfully"
 
+      - name: Run D1 migrations
+        run: |
+          echo "Applying D1 migrations for ${{ inputs.environment }}..."
+          if [ "${{ inputs.environment }}" = "production" ]; then
+            DB_NAME="inkpup-db"
+          else
+            DB_NAME="inkpup-db-${{ inputs.environment }}"
+          fi
+          npx --yes wrangler@4 d1 migrations apply "$DB_NAME" \
+            --config wrangler.resolved.toml \
+            --env ${{ inputs.environment }} \
+            --remote
+          echo "D1 migrations complete"
+
       - name: Deploy to environment
         run: |
           npx --yes wrangler@4 deploy \

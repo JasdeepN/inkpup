@@ -2,7 +2,15 @@
 
 ## Current Goals
 
-- [CONTEXT:2025-11-27] Session COMPLETE: Admin Portal Fixes + CI/CD Optimization | Fixes: logout API, contact redirect, inbound email webhook, admin animations | CI: Build-once/reuse-everywhere pattern, simplified workflows | Manual steps remaining: test logout/redirect locally, configure Resend receiving + Cloudflare MX record, add RESEND_WEBHOOK_SECRET to production GitHub secrets
+- Planning: Admin SCSS Refactoring — Plan: plan-admin-scss-refactor-2025-11-28.md
+- Strategy: Extract admin patterns AS the canonical mixins, then refactor
+- 5 Phases:
+- 1. Add design tokens to _variables.scss (admin surface/border/input tokens)
+- 2. Add mixins to _components.scss (admin-dark-input, admin-list-item, etc.)
+- 3. Create admin/ directory with 7 partials
+- 4. Migrate sections one-by-one with build+visual verification
+- 5. Update main index, full test, delete old file
+- Key principle: Admin styles are source of truth. Copy first, verify, then comment out original (never delete until verified).
 
 ## Current Focus
 - [CONTEXT:2025-11-26] **Unified Gallery View COMPLETE**:

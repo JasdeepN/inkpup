@@ -35,6 +35,9 @@ export default async function AdminNav() {
               <span className="nav-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
             )}
           </Link>
+          <Link href="/dashboard/customers" className="nav-link">
+            Customers
+          </Link>
           <Link href="/dashboard/templates" className="nav-link">
             Templates
           </Link>

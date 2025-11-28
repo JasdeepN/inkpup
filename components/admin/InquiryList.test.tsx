@@ -1,16 +1,13 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import InquiryList from './InquiryList';
 import type { Inquiry } from '@/lib/schemas/inquiry';
 
-// Mock InquiryDetail to simplify testing
-jest.mock('./InquiryDetail', () => ({
-  __esModule: true,
-  default: ({ inquiry }: { inquiry: Inquiry }) => (
-    <div data-testid={`detail-${inquiry.id}`}>
-      Detail for {inquiry.name}
-    </div>
-  ),
+// Mock useSearchParams as a jest.fn so we can change its return value
+const mockUseSearchParams = jest.fn(() => new URLSearchParams(''));
+
+jest.mock('next/navigation', () => ({
+  useSearchParams: () => mockUseSearchParams(),
 }));
 
 const mockInquiries: Inquiry[] = [
@@ -59,6 +56,21 @@ const mockInquiries: Inquiry[] = [
     replied_at: null,
     notes: null,
   },
+  {
+    id: 4,
+    name: 'Alice Green',
+    email: 'alice@example.com',
+    phone: null,
+    inquiry_type: 'flash',
+    design_id: null,
+    message: 'Deposit paid',
+    placement: null,
+    budget: null,
+    status: 'deposit_received',
+    created_at: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+    replied_at: null,
+    notes: null,
+  },
 ];
 
 describe('InquiryList', () => {
@@ -69,12 +81,16 @@ describe('InquiryList', () => {
     expect(screen.getByText('📭')).toBeInTheDocument();
   });
 
-  it('renders all inquiries', () => {
+  it('renders all inquiries as links', () => {
     render(<InquiryList inquiries={mockInquiries} />);
     
     expect(screen.getByText('John Doe')).toBeInTheDocument();
     expect(screen.getByText('Jane Smith')).toBeInTheDocument();
     expect(screen.getByText('Bob Wilson')).toBeInTheDocument();
+    
+    // Check that items are links
+    const johnLink = screen.getByText('John Doe').closest('a');
+    expect(johnLink).toHaveAttribute('href', '/dashboard/inquiries/1');
   });
 
   it('shows unread indicator for unread inquiries', () => {
@@ -89,52 +105,21 @@ describe('InquiryList', () => {
     expect(janeItem).not.toHaveClass('inquiry-item--unread');
   });
 
-  it('expands inquiry detail when clicked', () => {
+  it('links to detail page with correct URL', () => {
     render(<InquiryList inquiries={mockInquiries} />);
     
-    // Detail should not be visible initially
-    expect(screen.queryByTestId('detail-1')).not.toBeInTheDocument();
+    const johnLink = screen.getByText('John Doe').closest('a');
+    expect(johnLink).toHaveAttribute('href', '/dashboard/inquiries/1');
     
-    // Click to expand
-    const johnHeader = screen.getByText('John Doe').closest('button');
-    fireEvent.click(johnHeader!);
-    
-    // Detail should now be visible
-    expect(screen.getByTestId('detail-1')).toBeInTheDocument();
-  });
-
-  it('collapses inquiry detail when clicked again', () => {
-    render(<InquiryList inquiries={mockInquiries} />);
-    
-    const johnHeader = screen.getByText('John Doe').closest('button');
-    
-    // Expand
-    fireEvent.click(johnHeader!);
-    expect(screen.getByTestId('detail-1')).toBeInTheDocument();
-    
-    // Collapse
-    fireEvent.click(johnHeader!);
-    expect(screen.queryByTestId('detail-1')).not.toBeInTheDocument();
-  });
-
-  it('only expands one inquiry at a time', () => {
-    render(<InquiryList inquiries={mockInquiries} />);
-    
-    // Expand John's
-    fireEvent.click(screen.getByText('John Doe').closest('button')!);
-    expect(screen.getByTestId('detail-1')).toBeInTheDocument();
-    
-    // Expand Jane's (should collapse John's)
-    fireEvent.click(screen.getByText('Jane Smith').closest('button')!);
-    expect(screen.queryByTestId('detail-1')).not.toBeInTheDocument();
-    expect(screen.getByTestId('detail-2')).toBeInTheDocument();
+    const janeLink = screen.getByText('Jane Smith').closest('a');
+    expect(janeLink).toHaveAttribute('href', '/dashboard/inquiries/2');
   });
 
   it('displays inquiry type emoji', () => {
     render(<InquiryList inquiries={mockInquiries} />);
     
     // Flash type should show art emoji
-    expect(screen.getByText('🎨')).toBeInTheDocument();
+    expect(screen.getAllByText('🎨')).toHaveLength(2); // John and Alice
     // Custom type should show sparkle emoji
     expect(screen.getByText('✨')).toBeInTheDocument();
     // Contact type should show chat emoji
@@ -146,5 +131,40 @@ describe('InquiryList', () => {
     
     expect(screen.getByText('john@example.com')).toBeInTheDocument();
     expect(screen.getByText('jane@example.com')).toBeInTheDocument();
+  });
+
+  it('displays status badges including deposit_received', () => {
+    render(<InquiryList inquiries={mockInquiries} />);
+    
+    expect(screen.getByText('Unread')).toBeInTheDocument();
+    expect(screen.getByText('Awaiting')).toBeInTheDocument();
+    expect(screen.getByText('Read')).toBeInTheDocument();
+    expect(screen.getByText('💰 Deposit')).toBeInTheDocument();
+  });
+
+  it('shows arrow indicator for navigation', () => {
+    render(<InquiryList inquiries={mockInquiries} />);
+    
+    const arrows = screen.getAllByText('→');
+    expect(arrows.length).toBe(mockInquiries.length);
+  });
+});
+
+describe('InquiryList with status filter', () => {
+  beforeEach(() => {
+    // Mock with status param
+    mockUseSearchParams.mockReturnValue(new URLSearchParams('status=unread'));
+  });
+
+  afterEach(() => {
+    // Reset to default
+    mockUseSearchParams.mockReturnValue(new URLSearchParams(''));
+  });
+
+  it('passes from param in link when status filter is active', () => {
+    render(<InquiryList inquiries={mockInquiries} />);
+    
+    const johnLink = screen.getByText('John Doe').closest('a');
+    expect(johnLink).toHaveAttribute('href', '/dashboard/inquiries/1?from=unread');
   });
 });

@@ -17,6 +17,82 @@
   max-width: none;
 }
 
+/* ----------------------------------------------
+   GLOBAL ADMIN DARK INPUT STYLES
+   All form inputs inside admin shell get dark styling
+---------------------------------------------- */
+html.dark .admin-shell {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="password"],
+  input[type="search"],
+  input[type="url"],
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  select,
+  textarea {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text);
+    border-radius: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+    width: 100%;
+    
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+    
+    &:focus {
+      outline: none;
+      border-color: var(--accent, #f472b6);
+      box-shadow: 0 0 0 2px rgba(244, 114, 182, 0.2);
+    }
+    
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+  
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='rgba(255,255,255,0.5)' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.5rem;
+    cursor: pointer;
+  }
+  
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+  
+  input[type="file"] {
+    padding: 0.5rem;
+    cursor: pointer;
+    
+    &::file-selector-button {
+      background: var(--accent, #f472b6);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      margin-right: 0.75rem;
+      font-weight: 500;
+      
+      &:hover {
+        filter: brightness(1.1);
+      }
+    }
+  }
+}
+
 .admin-dashboard {
   display: grid;
   gap: var(--dashboard-grid-gap);
@@ -1338,14 +1414,18 @@ html.dark .admin-field select {
 }
 
 .inquiry-item {
+  display: block;
   border-radius: 0.75rem;
   border: 1px solid var(--glass-panel-border);
   background: rgba(255, 255, 255, 0.02);
   overflow: hidden;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+  text-decoration: none;
+  color: inherit;
   
   &:hover {
     border-color: rgba(255, 255, 255, 0.15);
+    transform: translateX(2px);
   }
   
   &--unread {
@@ -1364,14 +1444,8 @@ html.dark .admin-field select {
   text-align: left;
   background: transparent;
   border: none;
-  cursor: pointer;
   color: inherit;
   font: inherit;
-  
-  &:focus-visible {
-    outline: 2px solid var(--brand-accent);
-    outline-offset: -2px;
-  }
 }
 
 .inquiry-item__status {
@@ -1518,6 +1592,7 @@ html.dark .admin-field select {
   border: 1px solid var(--glass-panel-border);
   white-space: pre-wrap;
   line-height: 1.6;
+  min-height: 3rem; /* Consistent minimum height */
 }
 
 .inquiry-detail__grid {
@@ -1535,6 +1610,151 @@ html.dark .admin-field select {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+/* Status Progression Component */
+.status-progression {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.status-progression__stages {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.status-progression__arrow {
+  color: var(--muted);
+  font-size: 0.875rem;
+  opacity: 0.5;
+}
+
+.status-progression__stage {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--glass-panel-border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover:not(:disabled) {
+    border-color: var(--brand-accent);
+    background: rgba(255, 255, 255, 0.06);
+  }
+  
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  
+  /* Completed stage - stays highlighted */
+  &--completed {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: rgb(16, 185, 129);
+  }
+  
+  /* Current active stage - brighter highlight */
+  &--current {
+    background: rgba(16, 185, 129, 0.25);
+    border-color: rgba(16, 185, 129, 0.6);
+    color: rgb(52, 211, 153);
+    font-weight: 500;
+  }
+  
+  /* Archive button - different styling */
+  &--archive {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--glass-panel-border);
+    color: var(--muted);
+    
+    &:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: rgb(239, 68, 68);
+    }
+    
+    &.status-progression__stage--completed {
+      background: rgba(107, 114, 128, 0.2);
+      border-color: rgba(107, 114, 128, 0.4);
+      color: rgb(156, 163, 175);
+    }
+  }
+}
+
+.status-progression__hint {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.status-progression__stage-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Customer Summary (in Inquiry Detail) */
+.customer-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 0.5rem;
+}
+
+.customer-summary__info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+}
+
+.customer-summary__name {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.customer-summary__email {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.customer-summary__phone {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.customer-summary__stats {
+  font-size: 0.875rem;
+}
+
+.customer-summary__deposits {
+  color: #22c55e;
+}
+
+/* Customer Create Prompt */
+.customer-create {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: 0.5rem;
+}
+
+.customer-create__hint {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin: 0;
 }
 
 .inquiry-detail__notes {
@@ -2227,4 +2447,868 @@ html.dark .inquiry-reply-form__textarea,
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ----------------------------------------------
+   Confirm Dialog
+---------------------------------------------- */
+.confirm-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.confirm-dialog {
+  background: var(--glass-panel-bg, rgba(30, 30, 40, 0.95));
+  border: 1px solid var(--glass-panel-border, rgba(255, 255, 255, 0.1));
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: scaleIn 0.15s ease;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.confirm-dialog__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  color: var(--text, #fff);
+}
+
+.confirm-dialog__message {
+  font-size: 0.9rem;
+  color: var(--muted, rgba(255, 255, 255, 0.7));
+  margin: 0 0 1.5rem;
+  line-height: 1.5;
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+/* Danger button variant */
+.btn--danger {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+  
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.15));
+    border-color: rgba(239, 68, 68, 0.6);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+/* ----------------------------------------------
+   Save Notes Button (Green styling)
+---------------------------------------------- */
+.inquiry-detail__save-notes {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.05));
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: rgba(34, 197, 94, 1);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.25), rgba(34, 197, 94, 0.1));
+    border-color: rgba(34, 197, 94, 0.6);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+  }
+  
+  &--saved {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.15));
+    border-color: rgba(34, 197, 94, 0.6);
+  }
+}
+
+/* ----------------------------------------------
+   Inquiry Detail Page (dedicated view)
+---------------------------------------------- */
+.inquiry-detail-page {
+  width: min(100%, 900px); /* Fixed width, responsive on small screens */
+  margin: 0 auto;
+  justify-self: center; /* Center in grid parent */
+}
+
+.inquiry-detail-page__header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--glass-panel-border, rgba(255, 255, 255, 0.1));
+}
+
+.inquiry-detail-page__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted, rgba(255, 255, 255, 0.7));
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.15s ease;
+  
+  &:hover {
+    color: var(--text, #fff);
+  }
+}
+
+.inquiry-detail-page__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Status badge colors */
+.inquiry-status-badge--deposit_received {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+  border-color: rgba(234, 179, 8, 0.3);
+}
+
+
+/* ==============================================
+   Customer CRM Styles
+============================================== */
+
+/* Customer List */
+.customer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ==============================================
+   Customer Page - Stats, Search, Filter
+============================================== */
+.customers-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.customers-stats {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.customers-stat {
+  flex: 1;
+  min-width: 140px;
+  padding: 1rem 1.25rem;
+  background: var(--glass-panel-bg);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.customers-stat__value {
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.customers-stat__label {
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.customers-stat--highlight {
+  .customers-stat__value {
+    color: rgba(34, 197, 94, 1);
+  }
+}
+
+.customers-toolbar {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.customers-search {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.customers-search__icon {
+  position: absolute;
+  left: 0.75rem;
+  pointer-events: none;
+  opacity: 0.6;
+  font-size: 0.9rem;
+  color: var(--text);
+  z-index: 1;
+}
+
+.customers-search__input {
+  width: 100%;
+  padding: 0.625rem 2.25rem 0.625rem 2.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  
+  // Dark mode styling (explicit to avoid cascade issues)
+  html.dark & {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text);
+    
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+    
+    &:focus {
+      outline: none;
+      border-color: var(--accent, #f472b6);
+      box-shadow: 0 0 0 2px rgba(244, 114, 182, 0.2);
+    }
+  }
+}
+
+.customers-search__clear {
+  position: absolute;
+  right: 0.625rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  font-size: 0.8rem;
+  opacity: 0.6;
+  
+  &:hover {
+    opacity: 1;
+    color: var(--text);
+  }
+}
+
+.customers-sort {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.customers-sort__label {
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.customers-sort__select {
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  appearance: none;
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  cursor: pointer;
+  
+  // Dark mode styling (explicit to avoid cascade issues)
+  html.dark & {
+    background-color: rgba(255, 255, 255, 0.06);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='rgba(255,255,255,0.5)' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text);
+    
+    &:focus {
+      outline: none;
+      border-color: var(--accent, #f472b6);
+    }
+    
+    option {
+      background: #1a1a2e;
+      color: var(--text);
+    }
+  }
+}
+
+.customers-results {
+  font-size: 0.85rem;
+  color: var(--muted);
+  padding: 0.25rem 0;
+}
+
+/* Customer List Items */
+
+.customer-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--glass-panel-bg, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--glass-panel-border, rgba(255, 255, 255, 0.08));
+  border-radius: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.15s ease;
+  
+  &:hover {
+    background: var(--glass-panel-hover, rgba(255, 255, 255, 0.06));
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+}
+
+.customer-item__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.customer-item__name {
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.customer-item__email {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.customer-item__phone {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 0.125rem;
+}
+
+.customer-item__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.customer-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  background: var(--glass-panel-bg);
+  
+  &--deposits {
+    background: rgba(34, 197, 94, 0.1);
+    color: rgba(34, 197, 94, 1);
+  }
+  
+  &--inquiries {
+    background: rgba(59, 130, 246, 0.1);
+    color: rgba(59, 130, 246, 1);
+  }
+}
+
+.customer-stat--large {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: rgba(34, 197, 94, 1);
+}
+
+.customer-item__arrow {
+  color: var(--muted);
+  font-size: 1.25rem;
+}
+
+/* Customer Empty State */
+.customer-empty {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  
+  &__icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+  
+  h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
+.customer-empty--small {
+  text-align: center;
+  padding: 1.5rem;
+  background: var(--glass-panel-bg);
+  border-radius: 0.5rem;
+}
+
+/* Customer Detail Page - match inquiry detail width */
+.customer-detail-page {
+  width: min(100%, 900px);
+  justify-self: center;
+}
+
+.customer-detail-page__header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--glass-panel-border);
+}
+
+.customer-detail-page__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.15s ease;
+  
+  &:hover {
+    color: var(--text);
+  }
+}
+
+.customer-detail-page__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.customer-detail-page__info {
+  padding: 1.25rem;
+  background: var(--glass-panel-bg);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: 0.75rem;
+}
+
+.customer-detail__section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--glass-panel-border);
+}
+
+.customer-detail__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+}
+
+.customer-detail__notes {
+  width: 100%;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: 0.5rem;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: vertical;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+}
+
+.customer-detail__save-notes {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.05));
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: rgba(34, 197, 94, 1);
+  font-weight: 500;
+  
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.25), rgba(34, 197, 94, 0.1));
+    border-color: rgba(34, 197, 94, 0.6);
+  }
+}
+
+/* Deposit List */
+.deposit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.deposit-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--glass-panel-bg);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: 0.5rem;
+}
+
+.deposit-item__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.deposit-item__amount {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.deposit-item__details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.deposit-item__notes {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.deposit-item__actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+/* Deposit Status Badges */
+.deposit-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  
+  &--pending {
+    background: rgba(234, 179, 8, 0.15);
+    color: #eab308;
+  }
+  
+  &--received {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+  }
+  
+  &--refunded {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+  }
+}
+
+/* Add Deposit Form */
+.add-deposit-form {
+  padding: 1rem;
+  background: var(--glass-panel-bg);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: 0.5rem;
+}
+
+.add-deposit-form__row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+  }
+}
+
+.add-deposit-form__field {
+  flex: 1;
+}
+
+.add-deposit-form__label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-bottom: 0.375rem;
+  color: var(--muted);
+}
+
+.add-deposit-form__input-group {
+  display: flex;
+  align-items: center;
+}
+
+.add-deposit-form__prefix {
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-panel-border);
+  border-right: none;
+  border-radius: 0.375rem 0 0 0.375rem;
+  color: var(--muted);
+}
+
+.add-deposit-form__input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: 0.375rem;
+  color: var(--text);
+  font-size: 0.9rem;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+}
+
+.add-deposit-form__input-group .add-deposit-form__input {
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+.add-deposit-form__select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: 0.375rem;
+  color: var(--text);
+  font-size: 0.9rem;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+}
+
+.add-deposit-form__error {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 0.25rem;
+  color: #ef4444;
+  font-size: 0.85rem;
+}
+
+.add-deposit-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Customer Form (New Customer) */
+.customer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.customer-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.customer-form__label {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.customer-form__input,
+.customer-form__textarea {
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: 0.5rem;
+  color: var(--text);
+  font-size: 0.95rem;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+  
+  &::placeholder {
+    color: var(--muted);
+    opacity: 0.6;
+  }
+}
+
+.customer-form__textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.customer-form__error {
+  color: #ef4444;
+  font-size: 0.85rem;
+}
+
+.customer-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--glass-panel-border);
+}
+
+/* Button variants for deposits */
+.btn--success {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #22c55e;
+  
+  &:hover:not(:disabled) {
+    background: rgba(34, 197, 94, 0.25);
+    border-color: rgba(34, 197, 94, 0.6);
+  }
+}
+
+.btn--warning {
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.4);
+  color: #eab308;
+  
+  &:hover:not(:disabled) {
+    background: rgba(234, 179, 8, 0.25);
+    border-color: rgba(234, 179, 8, 0.6);
+  }
+}
+
+.btn--ghost {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+  }
+}
+
+/* Skeleton loading for customer list */
+.customer-item--skeleton {
+  pointer-events: none;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: 0.25rem;
+  
+  &--text {
+    height: 1rem;
+  }
+  
+  &--name {
+    width: 60%;
+    margin-bottom: 0.5rem;
+  }
+  
+  &--email {
+    width: 40%;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ==============================================
+   Customer Page - Inquiry Message List
+============================================== */
+.inquiry-message-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.inquiry-message-item {
+  display: block;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--accent, #f472b6);
+  }
+}
+
+.inquiry-message-item__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.inquiry-message-item__type {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.inquiry-message-item__date {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.inquiry-message-item__text {
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 0.5rem 0;
+}
+
+.inquiry-message-item__design,
+.inquiry-message-item__placement {
+  display: inline-block;
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  margin-right: 0.5rem;
 }

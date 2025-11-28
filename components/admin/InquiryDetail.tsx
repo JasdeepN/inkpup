@@ -1,69 +1,133 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
+import Link from 'next/link';
 import type { Inquiry, EmailTemplate, InquiryEmail } from '@/lib/schemas/inquiry';
+import type { Customer } from '@/lib/schemas/customer';
 import {
   updateInquiryStatusAction,
   updateInquiryNotesAction,
   getTemplatesForReplyAction,
   sendReplyAction,
   getInquiryAction,
+  createCustomerFromInquiryAction,
+  getCustomerForInquiryAction,
+  saveUnifiedNotesAction,
 } from '@/lib/admin-actions-inquiries';
 import InquiryReplyForm from './InquiryReplyForm';
+import ConfirmDialog from './ConfirmDialog';
 
 interface InquiryDetailProps {
   inquiry: Inquiry;
+  /** Callback when status changes (for parent sync) */
+  onStatusChange?: (status: Inquiry['status']) => void;
+  /** Callback to mark as read on any action (deferred read-marking) */
+  onActionTaken?: () => Promise<unknown>;
 }
 
-export default function InquiryDetail({ inquiry }: InquiryDetailProps) {
+export default function InquiryDetail({ 
+  inquiry, 
+  onStatusChange,
+  onActionTaken,
+}: InquiryDetailProps) {
   const [isPending, startTransition] = useTransition();
   const [notes, setNotes] = useState(inquiry.notes || '');
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [emails, setEmails] = useState<InquiryEmail[]>([]);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+  const [notesSaved, setNotesSaved] = useState(false);
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [currentStatus, setCurrentStatus] = useState(inquiry.status);
 
-  // Load templates and emails when expanding
+  // Load templates, emails, and customer on mount (NO auto-mark-read)
   useEffect(() => {
     const loadData = async () => {
-      const [templatesData, inquiryData] = await Promise.all([
+      const [templatesData, inquiryData, customerData] = await Promise.all([
         getTemplatesForReplyAction(),
         getInquiryAction(inquiry.id),
+        getCustomerForInquiryAction(inquiry.id),
       ]);
       setTemplates(templatesData);
       if (inquiryData.inquiry) {
         setEmails(inquiryData.inquiry.emails || []);
+        // Sync status from server
+        if (inquiryData.inquiry.status !== currentStatus) {
+          setCurrentStatus(inquiryData.inquiry.status);
+        }
+      }
+      if (customerData.customer) {
+        setCustomer(customerData.customer);
+        // Use customer notes if available (unified notes)
+        if (customerData.customer.notes) {
+          setNotes(customerData.customer.notes);
+        }
       }
     };
     loadData();
-
-    // Mark as read if unread
-    if (inquiry.status === 'unread') {
-      startTransition(async () => {
-        await updateInquiryStatusAction(inquiry.id, 'read');
-      });
-    }
-  }, [inquiry.id, inquiry.status]);
+  }, [inquiry.id, currentStatus]);
 
   const handleStatusChange = (newStatus: Inquiry['status']) => {
     startTransition(async () => {
+      // Mark as read on any status change (deferred read-marking)
+      if (onActionTaken) await onActionTaken();
+      
       const result = await updateInquiryStatusAction(inquiry.id, newStatus);
       if (result?.error) {
         setMessage({ type: 'error', text: result.error });
       } else {
         setMessage({ type: 'success', text: 'Status updated' });
+        setCurrentStatus(newStatus);
+        onStatusChange?.(newStatus);
       }
       setTimeout(() => setMessage(null), 3000);
     });
   };
 
+  const handleCreateCustomer = () => {
+    startTransition(async () => {
+      if (onActionTaken) await onActionTaken();
+      
+      const result = await createCustomerFromInquiryAction(inquiry.id);
+      if (result?.error) {
+        setMessage({ type: 'error', text: result.error });
+      } else if (result.customer) {
+        setMessage({ type: 'success', text: 'Customer profile created!' });
+        setCustomer(result.customer);
+        setCurrentStatus('customer_created');
+        onStatusChange?.('customer_created');
+      }
+      setTimeout(() => setMessage(null), 3000);
+    });
+  };
+
+  const handleArchiveClick = () => {
+    setShowArchiveConfirm(true);
+  };
+
+  const handleArchiveConfirm = () => {
+    setShowArchiveConfirm(false);
+    handleStatusChange('archived');
+  };
+
   const handleSaveNotes = () => {
     startTransition(async () => {
-      const result = await updateInquiryNotesAction(inquiry.id, notes);
+      // Mark as read on save notes (deferred read-marking)
+      if (onActionTaken) await onActionTaken();
+      
+      // Use unified notes - saves to customer if linked, otherwise to inquiry
+      const result = await saveUnifiedNotesAction(inquiry.id, notes);
       if (result?.error) {
         setMessage({ type: 'error', text: result.error });
       } else {
         setMessage({ type: 'success', text: 'Notes saved' });
+        setNotesSaved(true);
+        setTimeout(() => setNotesSaved(false), 2000);
+        // Update customer state with new notes if linked
+        if (customer) {
+          setCustomer({ ...customer, notes });
+        }
       }
       setTimeout(() => setMessage(null), 3000);
     });
@@ -72,10 +136,18 @@ export default function InquiryDetail({ inquiry }: InquiryDetailProps) {
   const handleReplySent = () => {
     setShowReplyForm(false);
     setMessage({ type: 'success', text: 'Reply sent!' });
+    
+    // Mark as read on reply (deferred read-marking)
+    if (onActionTaken) onActionTaken();
+    
     // Reload emails
     getInquiryAction(inquiry.id).then(({ inquiry: updated }) => {
       if (updated) setEmails(updated.emails || []);
     });
+    
+    // Notify parent of status change to 'replied'
+    onStatusChange?.('replied');
+    
     setTimeout(() => setMessage(null), 3000);
   };
 
@@ -134,28 +206,70 @@ export default function InquiryDetail({ inquiry }: InquiryDetailProps) {
         )}
       </div>
 
-      {/* Status Actions */}
+      {/* Customer Profile Section */}
+      <div className="inquiry-detail__section">
+        <h4 className="inquiry-detail__label">Customer Profile</h4>
+        {customer ? (
+          <div className="customer-summary">
+            <div className="customer-summary__info">
+              <span className="customer-summary__name">{customer.name}</span>
+              <span className="customer-summary__email">{customer.email}</span>
+              {customer.phone && (
+                <span className="customer-summary__phone">{customer.phone}</span>
+              )}
+            </div>
+            <div className="customer-summary__stats">
+              <span className="customer-summary__deposits">
+                💰 ${(customer.total_deposits || 0).toFixed(2)} total deposits
+              </span>
+            </div>
+            <Link 
+              href={`/dashboard/customers/${customer.id}`}
+              className="btn btn--sm btn--outline"
+            >
+              View Customer →
+            </Link>
+          </div>
+        ) : (
+          <div className="customer-create">
+            <p className="customer-create__hint">
+              Create a customer profile to track deposits and manage bookings.
+            </p>
+            <button
+              type="button"
+              className="btn btn--sm btn--primary"
+              onClick={handleCreateCustomer}
+              disabled={isPending}
+            >
+              {isPending ? 'Creating...' : '👤 Create Customer Profile'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Status Progression */}
       <div className="inquiry-detail__section">
         <h4 className="inquiry-detail__label">Status</h4>
-        <div className="inquiry-detail__actions">
-          <button
-            type="button"
-            className={`btn btn--sm ${inquiry.status === 'booked' ? 'btn--primary' : 'btn--outline'}`}
-            onClick={() => handleStatusChange('booked')}
-            disabled={isPending}
-          >
-            ✓ Booked
-          </button>
-          <button
-            type="button"
-            className={`btn btn--sm ${inquiry.status === 'archived' ? 'btn--secondary' : 'btn--outline'}`}
-            onClick={() => handleStatusChange('archived')}
-            disabled={isPending}
-          >
-            Archive
-          </button>
-        </div>
+        <StatusProgression 
+          currentStatus={currentStatus}
+          hasCustomer={!!customer}
+          onStatusChange={handleStatusChange}
+          onArchiveClick={handleArchiveClick}
+          isPending={isPending}
+        />
       </div>
+
+      {/* Archive Confirmation Dialog */}
+      <ConfirmDialog
+        open={showArchiveConfirm}
+        title="📦 Archive Inquiry"
+        message={`Are you sure you want to archive this inquiry from ${inquiry.name}? You can unarchive it later from the Archived tab.`}
+        confirmText="Archive"
+        cancelText="Cancel"
+        confirmVariant="danger"
+        onConfirm={handleArchiveConfirm}
+        onCancel={() => setShowArchiveConfirm(false)}
+      />
 
       {/* Notes */}
       <div className="inquiry-detail__section">
@@ -169,11 +283,11 @@ export default function InquiryDetail({ inquiry }: InquiryDetailProps) {
         />
         <button
           type="button"
-          className="btn btn--sm btn--outline mt-2"
+          className={`btn btn--sm inquiry-detail__save-notes mt-2 ${notesSaved ? 'inquiry-detail__save-notes--saved' : ''}`}
           onClick={handleSaveNotes}
           disabled={isPending}
         >
-          Save Notes
+          {notesSaved ? '✓ Saved!' : '💾 Save Notes'}
         </button>
       </div>
 
@@ -225,6 +339,163 @@ export default function InquiryDetail({ inquiry }: InquiryDetailProps) {
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Status Progression Component
+ * Shows the workflow: Customer Created → Deposit → Design → Booked → Archive
+ * Previous stages stay highlighted, can't skip stages (except archive)
+ */
+interface StatusProgressionProps {
+  currentStatus: Inquiry['status'];
+  hasCustomer: boolean;
+  onStatusChange: (status: Inquiry['status']) => void;
+  onArchiveClick: () => void;
+  isPending: boolean;
+}
+
+function StatusProgression({ 
+  currentStatus,
+  hasCustomer,
+  onStatusChange, 
+  onArchiveClick,
+  isPending 
+}: StatusProgressionProps) {
+  // Define the progression order: customer_created → deposit_received → design → booked
+  type Stage = 'customer_created' | 'deposit_received' | 'design' | 'booked';
+  const stages: Stage[] = ['customer_created', 'deposit_received', 'design', 'booked'];
+  
+  // Get numeric level for current status
+  const getStatusLevel = (status: string): number => {
+    if (status === 'archived') return 999; // Special case
+    if (status === 'booked') return 4;
+    if (status === 'design') return 3;
+    if (status === 'deposit_received') return 2;
+    if (status === 'customer_created') return 1;
+    return 0; // read, replied, unread
+  };
+  
+  const currentLevel = getStatusLevel(currentStatus);
+  const isArchived = currentStatus === 'archived';
+  
+  // Check if a stage is completed (at or past this stage)
+  const isStageCompleted = (stage: Stage): boolean => {
+    const stageLevel = getStatusLevel(stage);
+    return currentLevel >= stageLevel;
+  };
+  
+  // Check if a stage can be clicked
+  const canClickStage = (stage: Stage): boolean => {
+    if (isArchived) return false;
+    if (isPending) return false;
+    
+    const stageLevel = getStatusLevel(stage);
+    
+    // Customer created requires having a customer
+    if (stage === 'customer_created' && !hasCustomer) return false;
+    
+    // Can click if it's the current stage (to go back) or the next available stage
+    // But must have completed previous stages
+    if (stage === 'deposit_received' && !isStageCompleted('customer_created')) return false;
+    if (stage === 'design' && !isStageCompleted('deposit_received')) return false;
+    if (stage === 'booked' && !isStageCompleted('design')) return false;
+    
+    return stageLevel <= currentLevel + 1;
+  };
+
+  const handleStageClick = (stage: Stage) => {
+    if (!canClickStage(stage)) return;
+    
+    const stageLevel = getStatusLevel(stage);
+    
+    // If clicking current stage, go back to previous
+    if (stageLevel === currentLevel) {
+      const currentIndex = stages.indexOf(stage);
+      if (currentIndex > 0) {
+        onStatusChange(stages[currentIndex - 1]);
+      } else {
+        onStatusChange('read');
+      }
+    } else {
+      // Moving forward
+      onStatusChange(stage);
+    }
+  };
+
+  const stageLabels: Record<Stage, { icon: string; label: string }> = {
+    customer_created: { icon: '👤', label: 'Customer Created' },
+    deposit_received: { icon: '💰', label: 'Deposit Received' },
+    design: { icon: '🎨', label: 'Design Phase' },
+    booked: { icon: '✓', label: 'Booked' },
+  };
+
+  const getStageTitle = (stage: Stage): string => {
+    if (isArchived) return 'Inquiry archived';
+    if (!canClickStage(stage)) {
+      if (stage === 'customer_created' && !hasCustomer) {
+        return 'Create customer profile first';
+      }
+      const prevStage = stages[stages.indexOf(stage) - 1];
+      if (prevStage) {
+        return `Complete "${stageLabels[prevStage].label}" first`;
+      }
+    }
+    if (isStageCompleted(stage)) {
+      return `${stageLabels[stage].label} ✓`;
+    }
+    return `Mark as ${stageLabels[stage].label}`;
+  };
+
+  return (
+    <div className="status-progression">
+      <div className="status-progression__stages">
+        {stages.map((stage, index) => (
+          <div key={stage} className="status-progression__stage-wrapper">
+            {index > 0 && <span className="status-progression__arrow">→</span>}
+            <button
+              type="button"
+              className={`status-progression__stage ${
+                isStageCompleted(stage) ? 'status-progression__stage--completed' : ''
+              } ${currentStatus === stage ? 'status-progression__stage--current' : ''} ${
+                !canClickStage(stage) ? 'status-progression__stage--disabled' : ''
+              }`}
+              onClick={() => handleStageClick(stage)}
+              disabled={isPending || isArchived || !canClickStage(stage)}
+              title={getStageTitle(stage)}
+            >
+              {stageLabels[stage].icon} {stageLabels[stage].label}
+            </button>
+          </div>
+        ))}
+        
+        {/* Archive - always available */}
+        <span className="status-progression__arrow">→</span>
+        <button
+          type="button"
+          className={`status-progression__stage status-progression__stage--archive ${
+            isArchived ? 'status-progression__stage--completed' : ''
+          }`}
+          onClick={onArchiveClick}
+          disabled={isPending}
+          title={isArchived ? 'Archived' : 'Archive inquiry'}
+        >
+          Archive
+        </button>
+      </div>
+
+      {/* Helper text */}
+      {!isArchived && currentLevel === 0 && !hasCustomer && (
+        <p className="status-progression__hint">
+          Create a customer profile to start tracking progress
+        </p>
+      )}
+      {!isArchived && hasCustomer && currentLevel < 1 && (
+        <p className="status-progression__hint">
+          Click &quot;Customer Created&quot; to confirm the profile
+        </p>
+      )}
     </div>
   );
 }

@@ -267,3 +267,120 @@ export async function sendTemplateReplyAction(
     customVariables
   );
 }
+
+// ============================================
+// Customer Linking Actions
+// ============================================
+
+import { linkInquiryToCustomer } from './db/inquiries';
+import { getOrCreateCustomer, getCustomerById } from './db/customers';
+import type { Customer } from './schemas/customer';
+
+/**
+ * Create a customer from inquiry details and link them
+ */
+export async function createCustomerFromInquiryAction(
+  inquiryId: number
+): Promise<{ customer: Customer | null; error?: string }> {
+  const db = getD1Binding();
+  if (!db) {
+    return { customer: null, error: 'Database not available' };
+  }
+
+  // Get the inquiry
+  const inquiry = await getInquiryById(db, inquiryId);
+  if (!inquiry) {
+    return { customer: null, error: 'Inquiry not found' };
+  }
+
+  // Check if already linked to a customer
+  if (inquiry.customer_id) {
+    const existing = await getCustomerById(inquiry.customer_id, db);
+    if (existing) {
+      return { customer: existing, error: 'Inquiry already linked to a customer' };
+    }
+  }
+
+  // Create or get existing customer (copy notes from inquiry)
+  const customer = await getOrCreateCustomer(
+    inquiry.email,
+    inquiry.name,
+    inquiry.phone,
+    inquiry.notes,
+    db
+  );
+
+  if (!customer) {
+    return { customer: null, error: 'Failed to create customer' };
+  }
+
+  // Link inquiry to customer (also sets status to customer_created)
+  const linked = await linkInquiryToCustomer(db, inquiryId, customer.id);
+  if (!linked) {
+    return { customer: null, error: 'Failed to link inquiry to customer' };
+  }
+
+  revalidatePath('/dashboard/inquiries');
+  revalidatePath(`/dashboard/inquiries/${inquiryId}`);
+  revalidatePath('/dashboard/customers');
+
+  return { customer };
+}
+
+/**
+ * Get customer linked to an inquiry
+ */
+export async function getCustomerForInquiryAction(
+  inquiryId: number
+): Promise<{ customer: Customer | null; error?: string }> {
+  const db = getD1Binding();
+  if (!db) {
+    return { customer: null, error: 'Database not available' };
+  }
+
+  const inquiry = await getInquiryById(db, inquiryId);
+  if (!inquiry || !inquiry.customer_id) {
+    return { customer: null };
+  }
+
+  const customer = await getCustomerById(inquiry.customer_id, db);
+  return { customer };
+}
+
+/**
+ * Save unified notes - saves to customer if linked, otherwise to inquiry
+ */
+export async function saveUnifiedNotesAction(
+  inquiryId: number,
+  notes: string
+): Promise<ActionState> {
+  const db = getD1Binding();
+  if (!db) {
+    return { error: 'Database not available' };
+  }
+
+  // Get inquiry to check if linked to customer
+  const inquiry = await getInquiryById(db, inquiryId);
+  if (!inquiry) {
+    return { error: 'Inquiry not found' };
+  }
+
+  if (inquiry.customer_id) {
+    // Save to customer (unified notes)
+    const { updateCustomer } = await import('./db/customers');
+    const customer = await updateCustomer(inquiry.customer_id, { notes }, db);
+    if (!customer) {
+      return { error: 'Failed to save notes' };
+    }
+    revalidatePath(`/dashboard/customers/${inquiry.customer_id}`);
+  } else {
+    // Save to inquiry (no customer linked yet)
+    const success = await updateInquiryNotes(db, inquiryId, notes);
+    if (!success) {
+      return { error: 'Failed to save notes' };
+    }
+  }
+
+  revalidatePath(`/dashboard/inquiries/${inquiryId}`);
+  return { success: 'Notes saved' };
+}
