@@ -11,7 +11,24 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboardPage() {
-  const stats = await getDashboardStats();
+  let stats;
+  try {
+    stats = await getDashboardStats();
+  } catch (error) {
+    console.error('[Dashboard] Failed to load stats:', error);
+    // Return error state instead of throwing
+    return (
+      <div className="admin-shell">
+        <div className="admin-card admin-alert admin-alert--error">
+          <h2>Dashboard Error</h2>
+          <p>Failed to load dashboard statistics. Error: {error instanceof Error ? error.message : 'Unknown error'}</p>
+          <pre style={{ fontSize: '0.75rem', marginTop: '1rem', overflow: 'auto' }}>
+            {error instanceof Error ? error.stack : JSON.stringify(error)}
+          </pre>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-shell admin-dashboard">
