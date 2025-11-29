@@ -9,38 +9,57 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminGalleryPage() {
-  const canMutate = hasR2Credentials();
-  
-  // Fetch all categories in parallel
-  const [jobSummary, ...galleryResults] = await Promise.all([
-    getUploadJobSummary(),
-    ...GALLERY_CATEGORIES.map((cat) => listGalleryImages(cat).asPromise()),
-  ]);
+  try {
+    const canMutate = hasR2Credentials();
+    
+    // Fetch all categories in parallel
+    const [jobSummary, ...galleryResults] = await Promise.all([
+      getUploadJobSummary(),
+      ...GALLERY_CATEGORIES.map((cat) => listGalleryImages(cat).asPromise()),
+    ]);
 
-  // Combine into category data array
-  const categories = GALLERY_CATEGORIES.map((cat, index) => ({
-    category: cat,
-    images: galleryResults[index],
-  }));
+    // Combine into category data array
+    const categories = GALLERY_CATEGORIES.map((cat, index) => ({
+      category: cat,
+      images: galleryResults[index],
+    }));
 
-  const pendingJobs = jobSummary.queued + jobSummary.scheduled;
+    const pendingJobs = jobSummary.queued + jobSummary.scheduled;
 
-  return (
-    <div className="admin-shell">
-      <h1 className="text-2xl font-bold mb-4">
-        Gallery management
-        {pendingJobs > 0 && (
-          <span className="gallery-upload-panel__badge gallery-upload-panel__badge--pending ml-3">
-            {pendingJobs} processing
-          </span>
-        )}
-      </h1>
-      <GallerySectionList
-        categories={categories}
-        jobSummary={jobSummary}
-        canMutate={canMutate}
-      />
-    </div>
-  );
+    return (
+      <div className="admin-shell">
+        <h1 className="text-2xl font-bold mb-4">
+          Gallery management
+          {pendingJobs > 0 && (
+            <span className="gallery-upload-panel__badge gallery-upload-panel__badge--pending ml-3">
+              {pendingJobs} processing
+            </span>
+          )}
+        </h1>
+        <GallerySectionList
+          categories={categories}
+          jobSummary={jobSummary}
+          canMutate={canMutate}
+        />
+      </div>
+    );
+  } catch (error) {
+    console.error('[AdminGalleryPage] Error:', error);
+    return (
+      <div className="admin-shell p-6">
+        <h1 className="text-2xl font-bold text-red-600 mb-4">Gallery Error</h1>
+        <div className="bg-red-50 border border-red-200 rounded p-4">
+          <p className="text-red-800">
+            {error instanceof Error ? error.message : 'Unknown error loading gallery'}
+          </p>
+          {error instanceof Error && error.stack && (
+            <pre className="mt-2 text-xs text-red-600 overflow-auto max-h-64">
+              {error.stack}
+            </pre>
+          )}
+        </div>
+      </div>
+    );
+  }
 }
 

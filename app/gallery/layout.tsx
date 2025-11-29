@@ -5,6 +5,9 @@ import { isAdminHost } from '../../lib/admin-hosts';
 import AdminNav from '../../components/admin/AdminNav';
 import type { ReactNode } from 'react';
 
+// Force dynamic rendering - this layout reads cookies/headers at runtime
+export const dynamic = 'force-dynamic';
+
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   if (!isAdminEnabled()) {
     notFound();

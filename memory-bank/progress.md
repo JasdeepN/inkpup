@@ -1,21 +1,13 @@
-# Progress (Updated: 2025-11-28)
+# Progress (Updated: 2025-11-29)
 
 ## Done
 
-- Admin SCSS refactoring: Split 3314-line _admin.scss into 7 modular partials
-- Created admin/ directory structure with _index.scss aggregator
-- Added admin design tokens to _variables.scss (~30 lines)
-- Added admin mixins to _components.scss (~100 lines)
-- Fixed @use dependencies in partials for mixin access
-- Verified build passes and all 717 tests pass
-- Committed refactoring with hash 9e0e7deb
+- Applied 6 D1 migrations to dev database including email template seeding
 
 ## Doing
 
-
+- Investigating /gallery 500 error on dev.admin.inkpup.ca
 
 ## Next
 
-- Visual testing of admin pages to confirm zero UI regressions
-- Delete _admin.scss.old after visual verification
-- Push changes to remote
+
