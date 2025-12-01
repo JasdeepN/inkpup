@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { SyntheticEvent } from 'react';
+import type { SyntheticEvent, TouchEvent as ReactTouchEvent } from 'react';
 import type { GalleryItem, GalleryCategory } from '../lib/gallery-types';
 import { GALLERY_CATEGORIES, getCategoryLabel } from '../lib/gallery-types';
 import Gallery from './Gallery';
@@ -213,12 +213,89 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
     }
   }, []);
 
+  // Phase 2.1: Navigate to next/previous image with View Transitions
+  const navigateImage = useCallback((direction: 'next' | 'prev') => {
+    if (!selected) return;
+    const currentIndex = items.findIndex(item => item.id === selected.id || item.src === selected.src);
+    if (currentIndex === -1) return;
+    
+    const nextIndex = direction === 'next' 
+      ? Math.min(currentIndex + 1, items.length - 1)
+      : Math.max(currentIndex - 1, 0);
+    
+    if (nextIndex === currentIndex) return;
+    
+    const nextItem = items[nextIndex];
+    if (supportsViewTransitions()) {
+      void startViewTransition(() => {
+        setSelected(nextItem);
+      });
+    } else {
+      setSelected(nextItem);
+    }
+  }, [selected, items]);
+
+  // Phase 2.1: Keyboard navigation for modal
+  useEffect(() => {
+    if (!selected) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        navigateImage('next');
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        navigateImage('prev');
+      }
+      // Note: Escape is handled by dialog's onCancel
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selected, navigateImage]);
+
+  // Phase 2.2: Swipe gesture state
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const SWIPE_THRESHOLD = 50;
+
+  const handleTouchStart = useCallback((e: ReactTouchEvent) => {
+    touchStartRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+  }, []);
+
+  const handleTouchEnd = useCallback((e: ReactTouchEvent) => {
+    if (!touchStartRef.current) return;
+    
+    const deltaX = e.changedTouches[0].clientX - touchStartRef.current.x;
+    const deltaY = e.changedTouches[0].clientY - touchStartRef.current.y;
+    
+    // Only trigger if horizontal swipe is dominant
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > SWIPE_THRESHOLD) {
+      if (deltaX > 0) {
+        navigateImage('prev'); // Swipe right = previous
+      } else {
+        navigateImage('next'); // Swipe left = next
+      }
+    }
+    
+    touchStartRef.current = null;
+  }, [navigateImage]);
+
+  // Current image index for navigation hints
+  const currentIndex = useMemo(() => {
+    if (!selected) return -1;
+    return items.findIndex(item => item.id === selected.id || item.src === selected.src);
+  }, [selected, items]);
+
   return (
     <div className="gallery-view">
       <div className="gallery-filters" role="tablist" aria-label="Gallery categories">
         {GALLERY_CATEGORIES.filter(category => category !== 'hero').map((category) => {
           const label = getCategoryLabel(category);
           const isActive = category === activeCategory;
+          const count = itemsByCategory[category]?.length;
           return (
             <button
               key={category}
@@ -229,6 +306,11 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
               onClick={() => fetchCategory(category)}
             >
               {label}
+              {count !== undefined && (
+                <span className="gallery-filter__count" aria-label={`${count} items`}>
+                  {count}
+                </span>
+              )}
             </button>
           );
         })}
@@ -247,7 +329,9 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
         </section>
       )}
 
+      {/* Phase 2.4: key triggers re-mount animation on category change */}
       <Gallery
+        key={activeCategory}
         items={items}
         loading={loading}
         onSelect={handleSelect}
@@ -267,8 +351,35 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
           // Assign view-transition-name for modal container when supported
           {...(supportsViewTransitions() ? { style: { viewTransitionName: 'gallery-modal' } as any } : {})}
         >
-          <div className="gallery-modal__content">
+          <div 
+            className="gallery-modal__content"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
             <button className="gallery-modal__close" type="button" onClick={closeModal} aria-label="Close image preview">✕</button>
+            
+            {/* Navigation arrows (desktop) */}
+            {currentIndex > 0 && (
+              <button 
+                className="gallery-modal__nav gallery-modal__nav--prev" 
+                type="button" 
+                onClick={() => navigateImage('prev')}
+                aria-label="Previous image"
+              >
+                ‹
+              </button>
+            )}
+            {currentIndex < items.length - 1 && (
+              <button 
+                className="gallery-modal__nav gallery-modal__nav--next" 
+                type="button" 
+                onClick={() => navigateImage('next')}
+                aria-label="Next image"
+              >
+                ›
+              </button>
+            )}
+            
             <div
               className="gallery-modal__image"
               style={modalSize ? { width: `${modalSize.width}px`, height: `${modalSize.height}px` } : undefined}
@@ -284,14 +395,21 @@ export default function GalleryView({ initialCategory, initialData }: GalleryVie
                 {...(supportsViewTransitions() ? { style: { viewTransitionName: 'gallery-img' } as any } : {})}
               />
             </div>
-            {(selected.alt || (captionsEnabled && selected.caption)) && (
-              <div className="gallery-modal__footer">
-                <p className="gallery-modal__title">{selected.alt || 'Untitled artwork'}</p>
-                {captionsEnabled && selected.caption && (
-                  <p className="gallery-modal__caption">{selected.caption}</p>
-                )}
-              </div>
-            )}
+            <div className="gallery-modal__footer">
+              {(selected.alt || (captionsEnabled && selected.caption)) && (
+                <>
+                  <p className="gallery-modal__title">{selected.alt || 'Untitled artwork'}</p>
+                  {captionsEnabled && selected.caption && (
+                    <p className="gallery-modal__caption">{selected.caption}</p>
+                  )}
+                </>
+              )}
+              {/* Navigation hint */}
+              <p className="gallery-modal__nav-hint">
+                {currentIndex + 1} / {items.length}
+                <span className="gallery-modal__nav-hint-keys"> · ← → to navigate</span>
+              </p>
+            </div>
           </div>
         </dialog>
       )}

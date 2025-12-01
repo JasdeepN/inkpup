@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import SmartImage from './SmartImage';
 import RevealOnScroll from './animations/RevealOnScroll';
 import { generateStaggerDelays } from '../lib/animations/stagger';
+import { useCursorPosition } from '../lib/hooks/useCursorPosition';
 import type { GalleryItem } from '../lib/gallery-types';
 import { isGalleryCaptionsEnabled } from '../lib/featureFlags';
 
@@ -18,6 +19,10 @@ const skeletonKeys = ['one', 'two', 'three', 'four', 'five', 'six'];
 
 export default function Gallery({ items, loading = false, onSelect, fallbackActive = false }: GalleryProps) {
   const captionsEnabled = isGalleryCaptionsEnabled();
+  const gridRef = useRef<HTMLDivElement>(null);
+  
+  // Phase 2.3: Cursor spotlight effect
+  const cursorPosition = useCursorPosition(gridRef, items.length > 0);
   
   // Generate stagger delays for gallery cards (50ms increment, early trigger)
   const staggerDelays = useMemo(() => 
@@ -61,15 +66,16 @@ export default function Gallery({ items, loading = false, onSelect, fallbackActi
                 priority={idx < 3}
                 data-e2e-id={`gallery-img-${idx}`}
               />
-            </div>
-            {(item.alt || (captionsEnabled && item.caption)) && (
-              <figcaption className="gallery-card__meta" data-e2e-id={`gallery-caption-${idx}`}>
-                <span className="gallery-card__meta-primary">{item.alt || 'Untitled artwork'}</span>
+              {/* Hover overlay with info reveal */}
+              <div className="gallery-card__overlay" aria-hidden="true">
+                <span className="gallery-card__overlay-title">
+                  {item.alt || 'View artwork'}
+                </span>
                 {captionsEnabled && item.caption && (
-                  <span className="gallery-card__meta-secondary">{item.caption}</span>
+                  <span className="gallery-card__overlay-caption">{item.caption}</span>
                 )}
-              </figcaption>
-            )}
+              </div>
+            </div>
           </button>
         </figure>
       </RevealOnScroll>
@@ -77,7 +83,15 @@ export default function Gallery({ items, loading = false, onSelect, fallbackActi
   }, [captionsEnabled, fallbackActive, items, loading, onSelect, staggerDelays]);
 
   return (
-    <div className="gallery-grid" data-state={loading ? 'loading' : 'idle'}>
+    <div 
+      ref={gridRef}
+      className="gallery-grid" 
+      data-state={loading ? 'loading' : 'idle'}
+      style={{
+        '--cursor-x': cursorPosition.x,
+        '--cursor-y': cursorPosition.y,
+      } as React.CSSProperties}
+    >
       {content}
     </div>
   );

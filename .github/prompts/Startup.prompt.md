@@ -6,7 +6,7 @@ description: Startup prompt for new chat sessions
 
 **⚠️ CRITICAL: THIS FILE IS READ-ONLY ⚠️**
 **DO NOT MODIFY THIS PROMPT FILE. It is a template for agent workflows.**
-**All work, plans, and context must be saved to memory-bank/, NOT here.**
+**All work, plans, and context must be saved to AI-Memory/, NOT here.**
 
 
 [New Task Or Continuing Session?]
@@ -14,7 +14,7 @@ description: Startup prompt for new chat sessions
 ## Instructions for Every New Chat
 
 - Ask whether this is a new task or continuation of a previous session.
-- Check if Memory Bank is active, if not activate it.
+- Check if AI-Memory is active, if not activate it.
 - Check if MCPs are enabled. if not, enable them.
 
 ## New Task Checklist

@@ -1,12 +1,13 @@
 ---
 description: Comprehensive memory bank checkpoint and update workflow
+version: "1.0.0"
 ---
 
-# Memory Bank Checkpoint
+# AI-Memory Checkpoint
 
 **⚠️ CRITICAL: THIS FILE IS READ-ONLY ⚠️**
 **DO NOT MODIFY THIS PROMPT FILE. It is a template for agent workflows.**
-**All work, plans, and context must be saved to memory-bank/, NOT here.**
+**All work, plans, and context must be saved to AI-Memory/, NOT here.**
 
 
 This prompt guides a comprehensive review and update of all memory bank files, captures recent progress, documents decisions, and generates a commit message summarizing the session.
@@ -18,11 +19,11 @@ Run this checkpoint at the end of a coding session or when significant work has 
 ### Step 1: Review Current State
 
 1. **Read all memory files** in this order:
-   - `memory-bank/productContext.md` - Understand the project scope
-   - `memory-bank/activeContext.md` - Current goals and blockers
-   - `memory-bank/systemPatterns.md` - Architectural patterns
-   - `memory-bank/decisionLog.md` - Past decisions
-   - `memory-bank/progress.md` - Recent work
+   - `AI-Memory/productContext.md` - Understand the project scope
+   - `AI-Memory/activeContext.md` - Current goals and blockers
+   - `AI-Memory/systemPatterns.md` - Architectural patterns
+   - `AI-Memory/decisionLog.md` - Past decisions
+   - `AI-Memory/progress.md` - Recent work
 
 2. **Gather session context**:
    - Review recent git changes: `git status` and `git diff`
@@ -160,12 +161,6 @@ Before completing:
 - [ ] System patterns reflect current architecture
 - [ ] Commit message follows conventional commits format
 - [ ] Recommendations are actionable and specific
-
-### Step 7: Cleanup
-
-- [ ] Remove any temporary notes or drafts from memory files
-- [ ] Move all completed Plans/Researches to completed Archive (`memory-bank/archive/...`)
-- [ ] Place files in appropriate folders (UI, Backend, DevOps, etc.) 
 
 ## Usage
 

@@ -2,7 +2,7 @@
 
 **⚠️ CRITICAL: THIS FILE IS READ-ONLY ⚠️**
 **DO NOT MODIFY THIS PROMPT FILE. It is a template for agent workflows.**
-**All work, plans, and context must be saved to memory-bank/, NOT here.**
+**All work, plans, and context must be saved to AI-Memory/, NOT here.**
 
 
 ## Instructions
@@ -10,17 +10,6 @@
 Use this prompt to break down any complex task into actionable steps, assign #todos for each, and utilize available tools for tracking and execution. Each step should be clear, specific, and saved to #MemoryManagement for progress tracking.
 
 **Important:** This prompt template is for planning only. All generated plans, tasks, and progress must be saved to the Memory Management system, NOT to this prompt file.
-
----
-
-## ⚠️ Mandatory Outputs
-
-**Every Plan phase MUST produce BOTH:**
-
-1. **Plan File** → `memory-bank/plan-<feature>-<YYYY-MM-DD>.md`
-2. **Memory Updates** → Update `activeContext.md`, `progress.md`, `decisionLog.md`
-
-**Do not skip either output.** The plan file is the artifact; memory updates maintain continuity.
 
 ---
 
@@ -75,36 +64,21 @@ For each step, specify which tools or functions to use (e.g., code generation, u
 
 ---
 
-## 6. Save Plan & Update Memory
+## 6. Save to Memory Management
 
-**⚠️ MANDATORY: Complete BOTH steps.**
+**Use #MemoryManagement to save all task data:**
 
-### Step 1: Create Plan File
+- Save the complete plan to #MemoryManagement using appropriate commands
+- Store task breakdown in the project context
+- Log each #todo to the progress tracking system
+- Update active context with current task focus
+- Document key decisions made during planning
 
-**Filename:** `memory-bank/plan-<feature-slug>-<YYYY-MM-DD>.md`
-
-*(Example: `memory-bank/plan-image-gallery-2025-11-26.md`)*
-
-Include in the file:
-- Task definition and scope
-- Breakdown of steps with #todos
-- Tools and dependencies
-- Success criteria
-- Link to research brief (if exists)
-
-### Step 2: Update Memory (ALL required)
-
-```
-#MemoryManagement updateContext "Planning: <feature> — Plan: plan-<feature>-<date>.md"
-#MemoryManagement updateProgress "Done: Plan for <feature>; Doing: <first todo>; Next: <remaining todos>"
-#MemoryManagement logDecision "<planning decision>" "Context: <rationale>" (if significant choices made)
-```
-
-**Checklist before proceeding to Execute:**
-- [ ] Plan file created in `memory-bank/`
-- [ ] `activeContext.md` updated with plan link
-- [ ] `progress.md` updated with todos
-- [ ] Planning decisions logged (if any)
+**Memory Management Actions:**
+- Use `#MemoryManagement updateProgress` to track task status
+- Use `#MemoryManagement logDecision` for important choices
+- Use `#MemoryManagement updateContext` to set current focus
+- Use `#MemoryManagement updateSystemPatterns` for reusable patterns
 
 **Do NOT modify this prompt file** - it is a template for creating plans, not for storing them.
 
@@ -115,13 +89,10 @@ Include in the file:
 Plan for periodic reviews and adjust steps as needed based on feedback or new information.
 
 **Review Checklist:**
-
-**⚠️ Required Artifacts (MUST have both):**
-- [ ] **Plan file created:** `memory-bank/plan-<feature>-<YYYY-MM-DD>.md`
-- [ ] **Memory updated:**
-  - [ ] `activeContext.md` — current focus + link to plan file
-  - [ ] `progress.md` — todos with status
-  - [ ] `decisionLog.md` — planning decisions (if any)
+- Verify all tasks are saved to #MemoryManagement
+- Confirm #todos are tracked in progress system
+- Ensure active context reflects current priorities
+- Document any blockers or decisions
 
 ---
 

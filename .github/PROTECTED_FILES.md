@@ -16,7 +16,7 @@ The following directories contain files that define agent behavior and MUST NOT 
 
 ### 1. Explicit Instructions in copilot-instructions.md
 
-The main instruction file (`/home/admin/projects/web/.github/instructions/copilot-instructions.md`) contains a **CRITICAL** section at the top:
+The main instruction file contains a **CRITICAL** section at the top:
 
 ```markdown
 **CRITICAL: PROTECTED FILES - DO NOT MODIFY**
@@ -47,10 +47,10 @@ Each prompt template file (`.github/prompts/*.md`) includes a warning header:
 ```markdown
 **⚠️ CRITICAL: THIS FILE IS READ-ONLY ⚠️**
 **DO NOT MODIFY THIS PROMPT FILE. It is a template for agent workflows.**
-**All work, plans, and context must be saved to memory-bank/, NOT here.**
+**All work, plans, and context must be saved to AI-Memory/, NOT here.**
 ```
 
-This serves as both a protection and a reminder that outputs should go to `memory-bank/`, not back into the prompt files.
+This serves as both a protection and a reminder that outputs should go to `AI-Memory/`, not back into the prompt files.
 
 ### 4. .copilotignore File
 
@@ -96,6 +96,7 @@ Only humans should modify these files, and only when:
 - `Checkpoint.prompt.md` - Memory bank checkpoint workflow
 - `Startup.prompt.md` - Session initialization workflow
 - `GH.prompt.md` - GitHub Actions monitoring workflow
+- `Sync.prompt.md` - Memory-codebase synchronization workflow
 
 ### Agent Files (`.github/agents/`)
 - `memory-deep-think.agent.md` - Memory management and deep thinking
@@ -111,7 +112,7 @@ Only humans should modify these files, and only when:
 
 Agents should output their work to:
 
-- **`memory-bank/`** - For context, decisions, progress, patterns
+- **`AI-Memory/`** - For context, decisions, progress, patterns
 - **`app/`, `components/`, `lib/`** - For code implementation
 - **`docs/`** - For project documentation
 - **Root config files** - For build/deployment configuration
@@ -146,6 +147,9 @@ git log --oneline -- .github/prompts/ .github/agents/ .github/instructions/
   - Added read-only warnings to all prompt files
   - Created .copilotignore file
   - Created this documentation
+- 2025-12-01: Updated for AI-Memory folder structure
+  - Changed memory-bank references to AI-Memory
+  - Updated file list (consolidated to 5 files)
 
 ---
 

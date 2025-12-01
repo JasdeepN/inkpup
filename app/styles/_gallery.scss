@@ -78,16 +78,93 @@
   background: rgba(251, 113, 133, 0.08);
 }
 
+/* Phase 1.5: Filter button micro-interactions */
+.gallery-filter:active {
+  transform: scale(0.95);
+  transition-duration: 0.1s;
+}
+
 .gallery-filter--active {
   background: linear-gradient(120deg, rgba(251, 113, 133, 0.2), rgba(96, 165, 250, 0.18));
   border-color: rgba(251, 113, 133, 0.45);
   color: var(--header-text);
+  box-shadow: 0 0 20px rgba(251, 113, 133, 0.15);
+}
+
+/* Filter button stagger animation on load */
+.gallery-filter {
+  animation: filterSlideIn 0.4s var(--animation-ease-smooth) backwards;
+}
+.gallery-filter:nth-child(1) { animation-delay: 0ms; }
+.gallery-filter:nth-child(2) { animation-delay: 50ms; }
+.gallery-filter:nth-child(3) { animation-delay: 100ms; }
+.gallery-filter:nth-child(4) { animation-delay: 150ms; }
+.gallery-filter:nth-child(5) { animation-delay: 200ms; }
+
+@keyframes filterSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Phase 1.4: Category count badge */
+.gallery-filter__count {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.gallery-filter:hover .gallery-filter__count,
+.gallery-filter--active .gallery-filter__count {
+  opacity: 1;
 }
 
 .gallery-grid {
   display: grid;
   gap: 1.5rem;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  position: relative;
+  --cursor-x: 50%;
+  --cursor-y: 50%;
+}
+
+/* Phase 2.3: Cursor spotlight effect */
+@media (hover: hover) {
+  .gallery-grid::after {
+    content: '';
+    position: absolute;
+    inset: -50px;
+    pointer-events: none;
+    background: radial-gradient(
+      600px circle at var(--cursor-x) var(--cursor-y),
+      rgba(251, 113, 133, 0.07),
+      transparent 40%
+    );
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: 1;
+  }
+  
+  .gallery-grid:hover::after {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gallery-grid::after {
+    display: none;
+  }
 }
 
 .gallery-card {
@@ -102,10 +179,47 @@
               border var(--animation-duration-normal) ease;
   animation: fadeIn 0.6s var(--animation-ease-smooth) backwards;
   perspective: var(--card-perspective);
+  position: relative;
   
   /* Performance optimization for large galleries (50+ items) */
   content-visibility: auto;
   contain-intrinsic-size: 0 450px; /* Estimated card height for layout hints */
+}
+
+/* Phase 1.3: Gradient glow border on hover */
+.gallery-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    45deg,
+    rgba(251, 113, 133, 0.6),
+    rgba(96, 165, 250, 0.5),
+    rgba(251, 113, 133, 0.6)
+  );
+  background-size: 200% 200%;
+  border-radius: calc(1rem + 2px);
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 0.3s ease;
+  animation: gradient-shift 3s ease infinite;
+  pointer-events: none;
+}
+
+.gallery-card:hover::before,
+.gallery-card:focus-within::before {
+  opacity: 1;
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gallery-card::before {
+    animation: none;
+  }
 }
 
 /* Stagger animation for gallery items */
@@ -172,6 +286,73 @@
   height: 100%;
   object-fit: cover;
   transition: transform 0.5s ease;
+}
+
+/* Phase 1.2: Hover overlay with info reveal */
+.gallery-card__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.85) 0%,
+    rgba(0, 0, 0, 0.4) 40%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s var(--animation-ease-smooth);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 1rem;
+  pointer-events: none;
+}
+
+.gallery-card__overlay-title {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.3;
+  transform: translateY(10px);
+  opacity: 0;
+  transition: transform 0.3s var(--animation-ease-smooth),
+              opacity 0.3s var(--animation-ease-smooth);
+}
+
+.gallery-card__overlay-caption {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  margin-top: 0.25rem;
+  transform: translateY(10px);
+  opacity: 0;
+  transition: transform 0.3s var(--animation-ease-smooth) 0.05s,
+              opacity 0.3s var(--animation-ease-smooth) 0.05s;
+}
+
+/* Show overlay on hover (devices with hover capability) */
+@media (hover: hover) {
+  .gallery-card:hover .gallery-card__overlay,
+  .gallery-card:focus-within .gallery-card__overlay {
+    opacity: 1;
+  }
+  
+  .gallery-card:hover .gallery-card__overlay-title,
+  .gallery-card:focus-within .gallery-card__overlay-title,
+  .gallery-card:hover .gallery-card__overlay-caption,
+  .gallery-card:focus-within .gallery-card__overlay-caption {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Reduced motion: instant transitions */
+@media (prefers-reduced-motion: reduce) {
+  .gallery-card__overlay,
+  .gallery-card__overlay-title,
+  .gallery-card__overlay-caption {
+    transition: none;
+    transform: none;
+  }
 }
 
 .gallery-card__meta {
@@ -315,6 +496,63 @@
   color: var(--muted);
   font-size: 0.95rem;
   line-height: 1.5;
+}
+
+/* Phase 2.1 & 2.2: Modal navigation arrows */
+.gallery-modal__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3rem;
+  height: 3rem;
+  border: none;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.6);
+  color: #fff;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+  z-index: 2;
+  opacity: 0.7;
+}
+
+.gallery-modal__nav:hover,
+.gallery-modal__nav:focus-visible {
+  background: rgba(251, 113, 133, 0.75);
+  transform: translateY(-50%) scale(1.1);
+  opacity: 1;
+}
+
+.gallery-modal__nav--prev {
+  left: 0.75rem;
+}
+
+.gallery-modal__nav--next {
+  right: 0.75rem;
+}
+
+/* Navigation hint */
+.gallery-modal__nav-hint {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.gallery-modal__nav-hint-keys {
+  opacity: 0.6;
+}
+
+/* Hide nav buttons on touch devices (use swipe instead) */
+@media (hover: none) {
+  .gallery-modal__nav {
+    display: none;
+  }
+  
+  .gallery-modal__nav-hint-keys {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {

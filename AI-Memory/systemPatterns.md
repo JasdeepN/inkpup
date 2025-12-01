@@ -585,3 +585,61 @@ Admin styles organized in app/styles/admin/ with 7 partials by domain. Each part
 - app/styles/admin/_index.scss - aggregator with @forward statements
 - app/styles/admin/_base.scss - shell, cards, forms using @include admin-card-base
 - app/styles/_variables.scss - --admin-surface-subtle, --admin-radius-md tokens
+
+
+## Gallery Hover Overlay Pattern
+
+Gallery hover overlay pattern: Add `.gallery-card__overlay` inside `.gallery-card__image` with gradient background (bottom-to-top fade), absolute positioning, and opacity transition on hover. Text content uses translateY animation for slide-up reveal. Guard with `@media (hover: hover)` for touch devices and `@media (prefers-reduced-motion: reduce)` for accessibility.
+
+### Examples
+
+- components/Gallery.tsx - .gallery-card__overlay div with title/caption
+- app/styles/_gallery.scss - .gallery-card__overlay CSS with gradient and transitions
+- @media (hover: hover) guard for touch devices
+
+
+## Modal Navigation Pattern (Keyboard + Swipe)
+
+Modal keyboard/swipe navigation pattern for image galleries: Add useEffect with keydown listener for ArrowLeft/ArrowRight navigation when modal is open. Create navigation callback that wraps state updates in View Transitions API when supported. For mobile, track touch start/end positions and detect horizontal swipes (threshold 50px). Display navigation arrows on hover-capable devices, hide on touch devices. Show position indicator (e.g., '3 / 12').
+
+### Examples
+
+- components/GalleryView.tsx - navigateImage() callback with View Transitions
+- components/GalleryView.tsx - handleTouchStart/handleTouchEnd for swipe
+- app/styles/_gallery.scss - .gallery-modal__nav buttons hidden on touch devices
+
+## Cursor Spotlight Micro-Interaction Pattern [PATTERN:2025-12-01]
+
+### Context
+Portfolio gallery needed subtle, performant pointer-driven feedback without overwhelming image content. A spotlight effect following the cursor across the grid provides depth and interactivity while remaining purely decorative.
+
+### Pattern
+Use a custom hook (`useCursorPosition`) to track cursor X/Y percentage relative to the gallery grid container. Expose `--cursor-x` and `--cursor-y` CSS variables on a wrapping element. Apply a pseudo-element (`.gallery-grid::after`) that renders a radial gradient whose center is positioned via these CSS variables. Fade in only on hover-capable devices; fully disabled on touch and when `prefers-reduced-motion: reduce` is set.
+
+### Implementation Details
+1. Hook measures bounding client rect and computes percentages: `(clientX - left) / width` and `(clientY - top) / height`.
+2. Percentages stored as state. Lightweight math ensures negligible overhead.
+3. On `mouseleave`, state resets to center (50%, 50%) and opacity transitions out.
+4. SCSS uses `background: radial-gradient(circle at var(--cursor-x) var(--cursor-y), rgba(var(--accent-rgb),0.35), transparent 65%)` with pointer-events: none.
+5. Guards:
+   - `@media (hover: hover)` enable only when pointer hover possible.
+   - `@media (prefers-reduced-motion: reduce)` remove transitions (or disable effect entirely if desired).
+
+### Accessibility
+Purely decorative. Disabled automatically in environments without hover or with reduced motion preference. No screen reader impact (pseudo-element only).
+
+### Performance
+Single pseudo-element; no per-item listeners. Only two CSS custom properties updated. No layout thrashing; gradient painting handled by GPU compositor.
+
+### Fallback Behavior
+Touch devices skip mounting effect (media query). Users retain overlay, keyboard navigation, and swipe gestures.
+
+### Examples
+- lib/hooks/useCursorPosition.ts - tracks percentages
+- components/Gallery.tsx - applies style vars to grid wrapper
+- app/styles/_gallery.scss - pseudo-element gradient + transition rules
+
+### Future Enhancements
+- Velocity-based intensity scaling
+- Category-tinted spotlight (dynamic accent color via data attribute)
+- Distance-based subtle scale/parallax for nearby thumbnails
