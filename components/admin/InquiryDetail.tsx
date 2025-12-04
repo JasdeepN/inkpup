@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect, useTransition, useCallback } from 'react';
 import Link from 'next/link';
 import type { Inquiry, EmailTemplate, InquiryEmail } from '@/lib/schemas/inquiry';
 import type { Customer } from '@/lib/schemas/customer';
@@ -14,6 +14,7 @@ import {
   getCustomerForInquiryAction,
   saveUnifiedNotesAction,
 } from '@/lib/admin-actions-inquiries';
+import { useInquiryWebSocket } from '@/lib/hooks/useInquiryWebSocket';
 import InquiryReplyForm from './InquiryReplyForm';
 import ConfirmDialog from './ConfirmDialog';
 
@@ -41,6 +42,21 @@ export default function InquiryDetail({
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [currentStatus, setCurrentStatus] = useState(inquiry.status);
 
+  // Realtime updates via WebSocket (no polling)
+  useInquiryWebSocket(inquiry.id, {
+    onMessage: (msg) => {
+      if (msg.type === 'email_received' && Number(msg.inquiryId) === inquiry.id) {
+        // Refresh conversation when a new email arrives
+        handleRefreshConversation();
+        // Sync status to pending to indicate new customer activity
+        if (currentStatus !== 'pending') {
+          setCurrentStatus('pending');
+          onStatusChange?.('pending');
+        }
+      }
+    },
+  });
+
   // Load templates, emails, and customer on mount (NO auto-mark-read)
   useEffect(() => {
     const loadData = async () => {
@@ -67,6 +83,24 @@ export default function InquiryDetail({
     };
     loadData();
   }, [inquiry.id, currentStatus]);
+
+  // Manual refresh function for conversation
+  const handleRefreshConversation = useCallback(() => {
+    startTransition(async () => {
+      const { inquiry: updated } = await getInquiryAction(inquiry.id);
+      if (updated?.emails) {
+        setEmails(updated.emails);
+        setMessage({ type: 'success', text: 'Conversation refreshed' });
+        setTimeout(() => setMessage(null), 2000);
+        
+        // Sync status if changed
+        if (updated.status !== currentStatus) {
+          setCurrentStatus(updated.status);
+          onStatusChange?.(updated.status);
+        }
+      }
+    });
+  }, [inquiry.id, currentStatus, onStatusChange]);
 
   const handleStatusChange = (newStatus: Inquiry['status']) => {
     startTransition(async () => {
@@ -294,7 +328,18 @@ export default function InquiryDetail({
       {/* Conversation History */}
       {emails.length > 0 && (
         <div className="inquiry-detail__section">
-          <h4 className="inquiry-detail__label">Conversation History</h4>
+          <div className="inquiry-detail__section-header">
+            <h4 className="inquiry-detail__label">Conversation History</h4>
+            <button
+              type="button"
+              className="btn btn--sm btn--outline"
+              onClick={handleRefreshConversation}
+              disabled={isPending}
+              title="Check for new messages"
+            >
+              🔄 Refresh
+            </button>
+          </div>
           <div className="inquiry-emails">
             {emails.map((email) => {
               const isInbound = email.direction === 'inbound';

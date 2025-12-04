@@ -20,6 +20,10 @@ route = "dev.admin.inkpup.ca/*"
 zone_id = "${CLOUDFLARE_ZONE_ID}"
 logpush = true
 
+[[env.dev.services]]
+binding = "REALTIME"
+service = "inkpup-realtime-dev"
+
 [[env.dev.d1_databases]]
 binding = "DB"
 database_name = "inkpup-db-dev"
@@ -60,6 +64,10 @@ name = "inkpup"
 route = "inkpup.ca/*"
 zone_id = "${CLOUDFLARE_ZONE_ID}"
 logpush = true
+
+[[env.production.services]]
+binding = "REALTIME"
+service = "inkpup-realtime"
 
 [[env.production.d1_databases]]
 binding = "DB"

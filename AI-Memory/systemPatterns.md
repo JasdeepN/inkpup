@@ -569,6 +569,77 @@ Customer tracking with deposits: Customer has email (unique), name, phone, notes
 
 Admin styles organized in modular directory structure under app/styles/admin/. Each partial handles its own @use dependencies. Main _index.scss aggregates via @forward. Design tokens in _variables.scss (--admin-*), shared mixins in _components.scss (@mixin admin-*). Partials: _base.scss (shell/cards/forms), _dashboard.scss (stats/metrics), _dialogs.scss (modals), _gallery.scss (upload/images), _inquiries.scss (inbox/detail), _templates.scss (email editor), _customers.scss (CRM/deposits).
 
+## Resend Inbound Email Configuration Pattern [PATTERN:2025-12-01]
+
+**Three required steps for receiving customer replies:**
+
+1. **Receiving domain configuration**: Choose between `.resend.app` (immediate, zero DNS) or custom domain (requires MX record + DNS propagation)
+2. **Webhook registration**: Register webhook URL in Resend dashboard with `email.received` event, get signing secret
+3. **ReplyTo address**: Set `replyTo` in outbound emails to receiving domain address (e.g., `<inquiry-id>@<id>.resend.app`)
+
+**Why `.resend.app` is preferred for MVP:**
+- Zero DNS configuration (no MX record conflicts)
+- Immediate functionality (<1hr implementation)
+- Low risk (validates webhook before DNS complexity)
+- Sufficient for tattoo studio inquiry system
+- Can migrate to custom domain later without code changes (just Resend dashboard config)
+
+**Implementation checklist:**
+- [ ] Find `.resend.app` domain in Resend dashboard (Emails → Receiving → Inbound address)
+- [ ] Register webhook: URL=`https://inkpup.ca/api/webhooks/resend`, Events=`email.received`
+- [ ] Update `sendReplyAction` to use `replyTo: \`${inquiry.id}@<id>.resend.app\``
+- [ ] Test: inquiry → admin reply → customer reply → verify D1 inbound record
+
+**Troubleshooting:**
+- If webhook doesn't trigger: Check Resend dashboard webhook logs, verify endpoint is publicly accessible
+- If signature verification fails: Ensure `RESEND_WEBHOOK_SECRET` matches dashboard value
+- If emails go to spam: Customer's email provider may flag `.resend.app` domain (rare, monitor feedback)
+
+## Local Webhook Testing Pattern [PATTERN:2025-12-01]
+
+**Problem:** Testing webhooks locally requires either deploying to dev (slow) or managing tunnels (annoying).
+
+**Solution:** Hybrid approach - mock payloads for iteration, tunnel for validation.
+
+**Daily workflow:**
+1. **Rapid iteration (95% of dev time):**
+   - Create fixture: `tests/fixtures/resend-webhook-email-received.json` (copy from Resend dashboard)
+   - Test script: `scripts/test-webhook-local.sh` (curl POST to localhost)
+   - Dev bypass: Allow unsigned webhooks when `NODE_ENV=development`
+   - Run: `./scripts/test-webhook-local.sh` → instant feedback, VS Code breakpoints work
+
+2. **Final validation (before deploy):**
+   - Run: `cloudflared tunnel --url http://localhost:3002`
+   - Temporarily update Resend webhook to tunnel URL
+   - Send real email → customer reply → verify E2E
+   - Restore Resend webhook to `https://dev.admin.inkpup.ca`
+
+**Dev signature bypass (security-safe):**
+```typescript
+const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
+if (!webhookSecret) {
+  if (process.env.NODE_ENV === 'development') {
+    event = JSON.parse(payload); // Allow unsigned in local
+  } else {
+    return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
+  }
+} else {
+  const wh = new Webhook(webhookSecret);
+  event = wh.verify(payload, headers); // Normal verification
+}
+```
+
+**Benefits:**
+- <10 second feedback loops (vs 2-3min deploy)
+- VS Code debugger works (breakpoints, variable inspection)
+- No Resend webhook URL changes (stays pointed at dev environment)
+- Version-controlled test data (fixtures in repo)
+- Predictable, repeatable tests (same payload every time)
+
+**Tradeoffs:**
+- Mock payloads can drift from Resend schema (mitigate: copy from dashboard periodically)
+- Doesn't test Resend → endpoint networking (tunnel handles this, only needed occasionally)
+
 ### Examples
 
 - app/styles/admin/_index.scss - aggregator file
@@ -643,3 +714,7 @@ Touch devices skip mounting effect (media query). Users retain overlay, keyboard
 - Velocity-based intensity scaling
 - Category-tinted spotlight (dynamic accent color via data attribute)
 - Distance-based subtle scale/parallax for nearby thumbnails
+
+[PATTERN:2025-12-03] [PATTERN:2025-12-03] Realtime updates via DO + service binding: Use a dedicated realtime worker hosting a Durable Object to manage WebSocket connections per inquiry (idFromName). Notify the DO from the main app via a service binding on inbound email events. Client uses a WebSocket hook with heartbeat/reconnect logic—no polling. Routes under /realtime/* avoid conflicts and simplify observability.
+
+[PATTERN:2025-12-04] Next.js Navigation Error Handling: When using try/catch in layouts/pages that call redirect() or notFound(), check if the error is a navigation error before logging: `if (error.digest?.startsWith('NEXT_REDIRECT') || error.digest?.startsWith('NEXT_NOT_FOUND')) throw error;`. These are control flow mechanisms, not actual errors.

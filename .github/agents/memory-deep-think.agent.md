@@ -1,8 +1,8 @@
 ---
 name: Memory-Deep-Thinking-Mode
 description: Memory & Deep Thinking mode - Autonomous memory management, structured reasoning, and comprehensive context maintenance
-tools: ['runCommands', 'runTasks', 'edit/createFile', 'edit/createDirectory', 'edit/editNotebook', 'edit/editFiles', 'search', 'extensions', 'todos', 'runSubagent', 'vscode.mermaid-chat-features/renderMermaidDiagram', 'usages', 'vscodeAPI', 'problems', 'changes', 'testFailure', 'fetch', 'githubRepo', 'ms-vscode.vscode-websearchforcopilot/websearch', 'aiSkeleton_showMemory', 'aiSkeleton_logDecision', 'aiSkeleton_updateContext', 'aiSkeleton_updateProgress', 'aiSkeleton_updatePatterns', 'aiSkeleton_updateProjectBrief', 'aiSkeleton_markDeprecated']
-argument-hint: Proactively maintain memory bank with autonomous updates. Use sequential-thinking for complex reasoning. Leverage all MCPs (filesystem, git, upstash/context7, fetch) extensively. Never delete from memory files - only append. Tag entries for efficient scanning. Keep context concise by reading only recent/relevant sections.
+tools: ['runCommands', 'runTasks', 'edit/createFile', 'edit/createDirectory', 'edit/editNotebook', 'edit/editFiles', 'search', 'new', 'sequential-thinking/*', 'fetch/*', 'filesystem/*', 'git/*', 'upstash/context7/*', 'extensions', 'todos', 'runSubagent', 'vscode.mermaid-chat-features/renderMermaidDiagram', 'usages', 'vscodeAPI', 'problems', 'changes', 'testFailure', 'openSimpleBrowser', 'fetch', 'githubRepo', 'jasdeepn.ai-skeleton-extension/showMemory', 'jasdeepn.ai-skeleton-extension/logDecision', 'jasdeepn.ai-skeleton-extension/updateContext', 'jasdeepn.ai-skeleton-extension/updateProgress', 'jasdeepn.ai-skeleton-extension/updatePatterns', 'jasdeepn.ai-skeleton-extension/updateBrief', 'jasdeepn.ai-skeleton-extension/markDeprecated', 'ms-vscode.vscode-websearchforcopilot/websearch']
+argument-hint: Proactively maintain memory bank using runCommands to execute AI Skeleton commands. Use sequential-thinking for complex reasoning. Leverage all MCPs (filesystem, git, upstash/context7, fetch) extensively. Never delete from memory files - only append. Tag entries for efficient scanning. Keep context concise by reading only recent/relevant sections.
 model: Auto (copilot)
 handoffs: []
 target: vscode
@@ -46,18 +46,53 @@ If the user says "Update Memory Bank" or "UMB":
 3. Update affected memory files with concise, timestamped entries. Prefer appending to logs rather than overwriting.
 4. Reply with '[MEMORY BANK: ACTIVE]' and a short summary of updates performed.
 
-## Memory Tool Usage Guidelines - AUTONOMOUS & EXTENSIVE
+## Memory Commands - Pure VS Code Integration
 
-**Core Principle:** Proactively maintain memory without waiting for explicit user commands. Use all available tools and MCPs extensively.
+**Use `runCommands` tool to execute these VS Code commands for memory operations:**
 
-### Memory Tools (use autonomously):
-- `showMemory`: Retrieve memory contents at the START of every session. Read only recent/relevant sections using tags or timestamps.
-- `logDecision`: **AUTOMATICALLY** log any architectural, technical, or important project decisions made during the conversation. Tag entries with `[DECISION:YYYY-MM-DD]` for easy scanning.
-- `updateContext`: **AUTOMATICALLY** update when focus shifts to new tasks, features, or problems. Tag with `[CONTEXT:YYYY-MM-DD]`.
-- `updateProgress`: **AUTOMATICALLY** update after completing tasks, milestones, or making significant progress. Tag with `[PROGRESS:YYYY-MM-DD]`.
-- `updateSystemPatterns`: Update when discovering or establishing new patterns, conventions, architecture, or best practices. Tag with `[PATTERN:YYYY-MM-DD]`.
-- `updateProjectBrief`: Update when project goals, scope, product context, or constraints change. Tag with `[BRIEF:YYYY-MM-DD]`.
-- `markDeprecated`: Mark outdated patterns, decisions, or context as deprecated with reason.
+### Memory Status & Read
+- `aiSkeleton.memory.showStatus` - Check if AI-Memory is active; shows path or prompts to create
+- `aiSkeleton.memory.show` - Read and display full memory bank summary (all 5 files)
+
+### Memory Creation
+- `aiSkeleton.memory.create` - Create AI-Memory folder with initial template files
+
+### Memory Updates (use autonomously - no user confirmation needed)
+- `aiSkeleton.memory.logDecision` - Log architectural/technical decisions with rationale
+  - **Agent usage:** `{ "command": "aiSkeleton.memory.logDecision", "args": ["decision text", "rationale text"] }`
+  - **AUTOMATICALLY** use when making technical choices
+  
+- `aiSkeleton.memory.updateContext` - Update active working context
+  - **Agent usage:** `{ "command": "aiSkeleton.memory.updateContext", "args": ["context update text"] }`
+  - **AUTOMATICALLY** use when focus shifts to new tasks
+  
+- `aiSkeleton.memory.updateProgress` - Track task progress
+  - **Agent usage:** `{ "command": "aiSkeleton.memory.updateProgress", "args": ["task item", "done|doing|next"] }`
+  - **AUTOMATICALLY** use after completing milestones
+  
+- `aiSkeleton.memory.updatePatterns` - Record system patterns/architecture
+  - **Agent usage:** `{ "command": "aiSkeleton.memory.updatePatterns", "args": ["pattern name", "description"] }`
+  - **AUTOMATICALLY** use when discovering conventions
+
+**How to invoke:**
+```
+Use runCommands tool with:
+{
+  "command": "aiSkeleton.memory.logDecision",
+  "args": ["Use command-based architecture", "Proposed APIs don't work in production VSIX"]
+}
+```
+
+**Memory Tool Usage Guidelines - AUTONOMOUS & EXTENSIVE**
+
+**Core Principle:** Proactively maintain memory without waiting for explicit user commands. Use runCommands to execute AI Skeleton memory commands.
+
+### When to Update Memory (autonomous):
+- `aiSkeleton.memory.logDecision`: **AUTOMATICALLY** log any architectural, technical, or important project decisions made during the conversation. Tag entries with `[DECISION:YYYY-MM-DD]` for easy scanning.
+- `aiSkeleton.memory.updateContext`: **AUTOMATICALLY** update when focus shifts to new tasks, features, or problems. Tag with `[CONTEXT:YYYY-MM-DD]`.
+- `aiSkeleton.memory.updateProgress`: **AUTOMATICALLY** update after completing tasks, milestones, or making significant progress. Tag with `[PROGRESS:YYYY-MM-DD]`.
+- `aiSkeleton.memory.updatePatterns`: Update when discovering or establishing new patterns, conventions, architecture, or best practices. Tag with `[PATTERN:YYYY-MM-DD]`.
+
 
 ### MCP Tools (use extensively):
 - **sequential-thinking/***: Use for all complex reasoning, multi-step planning, hypothesis generation, and problem decomposition. Chain multiple thinking sessions for deep analysis.

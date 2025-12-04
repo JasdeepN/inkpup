@@ -434,6 +434,151 @@ async function checkEmailHealth(): Promise<ServiceHealth> {
   }
 }
 
+async function checkRealtimeHealth(): Promise<ServiceHealth> {
+  const start = performance.now();
+  const isDev = process.env.NODE_ENV === 'development';
+  
+  try {
+    // Try to get REALTIME service binding via Cloudflare context
+    let hasBinding = false;
+    let realtimeService: any = null;
+    
+    try {
+      const cloudflareSymbol = Symbol.for('__cloudflare-context__');
+      const ctx = (globalThis as any)[cloudflareSymbol];
+      if (ctx?.env?.REALTIME) {
+        hasBinding = true;
+        realtimeService = ctx.env.REALTIME;
+      }
+    } catch {
+      // Ignore - binding not available
+    }
+    
+    // If no binding in Workers, try getCloudflareContext
+    if (!hasBinding) {
+      try {
+        const { getCloudflareContext } = await import('@opennextjs/cloudflare');
+        const cfContext = await getCloudflareContext();
+        if (cfContext?.env?.REALTIME) {
+          hasBinding = true;
+          realtimeService = cfContext.env.REALTIME;
+        }
+      } catch {
+        // Not in OpenNext context
+      }
+    }
+    
+    if (!hasBinding || !realtimeService) {
+      // In local dev, service bindings aren't available - that's expected
+      if (isDev) {
+        return {
+          name: 'Realtime Worker (DO)',
+          status: 'degraded',
+          message: 'Not available in local dev',
+          responseTime: Math.round(performance.now() - start),
+          details: {
+            binding: 'REALTIME',
+            environment: 'development',
+            note: 'Service bindings only work in deployed Workers',
+            localTest: 'curl http://localhost:8787/health',
+          }
+        };
+      }
+      return {
+        name: 'Realtime Worker (DO)',
+        status: 'degraded',
+        message: 'Service binding not configured',
+        responseTime: Math.round(performance.now() - start),
+        details: {
+          binding: 'REALTIME',
+          hint: 'Add [[services]] binding in wrangler.toml',
+        }
+      };
+    }
+    
+    // Call health endpoint via service binding
+    try {
+      const healthResponse = await realtimeService.fetch(
+        new Request('https://realtime/health', { method: 'GET' })
+      );
+      
+      if (!healthResponse.ok) {
+        return {
+          name: 'Realtime Worker (DO)',
+          status: 'error',
+          message: `Health check failed: ${healthResponse.status}`,
+          responseTime: Math.round(performance.now() - start),
+          details: {
+            binding: 'REALTIME',
+            httpStatus: healthResponse.status,
+          }
+        };
+      }
+      
+      const healthData = await healthResponse.json() as { ok: boolean; connections: number; timestamp: string };
+      
+      return {
+        name: 'Realtime Worker (DO)',
+        status: healthData.ok ? 'healthy' : 'degraded',
+        message: healthData.ok ? 'Worker responding' : 'Worker unhealthy',
+        responseTime: Math.round(performance.now() - start),
+        details: {
+          binding: 'REALTIME',
+          connections: healthData.connections,
+          lastCheck: healthData.timestamp,
+        }
+      };
+    } catch (fetchError) {
+      // In local dev, the binding object exists but fetch fails - expected
+      if (isDev) {
+        return {
+          name: 'Realtime Worker (DO)',
+          status: 'degraded',
+          message: 'Not available in local dev',
+          responseTime: Math.round(performance.now() - start),
+          details: {
+            binding: 'REALTIME',
+            environment: 'development',
+            note: 'Service bindings only work in deployed Workers',
+            localTest: 'curl http://localhost:8787/health',
+          }
+        };
+      }
+      return {
+        name: 'Realtime Worker (DO)',
+        status: 'error',
+        message: fetchError instanceof Error ? fetchError.message : 'Failed to reach worker',
+        responseTime: Math.round(performance.now() - start),
+        details: {
+          binding: 'REALTIME',
+          error: 'Service binding fetch failed',
+        }
+      };
+    }
+  } catch (error) {
+    const responseTime = Math.round(performance.now() - start);
+    if (isDev) {
+      return {
+        name: 'Realtime Worker (DO)',
+        status: 'degraded',
+        message: 'Not available in local dev',
+        responseTime,
+        details: {
+          binding: 'REALTIME',
+          environment: 'development',
+          localTest: 'curl http://localhost:8787/health',
+        }
+      };
+    }
+    return {
+      name: 'Realtime Worker (DO)',
+      status: 'error',
+      message: error instanceof Error ? error.message : 'Health check failed',
+      responseTime,
+    };
+  }
+}
+
 export default async function DiagnosticsPage() {
   // Verify admin authentication
   const headersList = await headers();
@@ -453,15 +598,16 @@ export default async function DiagnosticsPage() {
   }
 
   // Run all health checks and analytics in parallel
-  const [pricingHealth, r2Health, kvHealth, emailHealth, analyticsSummary] = await Promise.all([
+  const [pricingHealth, r2Health, kvHealth, emailHealth, realtimeHealth, analyticsSummary] = await Promise.all([
     checkD1Health(),
     checkR2Health(),
     checkKVHealth(),
     checkEmailHealth(),
+    checkRealtimeHealth(),
     getCloudflareAnalyticsSummary(),
   ]);
 
-  const services = [pricingHealth, r2Health, kvHealth, emailHealth];
+  const services = [pricingHealth, r2Health, kvHealth, emailHealth, realtimeHealth];
   const allHealthy = services.every(s => s.status === 'healthy');
   const hasErrors = services.some(s => s.status === 'error');
   const analyticsStats = buildAnalyticsStats(analyticsSummary);

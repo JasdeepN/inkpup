@@ -70,3 +70,12 @@ export interface Env {
   CACHE: KVNamespace;
   [key: string]: unknown;
 }
+
+// Augment the global CloudflareEnv from @opennextjs/cloudflare
+declare global {
+  interface CloudflareEnv {
+    DB?: D1Database;
+    CACHE?: KVNamespace;
+    REALTIME?: Fetcher;
+  }
+}

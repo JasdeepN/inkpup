@@ -37,23 +37,23 @@ Run this checkpoint at the end of a coding session or when significant work has 
 Update each memory file based on recent work:
 
 #### activeContext.md
-- Update **Current Goals** using `#MemoryManagement updateContext`
+- Update **Current Goals** using `aiSkeleton_updateContext`
 - Update **Current Blockers** with any unresolved issues
 - Remove completed goals
 - Add new goals discovered during this session
 
 #### progress.md
-- Move completed items using `#MemoryManagement updateProgress`
+- Move completed items using `aiSkeleton_updateProgress`
 - Update "Doing" with current in-progress work
 - Update "Next" with planned upcoming tasks
 - Keep entries concise and timestamped
 
 #### decisionLog.md
-- Add decisions using `#MemoryManagement logDecision`
+- Add decisions using `aiSkeleton_logDecision`
 - Format: `| YYYY-MM-DD | Decision | Rationale |`
 
 #### systemPatterns.md
-- Document new patterns using `#MemoryManagement updateSystemPatterns`
+- Document new patterns using `aiSkeleton_updateSystemPatterns`
 - Update existing patterns if they evolved
 - Categories:
   - **Architectural Patterns**: High-level system design
@@ -61,7 +61,7 @@ Update each memory file based on recent work:
   - **Common Idioms**: Project-specific conventions
 
 #### productContext.md
-- Update using `#MemoryManagement updateProductContext` if core features changed
+- Update using `aiSkeleton_updateProductContext` if core features changed
 - Add new libraries or technologies to Technical Stack
 - Update overview if project scope shifted
 

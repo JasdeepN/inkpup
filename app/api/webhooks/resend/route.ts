@@ -4,6 +4,7 @@ import { Resend } from 'resend';
 import { Webhook } from 'svix';
 import { getD1Binding } from '@/lib/db/d1';
 import { createInboundEmail } from '@/lib/db/inquiry-emails';
+import { notifyInquiryUpdate } from '@/lib/services/realtime';
 
 // Lazy initialization to avoid build-time errors when RESEND_API_KEY is not available
 let resend: Resend | null = null;
@@ -63,18 +64,32 @@ export async function POST(request: NextRequest) {
 
   // Verify webhook signature
   const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
-  if (!webhookSecret) {
+  let event: ResendWebhookEvent;
+
+  // Dev bypass: Allow test signature in development for local testing
+  const signature = headers['svix-signature'] || '';
+  const isDevBypass = process.env.NODE_ENV === 'development' && signature.includes('dev_bypass_signature');
+
+  if (isDevBypass) {
+    console.warn('[Resend Webhook] ⚠️  Dev mode: Bypassing signature verification');
+    try {
+      event = JSON.parse(payload) as ResendWebhookEvent;
+    } catch (parseErr) {
+      console.error('[Resend Webhook] Failed to parse payload:', parseErr);
+      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+    }
+  } else if (!webhookSecret) {
     console.error('[Resend Webhook] Missing RESEND_WEBHOOK_SECRET');
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
-  }
-
-  let event: ResendWebhookEvent;
-  try {
-    const wh = new Webhook(webhookSecret);
-    event = wh.verify(payload, headers) as ResendWebhookEvent;
-  } catch (err) {
-    console.error('[Resend Webhook] Signature verification failed:', err);
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+  } else {
+    // Production: Verify signature with Svix
+    try {
+      const wh = new Webhook(webhookSecret);
+      event = wh.verify(payload, headers) as ResendWebhookEvent;
+    } catch (err) {
+      console.error('[Resend Webhook] Signature verification failed:', err);
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
   }
 
   // Handle email.received event (customer replies)
@@ -84,19 +99,33 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Resend Webhook] Received inbound email from: ${senderEmail}`);
 
-    // Get full email content from Resend API
+    // Get full email content from Resend Receiving API (not the outbound emails.get)
+    // See: https://resend.com/docs/dashboard/receiving/get-email-content
     let emailContent = { text: '', html: '' };
-    try {
-      const { data } = await getResend().emails.get(emailEvent.data.email_id);
-      if (data) {
-        emailContent = {
-          text: (data as { text?: string }).text || '',
-          html: (data as { html?: string }).html || '',
-        };
+    
+    // In dev mode with bypass, use mock body (Resend API won't have this fake email)
+    if (isDevBypass) {
+      emailContent = { 
+        text: '[DEV TEST] This is a mock email body for local testing.', 
+        html: '<p>[DEV TEST] This is a mock email body for local testing.</p>' 
+      };
+      console.log('[Resend Webhook] Using mock email body for dev testing');
+    } else {
+      try {
+        const { data, error } = await getResend().emails.receiving.get(emailEvent.data.email_id);
+        if (error) {
+          console.warn('[Resend Webhook] Receiving API error:', error);
+        } else if (data) {
+          emailContent = {
+            text: data.text || '',
+            html: data.html || '',
+          };
+          console.log(`[Resend Webhook] Fetched email body: ${emailContent.text?.length || 0} chars text, ${emailContent.html?.length || 0} chars html`);
+        }
+      } catch (fetchError) {
+        console.warn('[Resend Webhook] Could not fetch email content:', fetchError);
+        // Continue with empty body - we still want to record the email
       }
-    } catch (fetchError) {
-      console.warn('[Resend Webhook] Could not fetch email content:', fetchError);
-      // Continue with empty body - we still want to record the email
     }
 
     // Get D1 binding
@@ -145,12 +174,22 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`[Resend Webhook] ✅ Inbound email stored for inquiry ${inquiry.id}`);
+
+    // Notify realtime worker (non-blocking)
+    await notifyInquiryUpdate({
+      type: 'email_received',
+      inquiryId: inquiry.id,
+      emailId: emailRecord.id,
+      timestamp: new Date().toISOString(),
+    });
+
     return NextResponse.json({
       ok: true,
       matched: true,
       stored: true,
       inquiryId: inquiry.id,
       emailId: emailRecord.id,
+      notified: true,
     });
   }
 

@@ -5,6 +5,17 @@ import { isAdminHost } from '../../lib/admin-hosts';
 import AdminNav from '../../components/admin/AdminNav';
 import type { ReactNode } from 'react';
 
+// Helper to check if error is a Next.js redirect/notFound (they use special digest)
+function isNextNavigationError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    'digest' in error &&
+    typeof (error as any).digest === 'string' &&
+    ((error as any).digest.startsWith('NEXT_REDIRECT') ||
+     (error as any).digest.startsWith('NEXT_NOT_FOUND'))
+  );
+}
+
 // Force dynamic rendering - auth checks must happen at runtime
 export const dynamic = 'force-dynamic';
 
@@ -50,6 +61,10 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       </>
     );
   } catch (error) {
+    // Re-throw Next.js navigation errors (redirect, notFound) - they're not real errors
+    if (isNextNavigationError(error)) {
+      throw error;
+    }
     console.error('[AdminLayout] ERROR:', error);
     return (
       <div className="admin-shell">

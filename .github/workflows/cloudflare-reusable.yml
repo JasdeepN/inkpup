@@ -162,6 +162,18 @@ jobs:
             --remote
           echo "D1 migrations complete"
 
+      - name: Deploy realtime worker
+        working-directory: workers/realtime
+        env:
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+        run: |
+          envsubst < wrangler.toml > wrangler.resolved.toml
+          echo "Deploying realtime worker for ${{ inputs.environment }}..."
+          npx --yes wrangler@4 deploy \
+            --config wrangler.resolved.toml \
+            --env ${{ inputs.environment }}
+          echo "Realtime worker deployed"
+
       - name: Deploy to environment
         run: |
           npx --yes wrangler@4 deploy \

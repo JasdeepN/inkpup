@@ -1,0 +1,15 @@
+{
+  "type": "email.received",
+  "created_at": "2025-12-02T00:34:11.000Z",
+  "data": {
+    "email_id": "f6684859-8048-490e-81c0-560f3abf5616",
+    "created_at": "2025-12-02T00:34:15.350Z",
+    "from": "Test Customer <jasdeepn4@hotmail.com>",
+    "to": ["contact@mail.inkpup.ca"],
+    "bcc": [],
+    "cc": [],
+    "message_id": "<test-message-id@example.com>",
+    "subject": "RE: Deposit Request for Your Tattoo Appointment - InkPup",
+    "attachments": []
+  }
+}

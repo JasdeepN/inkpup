@@ -7,7 +7,7 @@
 
 ## Instructions
 
-Use this prompt to break down any complex task into actionable steps, assign #todos for each, and utilize available tools for tracking and execution. Each step should be clear, specific, and saved to #MemoryManagement for progress tracking.
+Use this prompt to break down any complex task into actionable steps, assign #todos for each, and utilize available tools for tracking and execution. Each step should be clear, specific, and saved to aiSkeleton for progress tracking.
 
 **Important:** This prompt template is for planning only. All generated plans, tasks, and progress must be saved to the Memory Management system, NOT to this prompt file.
 
@@ -66,19 +66,19 @@ For each step, specify which tools or functions to use (e.g., code generation, u
 
 ## 6. Save to Memory Management
 
-**Use #MemoryManagement to save all task data:**
+**Use aiSkeleton to save all task data:**
 
-- Save the complete plan to #MemoryManagement using appropriate commands
+- Save the complete plan to aiSkeleton using appropriate commands
 - Store task breakdown in the project context
 - Log each #todo to the progress tracking system
 - Update active context with current task focus
 - Document key decisions made during planning
 
 **Memory Management Actions:**
-- Use `#MemoryManagement updateProgress` to track task status
-- Use `#MemoryManagement logDecision` for important choices
-- Use `#MemoryManagement updateContext` to set current focus
-- Use `#MemoryManagement updateSystemPatterns` for reusable patterns
+- Use `aiSkeleton_updateProgress` to track task status
+- Use `aiSkeleton_logDecision` for important choices
+- Use `aiSkeleton_updateContext` to set current focus
+- Use `aiSkeleton_updateSystemPatterns` for reusable patterns
 
 **Do NOT modify this prompt file** - it is a template for creating plans, not for storing them.
 
@@ -89,7 +89,7 @@ For each step, specify which tools or functions to use (e.g., code generation, u
 Plan for periodic reviews and adjust steps as needed based on feedback or new information.
 
 **Review Checklist:**
-- Verify all tasks are saved to #MemoryManagement
+- Verify all tasks are saved to aiSkeleton
 - Confirm #todos are tracked in progress system
 - Ensure active context reflects current priorities
 - Document any blockers or decisions
@@ -116,21 +116,21 @@ Plan for periodic reviews and adjust steps as needed based on feedback or new in
 - #todo Deploy to staging
 
 **Tools:**
-- Research: Documentation tools, #MemoryManagement for context retrieval
+- Research: Documentation tools, aiSkeleton_* for context retrieval
 - Design: Figma, Memory Management for design decisions
 - Implementation: Code editor, Copilot, Memory Management for patterns
 - Testing: Unit test framework, Memory Management for test strategies
 - Deployment: CI/CD pipeline, Memory Management for deployment logs
 
 **Memory Management Usage:**
-- Save plan: `#MemoryManagement updateProjectBrief`
-- Track progress: `#MemoryManagement updateProgress`
-- Log decisions: `#MemoryManagement logDecision`
-- Update context: `#MemoryManagement updateContext`
+- Save plan: `aiSkeleton_updateProjectBrief`
+- Track progress: `aiSkeleton_updateProgress`
+- Log decisions: `aiSkeleton_logDecision`
+- Update context: `aiSkeleton_updateContext`
 
 ---
 
-*Use this template for each new task to ensure clarity, accountability, and progress tracking. All generated content should be saved to #MemoryManagement, not to this template file.*
+*Use this template for each new task to ensure clarity, accountability, and progress tracking. All generated content should be saved to aiSkeleton, not to this template file.*
 
 ---
 

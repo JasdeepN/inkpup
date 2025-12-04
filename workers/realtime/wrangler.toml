@@ -1,0 +1,34 @@
+name = "inkpup-realtime"
+main = "./src/worker.ts"
+compatibility_date = "2025-10-07"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+logpush = true
+
+[env.dev]
+name = "inkpup-realtime-dev"
+route = "dev.admin.inkpup.ca/realtime/*"
+zone_id = "${CLOUDFLARE_ZONE_ID}"
+logpush = true
+
+[[env.dev.durable_objects.bindings]]
+name = "INQUIRY_UPDATES"
+class_name = "InquiryUpdatesDO"
+
+[[env.dev.migrations]]
+tag = "v1"
+new_classes = ["InquiryUpdatesDO"]
+
+[env.production]
+name = "inkpup-realtime"
+route = "admin.inkpup.ca/realtime/*"
+zone_id = "${CLOUDFLARE_ZONE_ID}"
+logpush = true
+
+[[env.production.durable_objects.bindings]]
+name = "INQUIRY_UPDATES"
+class_name = "InquiryUpdatesDO"
+
+[[env.production.migrations]]
+tag = "v1"
+new_classes = ["InquiryUpdatesDO"]
