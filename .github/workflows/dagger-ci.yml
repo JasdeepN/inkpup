@@ -1,0 +1,32 @@
+name: dagger-ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - dev
+      - main
+
+jobs:
+  dagger:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dagger CLI
+        run: curl -L https://dl.dagger.io/dagger/install.sh | sh
+
+      - name: Run Dagger CI pipeline
+        run: ./bin/dagger run node dagger/ci.mjs
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || '' }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || '' }}

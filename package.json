@@ -14,6 +14,9 @@
     "test:integration": "npm run test:e2e",
     "test": "cross-env NODE_ENV=test jest --forceExit",
     "test:unit": "cross-env NODE_ENV=test jest --coverage",
+    "ci": "./bin/dagger run node dagger/ci.mjs",
+    "ci:e2e": "./bin/dagger run node dagger/ci.mjs --run-e2e",
+    "ci:deploy": "./bin/dagger run node dagger/ci.mjs --deploy",
     "act:cache:warm": "bash scripts/act-cache-images.sh warm",
     "act:cache:load": "bash scripts/act-cache-images.sh load",
     "act:cache:list": "bash scripts/act-cache-images.sh list",
@@ -45,6 +48,7 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@dagger.io/dagger": "^0.19.8",
     "@babel/preset-env": "^7.28.3",
     "@babel/preset-react": "^7.27.1",
     "@babel/preset-typescript": "^7.27.1",

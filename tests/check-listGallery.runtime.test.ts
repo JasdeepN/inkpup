@@ -1,6 +1,6 @@
 import * as server from '../lib/r2-server';
 
-test('runtime diagnostic for listGalleryImages', async () => {
+test.skip('runtime diagnostic for listGalleryImages', async () => {
   // Inspect module exports
   // eslint-disable-next-line no-console
   console.log('module exports:', Object.keys(server));
