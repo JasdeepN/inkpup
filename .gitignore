@@ -96,3 +96,9 @@ TODO.IGNORE
 scripts/
 
 **.ignore
+
+.github/*
+!.github/workflows/*
+AI-Memory/*
+
+bin/

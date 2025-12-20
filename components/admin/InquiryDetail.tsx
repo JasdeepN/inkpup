@@ -18,10 +18,12 @@ import { useInquiryWebSocket } from '@/lib/hooks/useInquiryWebSocket';
 import InquiryReplyForm from './InquiryReplyForm';
 import ConfirmDialog from './ConfirmDialog';
 
+type InquiryStatusWithPending = Inquiry['status'] | 'pending';
+
 interface InquiryDetailProps {
   inquiry: Inquiry;
   /** Callback when status changes (for parent sync) */
-  onStatusChange?: (status: Inquiry['status']) => void;
+  onStatusChange?: (status: InquiryStatusWithPending) => void;
   /** Callback to mark as read on any action (deferred read-marking) */
   onActionTaken?: () => Promise<unknown>;
 }
@@ -40,7 +42,8 @@ export default function InquiryDetail({
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [notesSaved, setNotesSaved] = useState(false);
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [currentStatus, setCurrentStatus] = useState(inquiry.status);
+  const [currentStatus, setCurrentStatus] = useState<InquiryStatusWithPending>(inquiry.status);
+  const statusForProgress: Inquiry['status'] = currentStatus === 'pending' ? 'read' : currentStatus;
 
   // Realtime updates via WebSocket (no polling)
   useInquiryWebSocket(inquiry.id, {
@@ -285,7 +288,7 @@ export default function InquiryDetail({
       <div className="inquiry-detail__section">
         <h4 className="inquiry-detail__label">Status</h4>
         <StatusProgression 
-          currentStatus={currentStatus}
+          currentStatus={statusForProgress}
           hasCustomer={!!customer}
           onStatusChange={handleStatusChange}
           onArchiveClick={handleArchiveClick}
